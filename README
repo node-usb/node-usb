@@ -9,9 +9,17 @@ Installation
 ==============================
 Make sure you have installed libusb-1.0-0-dev (Ubuntu: sudo apt-get install libusb-1.0-0-dev).
 Just run
-	make 
+	make setup
 in current directory and wait. "Unit tests" can be executed with
 	node tests/node-usb-test.js
+
+If you want to use the USB vendor ids, execute
+	make create-usb-ids
+
+Examples
+=============================
+A simple version of lsusb can be executed by typing
+	node examples/lsusb.js
 
 
 TODO

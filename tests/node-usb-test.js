@@ -22,8 +22,8 @@ for (var i = 0; i < devices.length; i++) {
 	console.log(device);
 	assert.ok((device.busNumber > 0), "busNumber must be larger than 0");
 	assert.ok((device.deviceAddress > 0), "deviceAddress must be larger than 0");
-	var id = device.busNumber + ":" + device.deviceAddress;
-	console.log("working on " + id);
+//	var id = device.busNumber + ":" + device.deviceAddress;
+//	console.log("working on " + id);
 	assert.equal(device.close(), false, "close() must be false because device is not opened");
 
 	try {
@@ -34,8 +34,8 @@ for (var i = 0; i < devices.length; i++) {
 		console.log("failed to open device [" + id + "]: " + e.message);
 	}
 
-	console.log(device.getDeviceDescriptor());
-	console.log(device.getConfigDescriptor());
+//	console.log(device.getDeviceDescriptor());
+//	console.log(device.getConfigDescriptor());
 }
 
 assert.ok(instance.close());

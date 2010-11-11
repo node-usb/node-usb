@@ -300,8 +300,8 @@ namespace NodeUsb {
 		// no constants at the moment
 	
 		// Properties
-		instance_template->SetAccessor(V8STR("busNumber"), Device::BusNumberGetter);
 		instance_template->SetAccessor(V8STR("deviceAddress"), Device::DeviceAddressGetter);
+		instance_template->SetAccessor(V8STR("busNumber"), Device::BusNumberGetter);
 
 		// Bindings to nodejs
 		NODE_SET_PROTOTYPE_METHOD(t, "open", Device::Open); // TODO Stream!
