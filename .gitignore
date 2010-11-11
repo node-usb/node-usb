@@ -1,3 +1,4 @@
 build/*
 usb_bindings.node
-./.lock-wscript
+./.lock-wscript/*
+**/.lock_script
