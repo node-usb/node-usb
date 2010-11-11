@@ -1,0 +1,9 @@
+{ "name" : "node-usb"
+, "version" : "0.0.1"
+, "description" : "experimental libusb bindings"
+, "author": "Christopher Klein"
+, "main": "./usb_bindings"
+, "scripts": { "install": "node-waf configure build" }
+}
+
+
