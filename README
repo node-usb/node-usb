@@ -1,0 +1,27 @@
+libusb-1.0 bindings for Node.js
+==============================
+node-usb is just a sample of how to interact between node.js ->  Google V8 -> external libraries (in this case libusb-1.0).
+At the moment only discovering of availble devices is possible and no asynchronous support is integrated.
+
+Tested with Node version 0.2.4
+
+Installation
+==============================
+Make sure you have installed libusb-1.0-0-dev (Ubuntu: sudo apt-get install libusb-1.0-0-dev).
+Just run
+	make 
+in current directory and wait. "Unit tests" can be executed with
+	node tests/node-usb-test.js
+
+
+TODO
+=============================
+* Move to asynchronous calls
+* read/write streams
+* ...
+
+More information
+==============================
+Christopher Klein <ckl[at]ecw[dot]de>
+http://twitter.com/schakko
+http://wap.ecw.de
