@@ -1,6 +1,6 @@
 #include "./bindings.h"
 
-#define THROW_BAD_ARGS ThrowException(Exception::TypeError(String::New("Bad argument"))))
+#define THROW_BAD_ARGS(fail) return ThrowException(Exception::TypeError(V8STR(fail)));
 #define THROW_NOT_YET return ThrowException(Exception::TypeError(String::Concat(String::New(__FUNCTION__), String::New("not yet supported"))));
 #define CHECK_USB(r, scope) \
 	if (r < LIBUSB_SUCCESS) { \
@@ -277,6 +277,12 @@ namespace NodeUsb {
 	}
 
 /******************************* Device */
+#define ENSURE_DEVICE_IS_OPEN \
+	if (false == self->is_opened) { \
+		CHECK_USB(libusb_open(self->device, &(self->handle)), scope); \
+		self->is_opened = true; \
+	}
+	
 	/** constructor template is needed for creating new Device objects from outside */
 	Persistent<FunctionTemplate> Device::constructor_template;
 
@@ -304,7 +310,6 @@ namespace NodeUsb {
 		instance_template->SetAccessor(V8STR("busNumber"), Device::BusNumberGetter);
 
 		// Bindings to nodejs
-		NODE_SET_PROTOTYPE_METHOD(t, "open", Device::Open); // TODO Stream!
 		NODE_SET_PROTOTYPE_METHOD(t, "close", Device::Close); // TODO Stream! 
 		NODE_SET_PROTOTYPE_METHOD(t, "reset", Device::Reset); 
 		NODE_SET_PROTOTYPE_METHOD(t, "getDeviceDescriptor", Device::GetDeviceDescriptor);
@@ -336,7 +341,7 @@ namespace NodeUsb {
 
 		// need libusb_device structure as first argument
 		if (args.Length() <= 0 || !args[0]->IsExternal()) {
-			return ThrowException(Exception::TypeError(String::New("Device::New argument is invalid. Must be external!"))); 
+			THROW_BAD_ARGS("Device::New argument is invalid. Must be external!") 
 		}
 
 		// make local value reference to first parameter
@@ -377,17 +382,9 @@ namespace NodeUsb {
 		return scope.Close(Integer::New(address));
 	}
 
-	Handle<Value> Device::Open(const Arguments& args) {
-		LOCAL(Device, self, args.This())
-		CHECK_USB(libusb_open(self->device, &(self->handle)), scope);
-		
-		self->is_opened = true;
-		return scope.Close(True());
-	}
-
 	Handle<Value> Device::Close(const Arguments& args) {
 		LOCAL(Device, self, args.This())
-
+		
 		if (true == self->is_opened) {
 			// libusb does not return any value so no CHECK_USB is needed
 			libusb_close(self->handle);
@@ -407,6 +404,10 @@ namespace NodeUsb {
 // TODO: Read-Only
 #define LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(name) \
 		r->Set(V8STR(#name), Integer::New((*self->config_descriptor).name));
+#define LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(name) \
+		interface->Set(V8STR(#name), Integer::New(interface_descriptor.name));
+#define LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(name) \
+		endpoint->Set(V8STR(#name), Integer::New(endpoint_descriptor.name));
 
 	Handle<Value> Device::GetConfigDescriptor(const Arguments& args) {
 		LOCAL(Device, self, args.This())
@@ -419,16 +420,71 @@ namespace NodeUsb {
 		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(bConfigurationValue)
 		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(iConfiguration)
 		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(bmAttributes)
+		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(MaxPower)
 		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(extra_length)
 		
 		// make new byte array. not very elegant but works. anyhow.
-		Local<Array> extra = Array::New();
+		Local<Array> config_extra = Array::New();
 		for (int i = 0; i < (*self->config_descriptor).extra_length; i++) {
-			extra->Set(i, Integer::New((*self->config_descriptor).extra[i]));
+			config_extra->Set(i, Integer::New((*self->config_descriptor).extra[i]));
 		}
+		r->Set(V8STR("extra"), config_extra);
 
-		r->Set(V8STR("extra"), extra);
+		Local<Array> interfaces = Array::New();
+		
+		r->Set(V8STR("interfaces"), interfaces);
+		
+		// iterate interfaces
+		for (int i = 0; i < (*self->config_descriptor).bNumInterfaces; i++) {
+			Local<Object> interface  = Object::New();
+			libusb_interface_descriptor interface_descriptor = ((*self->config_descriptor).interface)->altsetting[i];
 
+			LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bLength)
+			LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bDescriptorType)
+			LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bInterfaceNumber)
+			LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bAlternateSetting)
+			LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bNumEndpoints)
+			LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bInterfaceClass)
+			LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bInterfaceSubClass)
+			LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bInterfaceProtocol)
+			LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(iInterface)
+			LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(extra_length)
+			// read extra settings
+			Local<Array> interface_extra = Array::New();
+			for (int j = 0; j < interface_descriptor.extra_length; j++) {
+				interface_extra->Set(j, Integer::New(interface_descriptor.extra[j]));
+			}
+			interface->Set(V8STR("extra"), interface_extra);
+
+			Local<Array> endpoints = Array::New();
+			// interate endpoints
+			for (int j = 0; j < interface_descriptor.bNumEndpoints; j++) {
+				Local<Object> endpoint = Object::New();
+				libusb_endpoint_descriptor endpoint_descriptor = interface_descriptor.endpoint[j];
+				
+				LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bLength)
+				LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bDescriptorType)
+				LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bEndpointAddress)
+				LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bmAttributes)
+				LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(wMaxPacketSize)
+				LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bInterval)
+				LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bRefresh)
+				LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bSynchAddress)
+				LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(extra_length)
+				
+				// read extra settings
+				Local<Array> endpoint_extra = Array::New();
+				for (int k = 0; k < endpoint_descriptor.extra_length; k++) {
+					endpoint_extra->Set(k, Integer::New(endpoint_descriptor.extra[k]));
+				}
+				endpoint->Set(V8STR("extra"), endpoint_extra);
+				endpoints->Set(j, endpoint);
+			}
+
+			interface->Set(V8STR("endpoints"), endpoints);
+			interfaces->Set(i, interface);
+		}
+		
 		// free it
 		libusb_free_config_descriptor(self->config_descriptor);
 

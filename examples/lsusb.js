@@ -40,6 +40,7 @@ function pad(v, len, fill) {
 for (var i = 0; i < devices.length; i++) {
 	var device = devices[i];
 	var dd = device.getDeviceDescriptor();
+	var cd = device.getConfigDescriptor();
 
 	console.log("Bus " + pad(device.busNumber, 3, "0") + " Device " + pad(device.deviceAddress, 3, "0") + " ID " + pad(toHex(dd.idVendor), 4, "0") + ":" + pad(toHex(dd.idProduct), 4, "0"));
 	console.log("Device Descriptor:");
@@ -63,6 +64,40 @@ for (var i = 0; i < devices.length; i++) {
 	// iSerialNumber is default of libusb-1.0
 	console.log("  iSerial                       " + dd.iSerialNumber);
 	console.log("  bNumConfigurations            " + dd.bNumConfigurations);
+	console.log("  Configuration Descriptor: ");
+	console.log("    bLength                     " + cd.bLength);
+	console.log("    bDescriptorType             " + cd.bDescriptorType);
+	console.log("    wTotalLength                " + cd.wTotalLength);
+	console.log("    bNumInterfaces              " + cd.bNumInterfaces);
+	console.log("    bConfigurationValue         " + cd.bConfigurationValue);
+	console.log("    iConfiguration              " + cd.iConfiguration);
+	console.log("    bmAttributes                " + cd.bmAttributes);
+	console.log("    MaxPower                    " + cd.MaxPower);
+
+	for (var j = 0; j < cd.interfaces.length; j++) {
+		var interface = cd.interfaces[j];
+		console.log("    Interface descriptor:");
+		console.log("      bLength                   " + interface.bLength);
+		console.log("      bDescriptorType           " + interface.bDescriptorType);
+		console.log("      bInterfaceNumber          " + interface.bInterfaceNumber);
+		console.log("      bAlternateSetting         " + interface.bAlternateSetting);
+		console.log("      bNumEndpoints             " + interface.bNumEndpoints);
+		console.log("      bInterfaceClass           " + interface.bInterfaceClass);
+		console.log("      bInterfaceSubClass        " + interface.bInterfaceSubClass);
+		console.log("      bInterfaceProtocol        " + interface.bInterfaceProtocol);
+		console.log("      iInterface                " + interface.iInterface);
+	
+		for (k = 0; k < interface.endpoints.length; k++) {
+			var endpoint = interface.endpoints[k];
+			console.log("      Endpoint descriptor:");
+			console.log("        bLength                   " + endpoint.bLength);
+			console.log("        bDescriptorType           " + endpoint.bDescriptorType);
+			console.log("        bEndpointAddress          0x" + toHex(endpoint.bEndpointAddress));
+			console.log("        bmAttributes              " + endpoint.bmAttributes);
+			console.log("        wMaxPacketSize            0x" + pad(toHex(endpoint.wMaxPacketSize), 4, "0"));
+			console.log("        bInterval                 " + endpoint.bInterval);
+		}
+	}
 }
 
 instance.close();

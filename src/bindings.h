@@ -55,7 +55,6 @@ namespace NodeUsb  {
 			static Handle<Value> BusNumberGetter(Local<String> property, const AccessorInfo &info);
 			static Handle<Value> DeviceAddressGetter(Local<String> property, const AccessorInfo &info);
 			/** V8 functions */
-			static Handle<Value> Open(const Arguments& args);
 			static Handle<Value> Close(const Arguments& args);
 			static Handle<Value> Reset(const Arguments& args);
 			static Handle<Value> GetConfigDescriptor(const Arguments& args);

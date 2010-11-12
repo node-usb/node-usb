@@ -17,25 +17,14 @@ assert.ok((devices.length > 0), "getDevices() must be larger than 0 (assume that
 
 for (var i = 0; i < devices.length; i++) {
 	var device = devices[i];
-	console.log(device);
+	
 	assert.ok((device.busNumber > 0), "busNumber must be larger than 0");
 	assert.ok((device.deviceAddress > 0), "deviceAddress must be larger than 0");
 	var id = device.busNumber + ":" + device.deviceAddress;
-//	console.log("working on " + id);
-	assert.equal(device.close(), false, "close() must be false because device is not opened");
-
-	try {
-		device.open();
-		assert.ok(device.close());
-	}
-	catch (e) {
-		console.log("failed to open device [" + id + "]: " + e.message);
-	}
-
-//	console.log(device.getDeviceDescriptor());
-//	console.log(device.getConfigDescriptor());
+	assert.ok((device.getDeviceDescriptor() != undefined), "getDeviceDescriptor() must return an object");
+	assert.ok((device.getConfigDescriptor() != undefined), "getConfigDescriptor() must return an object");
+//	assert.equal(device.close(), true, "close() must be true because device is opened by prior 
 }
-
 assert.ok(instance.close());
 
 console.log("Tests were successful :-)");
