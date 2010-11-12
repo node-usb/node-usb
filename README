@@ -22,12 +22,6 @@ A simple version of lsusb can be executed by typing
 	node examples/lsusb.js
 
 
-TODO
-=============================
-* Move to asynchronous calls
-* read/write streams
-* ...
-
 More information
 ==============================
 Christopher Klein <ckl[at]ecw[dot]de>

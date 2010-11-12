@@ -7,10 +7,8 @@ namespace NodeUsb {
 		HandleScope scope;
 		Usb::InitalizeUsb(target);
 		Device::InitalizeDevice(target);
-		
 		target->Set(String::NewSymbol("version"),
 				String::New(NODE_USB_VERSION));
-		
 		Handle<ObjectTemplate> global = ObjectTemplate::New();
 		Handle<Context> context = Context::New(NULL, global);
 		Context::Scope context_scope(context);

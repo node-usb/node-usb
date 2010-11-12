@@ -2,6 +2,7 @@
 #define SRC_BINDINGS_H_
 
 #include "node_usb.h"
+#include "libusb.h"
 
 // Taken from node-libmysqlclient
 #define OBJUNWRAP ObjectWrap::Unwrap

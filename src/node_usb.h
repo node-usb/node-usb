@@ -13,7 +13,6 @@
 #include <node.h>
 #include <node_buffer.h>
 #include <node_events.h>
-// include std::string
 #include <cstring>
 #include <string>
 #include <cstdlib>

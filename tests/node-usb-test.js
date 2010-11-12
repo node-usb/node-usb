@@ -2,11 +2,9 @@ var assert = require('assert');
 var usb_driver = require("../usb.js");
 
 var instance = usb_driver.create()
-console.log(instance);
-console.log(instance.LIBUSB_CLASS_PER_INTERFACE);
 
 assert.notEqual(instance, undefined, "instance must be undefined");
-
+assert.ok((instance.LIBUSB_CLASS_PER_INTERFACE != undefined), "Constants must be defined");
 assert.equal(instance.isLibusbInitalized, false, "isLibusbInitalized must be false");
 assert.equal(instance.close(), false, "close() must be false because driver is not opened");
 
@@ -22,7 +20,7 @@ for (var i = 0; i < devices.length; i++) {
 	console.log(device);
 	assert.ok((device.busNumber > 0), "busNumber must be larger than 0");
 	assert.ok((device.deviceAddress > 0), "deviceAddress must be larger than 0");
-//	var id = device.busNumber + ":" + device.deviceAddress;
+	var id = device.busNumber + ":" + device.deviceAddress;
 //	console.log("working on " + id);
 	assert.equal(device.close(), false, "close() must be false because device is not opened");
 
