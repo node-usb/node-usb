@@ -86,8 +86,8 @@ for (var i = 0; i < devices.length; i++) {
 		console.log("      bInterfaceSubClass        " + interface.bInterfaceSubClass);
 		console.log("      bInterfaceProtocol        " + interface.bInterfaceProtocol);
 		console.log("      iInterface                " + interface.iInterface);
-	
-		for (k = 0; k < interface.endpoints.length; k++) {
+
+		for (var k = 0; k < interface.endpoints.length; k++) {
 			var endpoint = interface.endpoints[k];
 			console.log("      Endpoint descriptor:");
 			console.log("        bLength                   " + endpoint.bLength);

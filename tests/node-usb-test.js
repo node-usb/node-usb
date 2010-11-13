@@ -17,12 +17,16 @@ assert.ok((devices.length > 0), "getDevices() must be larger than 0 (assume that
 
 for (var i = 0; i < devices.length; i++) {
 	var device = devices[i];
-	
+	console.log("IN:" + i);
+	console.log(device);
 	assert.ok((device.busNumber > 0), "busNumber must be larger than 0");
 	assert.ok((device.deviceAddress > 0), "deviceAddress must be larger than 0");
 	var id = device.busNumber + ":" + device.deviceAddress;
+	console.log("Before getDeviceDescriptor");
 	assert.ok((device.getDeviceDescriptor() != undefined), "getDeviceDescriptor() must return an object");
+	console.log("Before getConfigDescriptor");
 	assert.ok((device.getConfigDescriptor() != undefined), "getConfigDescriptor() must return an object");
+	console.log("OUT" + i);
 //	assert.equal(device.close(), true, "close() must be true because device is opened by prior 
 }
 assert.ok(instance.close());
