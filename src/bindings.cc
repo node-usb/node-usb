@@ -148,6 +148,7 @@ namespace NodeUsb {
 
 	Usb::Usb() : EventEmitter() {
 		is_initalized = false;
+		num_devices = 0;
 		devices = NULL;
 	}
 
@@ -219,6 +220,7 @@ namespace NodeUsb {
 		return scope.Close(True());
 	}
 
+
 	/**
 	 * Returns the devices discovered by libusb
 	 * @return array[Device]
@@ -233,19 +235,19 @@ namespace NodeUsb {
 		Local<Array> discoveredDevices = Array::New();
 
 		// TODO Google codeguide for ssize_t?
-		ssize_t cntDevices = 0;
 		ssize_t i = 0;
 
 		// if no devices were covered => get device list
 		if (self->devices == NULL) {
-			cntDevices = libusb_get_device_list(NULL, &(self->devices));
-			CHECK_USB(cntDevices, scope);
+			DEBUG("Discover device list");
+			self->num_devices = libusb_get_device_list(NULL, &(self->devices));
+			CHECK_USB(self->num_devices, scope);
 		}
-		
+
 		// js_device contains the Device instance
 		Local<Object> js_device;
 
-		for (; i < cntDevices; i++) {
+		for (; i < self->num_devices; i++) {
 			// wrap libusb_device structure into a Local<Value>
 			Local<Value> arg = External::New(self->devices[i]);
 
@@ -371,7 +373,8 @@ namespace NodeUsb {
 	}
 
 	/**
-	 * @return integer
+	 * @return integer		DEBUG("Before init");
+
 	 */
 	Handle<Value> Device::DeviceAddressGetter(Local<String> property, const AccessorInfo &info) {
 		HandleScope scope;
@@ -408,15 +411,18 @@ namespace NodeUsb {
 		interface->Set(V8STR(#name), Integer::New(interface_descriptor.name));
 #define LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(name) \
 		endpoint->Set(V8STR(#name), Integer::New(endpoint_descriptor.name));
-	
+
 	/**
-	 * Returns complete configuration descriptor including interfaces and endpoints
-	 * @return object
+	 * Returns configuration descriptor structure
 	 */
 	Handle<Value> Device::GetConfigDescriptor(const Arguments& args) {
+		// make local value reference to first parameter
+		Local<External> refDevice = Local<External>::Cast(args[0]);
+
 		LOCAL(Device, self, args.This())
 		CHECK_USB(libusb_get_active_config_descriptor(self->device, &(self->config_descriptor)), scope)
 		Local<Object> r = Object::New();
+
 		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(bLength)
 		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(bDescriptorType)
 		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(wTotalLength)
@@ -441,53 +447,44 @@ namespace NodeUsb {
 		// iterate interfaces
 		for (int i = 0; i < (*self->config_descriptor).bNumInterfaces; i++) {
 			Local<Object> interface  = Object::New();
-			libusb_interface_descriptor interface_descriptor = ((*self->config_descriptor).interface)->altsetting[i];
+			libusb_interface interface_container = (*self->config_descriptor).interface[i];
+			
+			for (int j = 0; j < interface_container.num_altsetting	; j++) {
+				libusb_interface_descriptor interface_descriptor = interface_container.altsetting[j];
+				LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bLength)
+				LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bDescriptorType)
+				LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bInterfaceNumber)
+				LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bAlternateSetting)
+				LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bNumEndpoints)
+				LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bInterfaceClass)
+				LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bInterfaceSubClass)
+				LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bInterfaceProtocol)
+				LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(iInterface)
+				LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(extra_length)
+	
+				Local<Array> endpoints = Array::New();
 
-			LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bLength)
-			LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bDescriptorType)
-			LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bInterfaceNumber)
-			LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bAlternateSetting)
-			LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bNumEndpoints)
-			LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bInterfaceClass)
-			LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bInterfaceSubClass)
-			LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bInterfaceProtocol)
-			LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(iInterface)
-			LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(extra_length)
-			// read extra settings
-			Local<Array> interface_extra = Array::New();
-			for (int j = 0; j < interface_descriptor.extra_length; j++) {
-				interface_extra->Set(j, Integer::New(interface_descriptor.extra[j]));
-			}
-			interface->Set(V8STR("extra"), interface_extra);
-
-			Local<Array> endpoints = Array::New();
-
-			// interate endpoints
-			for (int j = 0; j < interface_descriptor.bNumEndpoints; j++) {
-				Local<Object> endpoint = Object::New();
-				libusb_endpoint_descriptor endpoint_descriptor = interface_descriptor.endpoint[j];
+				// interate endpoints
+				for (int k = 0; k < interface_descriptor.bNumEndpoints; k++) {
+					Local<Object> endpoint = Object::New();
+					libusb_endpoint_descriptor endpoint_descriptor = interface_descriptor.endpoint[k];
 				
-				LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bLength)
-				LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bDescriptorType)
-				LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bEndpointAddress)
-				LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bmAttributes)
-				LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(wMaxPacketSize)
-				LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bInterval)
-				LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bRefresh)
-				LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bSynchAddress)
-				LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(extra_length)
+					LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bLength)
+					LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bDescriptorType)
+					LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bEndpointAddress)
+					LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bmAttributes)
+					LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(wMaxPacketSize)
+					LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bInterval)
+					LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bRefresh)
+					LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bSynchAddress)
+					LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(extra_length)
 				
-				// read extra settings
-				Local<Array> endpoint_extra = Array::New();
-				for (int k = 0; k < endpoint_descriptor.extra_length; k++) {
-					endpoint_extra->Set(k, Integer::New(endpoint_descriptor.extra[k]));
+					endpoints->Set(k, endpoint);
 				}
-				endpoint->Set(V8STR("extra"), endpoint_extra);
-				endpoints->Set(j, endpoint);
-			}
 
-			interface->Set(V8STR("endpoints"), endpoints);
-			interfaces->Set(i, interface);
+				interface->Set(V8STR("endpoints"), endpoints);
+				interfaces->Set(i, interface);
+			}
 		}
 		
 		// free it

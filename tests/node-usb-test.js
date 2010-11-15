@@ -17,12 +17,21 @@ assert.ok((devices.length > 0), "getDevices() must be larger than 0 (assume that
 
 for (var i = 0; i < devices.length; i++) {
 	var device = devices[i];
-	
+	var deviceDesc = undefined;
+	var deviceConfigDesc = undefined;
 	assert.ok((device.busNumber > 0), "busNumber must be larger than 0");
 	assert.ok((device.deviceAddress > 0), "deviceAddress must be larger than 0");
 	var id = device.busNumber + ":" + device.deviceAddress;
-	assert.ok((device.getDeviceDescriptor() != undefined), "getDeviceDescriptor() must return an object");
-	assert.ok((device.getConfigDescriptor() != undefined), "getConfigDescriptor() must return an object");
+	assert.ok(((deviceDesc = device.getDeviceDescriptor()) != undefined), "getDeviceDescriptor() must return an object");
+	assert.ok(((deviceConfigDesc = device.getConfigDescriptor()) != undefined), "getConfigDescriptor() must return an object");
+
+	var arr = instance.find_by_vid_and_pid(deviceDesc.idVendor, deviceDesc.idProduct);
+	console.log(arr);
+	assert.ok((arr != undefined), "usb.find_by_vid_and_pid() must return array");
+	assert.ok((arr.length > 0), "usb.find_by_vid_and_pid() must return array with length > 0");
+	assert.equal(device.busNumber, arr[0].busNumber, "arr[0] must contain object with same busNumber");
+	assert.equal(device.deviceAddress, arr[0].deviceAddress, "arr[0] must contain object with same deviceAddress");
+
 //	assert.equal(device.close(), true, "close() must be true because device is opened by prior 
 }
 assert.ok(instance.close());

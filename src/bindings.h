@@ -20,6 +20,7 @@ namespace NodeUsb  {
 		protected:
 			/** members */
 			bool is_initalized;
+			int num_devices;
 			libusb_device **devices;
 			/** methods */
 			int InitalizeLibusb();
