@@ -49,6 +49,8 @@ namespace NodeUsb  {
 			struct libusb_device_descriptor device_descriptor;
 			struct libusb_config_descriptor *config_descriptor;
 
+			void DispatchAsynchronousUsbTransfer(libusb_transfer *transfer);
+
 			/** exposed to V8 */
 			static Handle<Value> New(const Arguments& args);
 			/** V8 getter */
@@ -59,6 +61,8 @@ namespace NodeUsb  {
 			static Handle<Value> Reset(const Arguments& args);
 			static Handle<Value> GetConfigDescriptor(const Arguments& args);
 			static Handle<Value> GetDeviceDescriptor(const Arguments& args);
+			static Handle<Value> Write(const Argument& args);
+			static Handle<Value> Read(const Argument& args);
 	};
 }
 #endif

@@ -284,7 +284,11 @@ namespace NodeUsb {
 	}
 	
 	/** constructor template is needed for creating new Device objects from outside */
-	Persistent<FunctionTemplate> Device::constructor_template;
+	Persistent<FunctionTemplate> Device::constructor_
+
+	void Device::DispatchAsynchronousUsbTransfer(libusb_transfer *transfer)
+	{
+	}
 
 	/**
 	 * @param device.busNumber integer
@@ -523,5 +527,24 @@ namespace NodeUsb {
 		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bNumConfigurations)
 
 		return scope.Close(r);
+	}
+
+	/**
+	 * @param int endpoint
+	 * @param enum TRANSFER_TYPE
+	 * @param int timeout_ms
+	 * @param array write_data
+	 * @param function js-callback[status]
+	 */
+	Handle<Value> Device::Write(const Arguments& args) {
+	}
+
+	/**
+	 * @param int endpoint
+	 * @param enum TRANSFER_TYPE
+	 * @param int timeout_ms
+	 * @param function js-callback[status, read-data]
+	 */
+	Handle<Value> Device::Read(const Arguments& args) {
 	}
 }
