@@ -6,9 +6,12 @@ srcdir = '.'
 blddir = 'build'
 VERSION = '0.1'
 
+# def options(ctx):
+
 def set_options(opt):
 	opt.tool_options("compiler_cxx")
 	opt.tool_options("compiler_cc")
+	opt.add_option('--debug', action='store', default=False, help='Enable debugging output')
 
 def configure(conf):
 	conf.check_tool('compiler_cxx')
@@ -32,6 +35,9 @@ def build(bld):
 	obj.lib = ["usb-1.0"]
 	obj.name = "node-usb"
 	obj.linklags = ['/usr/lib/libusb-1.0a']
+	
+	if (Options.options.debug != False) and (Options.options.debug == 'true'):
+		obj.defines = ['ENABLE_DEBUG=1']
 
 def shutdown():
 	t = 'usb_bindings.node';

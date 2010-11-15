@@ -6,6 +6,7 @@ var binding = require("./usb_bindings");
 exports.create = function() {
 	var usbInstance = new binding.Usb();
 
+	// prototype method for finding devices by vendor and product id
 	usbInstance.find_by_vid_and_pid = function(vid, pid) {
 		var r = new Array();
 		var devices = this.getDevices();

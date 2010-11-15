@@ -7,7 +7,14 @@
 // Taken from node-libmysqlclient
 #define OBJUNWRAP ObjectWrap::Unwrap
 #define V8STR(str) String::New(str)
-#define DEBUG(str) fprintf(stderr, "node-usb [%s:%s() %d]: %s", __FILE__, __FUNCTION__, __LINE__, str); fprintf(stderr, "\n");
+
+#ifdef ENABLE_DEBUG
+  #define DEBUG(str) fprintf(stderr, "node-usb [%s:%s() %d]: %s", __FILE__, __FUNCTION__, __LINE__, str); fprintf(stderr, "\n");
+#endif
+
+#ifndef ENABLE_DEBUG
+  #define DEBUG(str)
+#endif
 
 namespace NodeUsb  {
 	class Usb : public EventEmitter {

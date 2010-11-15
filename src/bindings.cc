@@ -373,7 +373,7 @@ namespace NodeUsb {
 	}
 
 	/**
-	 * @return integer		DEBUG("Before init");
+	 * @return integer
 
 	 */
 	Handle<Value> Device::DeviceAddressGetter(Local<String> property, const AccessorInfo &info) {
