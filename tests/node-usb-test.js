@@ -26,11 +26,17 @@ for (var i = 0; i < devices.length; i++) {
 	assert.ok(((deviceConfigDesc = device.getConfigDescriptor()) != undefined), "getConfigDescriptor() must return an object");
 
 	var arr = instance.find_by_vid_and_pid(deviceDesc.idVendor, deviceDesc.idProduct);
-	console.log(arr);
 	assert.ok((arr != undefined), "usb.find_by_vid_and_pid() must return array");
 	assert.ok((arr.length > 0), "usb.find_by_vid_and_pid() must return array with length > 0");
-	assert.equal(device.busNumber, arr[0].busNumber, "arr[0] must contain object with same busNumber");
-	assert.equal(device.deviceAddress, arr[0].deviceAddress, "arr[0] must contain object with same deviceAddress");
+	var found = false;
+	for (var j = 0; j < arr.length; j++) {
+		if ((arr[j].deviceAddress == device.deviceAddress) && (arr[j].busNumber == device.busNumber)) {
+			found = true;
+			break;
+		}
+	}
+	
+	assert.ok(found, "could not find USB interface with find_by_vid_and_pid with equal busNumber and deviceAddress");
 
 //	assert.equal(device.close(), true, "close() must be true because device is opened by prior 
 }
