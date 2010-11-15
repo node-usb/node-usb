@@ -51,13 +51,9 @@ namespace NodeUsb  {
 
 		protected:
 			/** members */
-			bool is_opened;
 			struct libusb_device *device;
-			struct libusb_device_handle *handle;
 			struct libusb_device_descriptor device_descriptor;
 			struct libusb_config_descriptor *config_descriptor;
-
-			void DispatchAsynchronousUsbTransfer(libusb_transfer *transfer);
 
 			/** exposed to V8 */
 			static Handle<Value> New(const Arguments& args);
@@ -69,6 +65,28 @@ namespace NodeUsb  {
 			static Handle<Value> Reset(const Arguments& args);
 			static Handle<Value> GetConfigDescriptor(const Arguments& args);
 			static Handle<Value> GetDeviceDescriptor(const Arguments& args);
+			static Handle<Value> OpenHandle(const Arguments& args);
+	};
+
+	class DeviceHandle : public EventEmitter {
+		public:
+			static void InitalizeDeviceHandle(Handle<Object> target);
+			static Persistent<FunctionTemplate> constructor_template;
+			DeviceHandle(libusb_device*, int);
+			~DeviceHandle();
+			int init();
+
+			void DispatchAsynchronousUsbTransfer(libusb_transfer *transfer);
+		protected:
+			/** members */
+			struct libusb_device *device;
+			struct libusb_device_handle *handle;
+			int num_interface;	
+			/** exposed to V8 */
+			static Handle<Value> New(const Arguments& args);
+			/** V8 getter */
+			static Handle<Value> IsKernelDriverActiveGetter(Local<String> property, const AccessorInfo &info);
+			/** V8 functions */
 			static Handle<Value> Write(const Arguments& args);
 			static Handle<Value> Read(const Arguments& args);
 	};

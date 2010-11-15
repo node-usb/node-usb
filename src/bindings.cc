@@ -279,18 +279,8 @@ namespace NodeUsb {
 	}
 
 /******************************* Device */
-#define ENSURE_DEVICE_IS_OPEN \
-	if (false == self->is_opened) { \
-		CHECK_USB(libusb_open(self->device, &(self->handle)), scope); \
-		self->is_opened = true; \
-	}
-	
 	/** constructor template is needed for creating new Device objects from outside */
 	Persistent<FunctionTemplate> Device::constructor_template;
-
-	void Device::DispatchAsynchronousUsbTransfer(libusb_transfer *transfer)
-	{
-	}
 
 	/**
 	 * @param device.busNumber integer
@@ -316,7 +306,6 @@ namespace NodeUsb {
 		instance_template->SetAccessor(V8STR("busNumber"), Device::BusNumberGetter);
 
 		// Bindings to nodejs
-		NODE_SET_PROTOTYPE_METHOD(t, "close", Device::Close); // TODO Stream! 
 		NODE_SET_PROTOTYPE_METHOD(t, "reset", Device::Reset); 
 		NODE_SET_PROTOTYPE_METHOD(t, "getDeviceDescriptor", Device::GetDeviceDescriptor);
 		NODE_SET_PROTOTYPE_METHOD(t, "getConfigDescriptor", Device::GetConfigDescriptor);
@@ -330,14 +319,9 @@ namespace NodeUsb {
 		DEBUG("Assigning libusb_device structure to self")
 		device = _device;
 		config_descriptor = NULL;
-		is_opened = false;
 	}
 
 	Device::~Device() {
-		// TODO Closing opened streams/device handles
-		if (handle != NULL) {
-			libusb_close(handle);
-		}
 		DEBUG("Device object destroyed")
 	}
 
@@ -368,9 +352,7 @@ namespace NodeUsb {
 	 * @return integer
 	 */
 	Handle<Value> Device::BusNumberGetter(Local<String> property, const AccessorInfo &info) {
-		HandleScope scope;
-		
-		Device *self = OBJUNWRAP<Device>(info.Holder());
+		LOCAL(Device, self, info.Holder())
 		uint8_t bus_number = libusb_get_bus_number(self->device);
 
 		return scope.Close(Integer::New(bus_number));
@@ -381,24 +363,10 @@ namespace NodeUsb {
 
 	 */
 	Handle<Value> Device::DeviceAddressGetter(Local<String> property, const AccessorInfo &info) {
-		HandleScope scope;
-		
-		Device *self = OBJUNWRAP<Device>(info.Holder());
+		LOCAL(Device, self, info.Holder())
 		uint8_t address = libusb_get_device_address(self->device);
 
 		return scope.Close(Integer::New(address));
-	}
-
-	Handle<Value> Device::Close(const Arguments& args) {
-		LOCAL(Device, self, args.This())
-		
-		if (true == self->is_opened) {
-			// libusb does not return any value so no CHECK_USB is needed
-			libusb_close(self->handle);
-			return scope.Close(True());
-		}
-
-		return scope.Close(False());
 	}
 
 	Handle<Value> Device::Reset(const Arguments& args) {
@@ -444,15 +412,6 @@ namespace NodeUsb {
 			Local<Object> interface  = Object::New();
 			libusb_interface interface_container = (*self->config_descriptor).interface[i];
 
-			int isKernelDriverActive = 0;
-			
-			if ((isKernelDriverActive = libusb_open(self->device, &(self->handle))) >= 0) {
-				isKernelDriverActive = libusb_kernel_driver_active(self->handle, 0);
-				libusb_close(self->handle);
-			}
-
-			interface->Set(V8STR("isKernelDriverActive"), Integer::New(isKernelDriverActive));
-
 			for (int j = 0; j < interface_container.num_altsetting; j++) {
 				libusb_interface_descriptor interface_descriptor = interface_container.altsetting[j];
 				LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bLength)
@@ -497,6 +456,12 @@ namespace NodeUsb {
 
 		return scope.Close(r);
 	}
+	
+	Handle<Value> Device::OpenHandle(const Arguments& args)
+	{
+		LOCAL(Device, self, args.This());
+		return scope.Close(True());
+	}
 
 // TODO: Read-Only
 #define LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(name) \
@@ -529,6 +494,84 @@ namespace NodeUsb {
 		return scope.Close(r);
 	}
 
+/******************************* DeviceHandle */
+	/** constructor template is needed for creating new Device objects from outside */
+	Persistent<FunctionTemplate> DeviceHandle::constructor_template;
+
+	void DeviceHandle::InitalizeDeviceHandle(Handle<Object> target) {
+		DEBUG("Entering...")
+		HandleScope  scope;
+		Local<FunctionTemplate> t = FunctionTemplate::New(DeviceHandle::New);
+
+		// Constructor
+		t->InstanceTemplate()->SetInternalFieldCount(1);
+		t->SetClassName(String::NewSymbol("DeviceHandle"));
+		Device::constructor_template = Persistent<FunctionTemplate>::New(t);
+
+		Local<ObjectTemplate> instance_template = t->InstanceTemplate();
+
+		// Constants
+		// no constants at the moment
+	
+		// Properties
+		instance_template->SetAccessor(V8STR("isKernelDriverAttached"), DeviceHandle::IsKernelDriverActiveGetter);
+
+		// methods exposed to node.js
+		NODE_SET_PROTOTYPE_METHOD(t, "write", DeviceHandle::Write);
+		NODE_SET_PROTOTYPE_METHOD(t, "read", DeviceHandle::Read);
+
+		// Make it visible in JavaScript
+		target->Set(String::NewSymbol("DeviceHandle"), t->GetFunction());	
+		DEBUG("Leave")
+	}
+
+	DeviceHandle::DeviceHandle(libusb_device* _device, int _num_interface) {
+		DEBUG("Assigning libusb_device and libusb_device_handle structure to self")
+		device = _device;
+		num_interface = _num_interface;
+	}
+
+	int DeviceHandle::init() {
+		return libusb_open(device, &handle);
+	}
+
+	DeviceHandle::~DeviceHandle() {
+		// TODO Closing opened streams/device handles
+		if (handle != NULL) {
+			libusb_close(handle);
+		}
+		DEBUG("Device object destroyed")
+	}
+
+	Handle<Value> DeviceHandle::New(const Arguments& args) {
+		HandleScope scope;
+		DEBUG("New Device object created")
+
+		// need libusb_device structure as first argument
+		if (args.Length() != 2 || !args[0]->IsExternal() || !args[1]->IsInt32()) {
+			THROW_BAD_ARGS("Device::New argument is invalid. [object:external, integer:interface]!") 
+		}
+
+		// make local value reference to first parameter
+		Local<External> refDevice = Local<External>::Cast(args[0]);
+
+		// cast local reference to local libusb_device structure 
+		libusb_device *libusbDevice = static_cast<libusb_device*>(refDevice->Value());
+
+		// create new Devicehandle object
+		DeviceHandle *deviceHandle = new DeviceHandle(libusbDevice, args[1]->IntegerValue());
+		// initalize handle
+		CHECK_USB(deviceHandle->init(), scope);
+
+		// wrap created Device object to v8
+		deviceHandle->Wrap(args.This());
+
+		return args.This();
+	}
+
+	void DeviceHandle::DispatchAsynchronousUsbTransfer(libusb_transfer *transfer)
+	{
+	}
 	/**
 	 * @param int endpoint
 	 * @param enum TRANSFER_TYPE
@@ -536,8 +579,8 @@ namespace NodeUsb {
 	 * @param array write_data
 	 * @param function js-callback[status]
 	 */
-	Handle<Value> Device::Write(const Arguments& args) {
-		LOCAL(Device, self, args.This())
+	Handle<Value> DeviceHandle::Write(const Arguments& args) {
+		LOCAL(DeviceHandle, self, args.This())
 		return scope.Close(True());
 	}
 
@@ -547,8 +590,21 @@ namespace NodeUsb {
 	 * @param int timeout_ms
 	 * @param function js-callback[status, read-data]
 	 */
-	Handle<Value> Device::Read(const Arguments& args) {
-		LOCAL(Device, self, args.This())
+	Handle<Value> DeviceHandle::Read(const Arguments& args) {
+		LOCAL(DeviceHandle, self, args.This())
 		return scope.Close(True());
 	}
+
+	Handle<Value> DeviceHandle::IsKernelDriverActiveGetter(Local<String> property, const AccessorInfo &info) {
+		LOCAL(DeviceHandle, self, info.Holder())
+		
+		int isKernelDriverActive = 0;
+			
+		if ((isKernelDriverActive = libusb_open(self->device, &(self->handle))) >= 0) {
+			isKernelDriverActive = libusb_kernel_driver_active(self->handle, self->num_interface);
+		}
+
+		return scope.Close(Integer::New(isKernelDriverActive));
+	}
+
 }
