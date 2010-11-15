@@ -286,7 +286,7 @@ namespace NodeUsb {
 	}
 	
 	/** constructor template is needed for creating new Device objects from outside */
-	Persistent<FunctionTemplate> Device::constructor_
+	Persistent<FunctionTemplate> Device::constructor_template;
 
 	void Device::DispatchAsynchronousUsbTransfer(libusb_transfer *transfer)
 	{
@@ -436,24 +436,24 @@ namespace NodeUsb {
 		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(bmAttributes)
 		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(MaxPower)
 		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(extra_length)
-		
-		// make new byte array. not very elegant but works. anyhow.
-		Local<Array> config_extra = Array::New();
-		for (int i = 0; i < (*self->config_descriptor).extra_length; i++) {
-			config_extra->Set(i, Integer::New((*self->config_descriptor).extra[i]));
-		}
-		r->Set(V8STR("extra"), config_extra);
 
 		Local<Array> interfaces = Array::New();
-		
-		r->Set(V8STR("interfaces"), interfaces);
 		
 		// iterate interfaces
 		for (int i = 0; i < (*self->config_descriptor).bNumInterfaces; i++) {
 			Local<Object> interface  = Object::New();
 			libusb_interface interface_container = (*self->config_descriptor).interface[i];
+
+			int isKernelDriverActive = 0;
 			
-			for (int j = 0; j < interface_container.num_altsetting	; j++) {
+			if ((isKernelDriverActive = libusb_open(self->device, &(self->handle))) >= 0) {
+				isKernelDriverActive = libusb_kernel_driver_active(self->handle, 0);
+				libusb_close(self->handle);
+			}
+
+			interface->Set(V8STR("isKernelDriverActive"), Integer::New(isKernelDriverActive));
+
+			for (int j = 0; j < interface_container.num_altsetting; j++) {
 				libusb_interface_descriptor interface_descriptor = interface_container.altsetting[j];
 				LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bLength)
 				LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bDescriptorType)
@@ -491,6 +491,7 @@ namespace NodeUsb {
 			}
 		}
 		
+		r->Set(V8STR("interfaces"), interfaces);
 		// free it
 		libusb_free_config_descriptor(self->config_descriptor);
 
@@ -536,6 +537,8 @@ namespace NodeUsb {
 	 * @param function js-callback[status]
 	 */
 	Handle<Value> Device::Write(const Arguments& args) {
+		LOCAL(Device, self, args.This())
+		return scope.Close(True());
 	}
 
 	/**
@@ -545,5 +548,7 @@ namespace NodeUsb {
 	 * @param function js-callback[status, read-data]
 	 */
 	Handle<Value> Device::Read(const Arguments& args) {
+		LOCAL(Device, self, args.This())
+		return scope.Close(True());
 	}
 }

@@ -35,7 +35,7 @@ for (var i = 0; i < devices.length; i++) {
 			break;
 		}
 	}
-	
+	console.log(deviceConfigDesc);	
 	assert.ok(found, "could not find USB interface with find_by_vid_and_pid with equal busNumber and deviceAddress");
 
 //	assert.equal(device.close(), true, "close() must be true because device is opened by prior 

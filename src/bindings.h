@@ -69,8 +69,8 @@ namespace NodeUsb  {
 			static Handle<Value> Reset(const Arguments& args);
 			static Handle<Value> GetConfigDescriptor(const Arguments& args);
 			static Handle<Value> GetDeviceDescriptor(const Arguments& args);
-			static Handle<Value> Write(const Argument& args);
-			static Handle<Value> Read(const Argument& args);
+			static Handle<Value> Write(const Arguments& args);
+			static Handle<Value> Read(const Arguments& args);
 	};
 }
 #endif
