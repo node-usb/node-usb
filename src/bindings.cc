@@ -408,7 +408,11 @@ namespace NodeUsb {
 		interface->Set(V8STR(#name), Integer::New(interface_descriptor.name));
 #define LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(name) \
 		endpoint->Set(V8STR(#name), Integer::New(endpoint_descriptor.name));
-
+	
+	/**
+	 * Returns complete configuration descriptor including interfaces and endpoints
+	 * @return object
+	 */
 	Handle<Value> Device::GetConfigDescriptor(const Arguments& args) {
 		LOCAL(Device, self, args.This())
 		CHECK_USB(libusb_get_active_config_descriptor(self->device, &(self->config_descriptor)), scope)
@@ -457,6 +461,7 @@ namespace NodeUsb {
 			interface->Set(V8STR("extra"), interface_extra);
 
 			Local<Array> endpoints = Array::New();
+
 			// interate endpoints
 			for (int j = 0; j < interface_descriptor.bNumEndpoints; j++) {
 				Local<Object> endpoint = Object::New();
@@ -495,6 +500,10 @@ namespace NodeUsb {
 #define LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(name) \
 		r->Set(V8STR(#name), Integer::New(self->device_descriptor.name));
 
+	/**
+	 * Returns the device descriptor of current device
+	 * @return object
+	 */
 	Handle<Value> Device::GetDeviceDescriptor(const Arguments& args) {
 		LOCAL(Device, self, args.This())
 		CHECK_USB(libusb_get_device_descriptor(self->device, &(self->device_descriptor)), scope)
