@@ -148,6 +148,7 @@ namespace NodeUsb {
 
 	Usb::Usb() : EventEmitter() {
 		is_initalized = false;
+		num_devices = 0;
 		devices = NULL;
 	}
 
@@ -219,6 +220,7 @@ namespace NodeUsb {
 		return scope.Close(True());
 	}
 
+
 	/**
 	 * Returns the devices discovered by libusb
 	 * @return array[Device]
@@ -233,19 +235,19 @@ namespace NodeUsb {
 		Local<Array> discoveredDevices = Array::New();
 
 		// TODO Google codeguide for ssize_t?
-		ssize_t cntDevices = 0;
 		ssize_t i = 0;
 
 		// if no devices were covered => get device list
 		if (self->devices == NULL) {
-			cntDevices = libusb_get_device_list(NULL, &(self->devices));
-			CHECK_USB(cntDevices, scope);
+			DEBUG("Discover device list");
+			self->num_devices = libusb_get_device_list(NULL, &(self->devices));
+			CHECK_USB(self->num_devices, scope);
 		}
-		
+
 		// js_device contains the Device instance
 		Local<Object> js_device;
 
-		for (; i < cntDevices; i++) {
+		for (; i < self->num_devices; i++) {
 			// wrap libusb_device structure into a Local<Value>
 			Local<Value> arg = External::New(self->devices[i]);
 
@@ -376,6 +378,7 @@ namespace NodeUsb {
 
 	/**
 	 * @return integer
+
 	 */
 	Handle<Value> Device::DeviceAddressGetter(Local<String> property, const AccessorInfo &info) {
 		HandleScope scope;
@@ -415,16 +418,8 @@ namespace NodeUsb {
 
 	/**
 	 * Returns configuration descriptor structure
-	 * @param integer (optional) maximum extra bytes read from structure
 	 */
 	Handle<Value> Device::GetConfigDescriptor(const Arguments& args) {
-		int max_extra_length = 1024;
-		int extra_length_use = max_extra_length;
-
-		if (args.Length() == 1 && args[0]->IsInt32()) {
-			max_extra_length = args[0]->IntegerValue();
-		}
-
 		// make local value reference to first parameter
 		Local<External> refDevice = Local<External>::Cast(args[0]);
 
@@ -506,6 +501,10 @@ namespace NodeUsb {
 #define LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(name) \
 		r->Set(V8STR(#name), Integer::New(self->device_descriptor.name));
 
+	/**
+	 * Returns the device descriptor of current device
+	 * @return object
+	 */
 	Handle<Value> Device::GetDeviceDescriptor(const Arguments& args) {
 		LOCAL(Device, self, args.This())
 		CHECK_USB(libusb_get_device_descriptor(self->device, &(self->device_descriptor)), scope)
