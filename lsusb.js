@@ -53,9 +53,9 @@ for (var i = 0; i < devices.length; i++) {
 	console.log("  bDeviceProtocol               " + dd.bDeviceProtocol);
 	console.log("  bMaxPacketSize0               " + dd.bMaxPacketSize0);
 	var idVendor = pad(toHex(dd.idVendor), 4, "0");
-	console.log("  idVendor                      " + "0x" + idVendor + " " + usb_ids[idVendor].name);
+	console.log("  idVendor                      " + "0x" + idVendor); // + " " + usb_ids[idVendor].name);
 	var idProduct = pad(toHex(dd.idProduct), 4, "0")
-	console.log("  idProduct                     " + "0x" + idProduct + " " + usb_ids[idVendor].products[idProduct].name);
+	console.log("  idProduct                     " + "0x" + idProduct); // + " " + usb_ids[idVendor].products[idProduct].name);
 	// 2 bcdDevice: 2 bytes
 	var bcdDeviceArr = toByteArray(dd.bcdDevice);
 	console.log("  bcdDevice                     " + bcdDeviceArr[0] + "." + pad(bcdDeviceArr[1], 2, "0"));
@@ -68,4 +68,3 @@ for (var i = 0; i < devices.length; i++) {
 
 instance.close();
 
-console.log(usb_ids.064e);
