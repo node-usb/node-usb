@@ -19,23 +19,23 @@
 namespace NodeUsb  {
 	class Usb : public EventEmitter {
 		public:
-			/** called from outside to initalize V8 class template */
-			static void InitalizeUsb(Handle<Object> target);
+			static void Initalize(Handle<Object> target);
 			Usb();
 			~Usb();
 
 		protected:
-			/** members */
+			// members
 			bool is_initalized;
 			int num_devices;
 			libusb_device **devices;
-			/** methods */
+			// internal methods
 			int InitalizeLibusb();
-			/** exposed to V8 */
-			static Handle<Value> New(const Arguments& args);
-			/** V8 getter */
+
+			// V8 getter
 			static Handle<Value> IsLibusbInitalizedGetter(Local<String> property, const AccessorInfo &info);
-			/** V8 functions */
+			
+			// exposed to V8
+			static Handle<Value> New(const Arguments& args);
 			static Handle<Value> GetDeviceList(const Arguments& args);
 			static Handle<Value> Refresh(const Arguments& args);
 			static Handle<Value> Close(const Arguments& args);		
@@ -43,52 +43,67 @@ namespace NodeUsb  {
 
 	class Device : public EventEmitter {
 		public:
-			/** called from outside to initalize V8 class template */
-			static void InitalizeDevice(Handle<Object> target);
+			// called from outside to initalize V8 class template
+			static void Initalize(Handle<Object> target);
 			static Persistent<FunctionTemplate> constructor_template;
 			Device(libusb_device*);
 			~Device();
 
 		protected:
-			/** members */
+			// members
 			struct libusb_device *device;
 			struct libusb_device_descriptor device_descriptor;
 			struct libusb_config_descriptor *config_descriptor;
 
-			/** exposed to V8 */
-			static Handle<Value> New(const Arguments& args);
-			/** V8 getter */
+			// V8 getter
 			static Handle<Value> BusNumberGetter(Local<String> property, const AccessorInfo &info);
 			static Handle<Value> DeviceAddressGetter(Local<String> property, const AccessorInfo &info);
-			/** V8 functions */
+
+			// exposed to V8
+			static Handle<Value> New(const Arguments& args);
 			static Handle<Value> Close(const Arguments& args);
 			static Handle<Value> Reset(const Arguments& args);
 			static Handle<Value> GetConfigDescriptor(const Arguments& args);
 			static Handle<Value> GetDeviceDescriptor(const Arguments& args);
-			static Handle<Value> OpenHandle(const Arguments& args);
 	};
 
-	class DeviceHandle : public EventEmitter {
+	class Interface : public EventEmitter {
 		public:
-			static void InitalizeDeviceHandle(Handle<Object> target);
+			static void Initalize(Handle<Object> target);
 			static Persistent<FunctionTemplate> constructor_template;
-			DeviceHandle(libusb_device*, int);
-			~DeviceHandle();
-			int init();
+			Interface(libusb_device*, libusb_interface_descriptor*);
+			~Interface();
 
-			void DispatchAsynchronousUsbTransfer(libusb_transfer *transfer);
 		protected:
-			/** members */
+			// members
 			struct libusb_device *device;
 			struct libusb_device_handle *handle;
-			int num_interface;	
-			/** exposed to V8 */
-			static Handle<Value> New(const Arguments& args);
-			/** V8 getter */
+			struct libusb_interface_descriptor *descriptor;
+			// V8 getter
 			static Handle<Value> IsKernelDriverActiveGetter(Local<String> property, const AccessorInfo &info);
-			/** V8 functions */
-			static Handle<Value> Write(const Arguments& args);
-			static Handle<Value> Read(const Arguments& args);
+			// exposed to V8
+			static Handle<Value> New(const Arguments& args);
+	};
+
+	class Endpoint : public EventEmitter {
+		public:
+			static void Initalize(Handle<Object> target);
+			static Persistent<FunctionTemplate> constructor_template;
+			Endpoint(libusb_device*, libusb_endpoint_descriptor*);
+			~Endpoint();
+		protected:
+			// members
+			struct libusb_device *device;
+			struct libusb_device_handle *handle;
+			struct libusb_endpoint_descriptor *descriptor;
+			int endpoint_type;
+			void DispatchAsynchronousUsbTransfer(libusb_transfer *transfer);
+			// v8 getter
+			static Handle<Value> EndpointTypeGetter(Local<String> property, const AccessorInfo &info);
+			// exposed to V8
+			static Handle<Value> New(const Arguments& args);
+			static Handle<Value> Submit(const Arguments& args);
+
 	};
 }
 #endif

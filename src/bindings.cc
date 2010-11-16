@@ -76,7 +76,7 @@ namespace NodeUsb {
 	/**
 	 * @param usb.isLibusbInitalized: boolean
 	 */
-	void Usb::InitalizeUsb(Handle<Object> target) {
+	void Usb::Initalize(Handle<Object> target) {
 		DEBUG("Entering")
 		HandleScope  scope;
 		
@@ -286,7 +286,7 @@ namespace NodeUsb {
 	 * @param device.busNumber integer
 	 * @param device.deviceAddress integer
 	 */
-	void Device::InitalizeDevice(Handle<Object> target) {
+	void Device::Initalize(Handle<Object> target) {
 		DEBUG("Entering...")
 		HandleScope  scope;
 		Local<FunctionTemplate> t = FunctionTemplate::New(Device::New);
@@ -334,11 +334,11 @@ namespace NodeUsb {
 			THROW_BAD_ARGS("Device::New argument is invalid. Must be external!") 
 		}
 
-		// make local value reference to first parameter
 		Local<External> refDevice = Local<External>::Cast(args[0]);
 
 		// cast local reference to local libusb_device structure 
 		libusb_device *libusbDevice = static_cast<libusb_device*>(refDevice->Value());
+
 		// create new Device object
 		Device *device = new Device(libusbDevice);
 
@@ -360,7 +360,6 @@ namespace NodeUsb {
 
 	/**
 	 * @return integer
-
 	 */
 	Handle<Value> Device::DeviceAddressGetter(Local<String> property, const AccessorInfo &info) {
 		LOCAL(Device, self, info.Holder())
@@ -379,10 +378,6 @@ namespace NodeUsb {
 // TODO: Read-Only
 #define LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(name) \
 		r->Set(V8STR(#name), Integer::New((*self->config_descriptor).name));
-#define LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(name) \
-		interface->Set(V8STR(#name), Integer::New(interface_descriptor.name));
-#define LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(name) \
-		endpoint->Set(V8STR(#name), Integer::New(endpoint_descriptor.name));
 
 	/**
 	 * Returns configuration descriptor structure
@@ -409,44 +404,36 @@ namespace NodeUsb {
 		
 		// iterate interfaces
 		for (int i = 0; i < (*self->config_descriptor).bNumInterfaces; i++) {
-			Local<Object> interface  = Object::New();
 			libusb_interface interface_container = (*self->config_descriptor).interface[i];
 
 			for (int j = 0; j < interface_container.num_altsetting; j++) {
 				libusb_interface_descriptor interface_descriptor = interface_container.altsetting[j];
-				LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bLength)
-				LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bDescriptorType)
-				LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bInterfaceNumber)
-				LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bAlternateSetting)
-				LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bNumEndpoints)
-				LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bInterfaceClass)
-				LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bInterfaceSubClass)
-				LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bInterfaceProtocol)
-				LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(iInterface)
-				LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(extra_length)
-	
+
+				Local<Value> args_new_interface[2] = {
+					External::New(self->device),
+					External::New(&interface_descriptor),
+				};
+
+				// create new object instance of class NodeUsb::Interface  
+				Persistent<Object> js_interface(Interface::constructor_template->GetFunction()->NewInstance(2, args_new_interface));
 				Local<Array> endpoints = Array::New();
 
 				// interate endpoints
 				for (int k = 0; k < interface_descriptor.bNumEndpoints; k++) {
-					Local<Object> endpoint = Object::New();
 					libusb_endpoint_descriptor endpoint_descriptor = interface_descriptor.endpoint[k];
-				
-					LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bLength)
-					LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bDescriptorType)
-					LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bEndpointAddress)
-					LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bmAttributes)
-					LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(wMaxPacketSize)
-					LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bInterval)
-					LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bRefresh)
-					LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bSynchAddress)
-					LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(extra_length)
-				
-					endpoints->Set(k, endpoint);
+
+					Local<Value> args_new_endpoint[2] = {
+						External::New(self->device),
+						External::New(&endpoint_descriptor),
+					};
+
+					// create new object instance of class NodeUsb::Endpoint
+					Persistent<Object> js_endpoint(Endpoint::constructor_template->GetFunction()->NewInstance(2, args_new_endpoint));
+					endpoints->Set(k, js_endpoint);
 				}
 
-				interface->Set(V8STR("endpoints"), endpoints);
-				interfaces->Set(i, interface);
+				js_interface->Set(V8STR("endpoints"), endpoints);
+				interfaces->Set(i, js_interface);
 			}
 		}
 		
@@ -457,12 +444,6 @@ namespace NodeUsb {
 		return scope.Close(r);
 	}
 	
-	Handle<Value> Device::OpenHandle(const Arguments& args)
-	{
-		LOCAL(Device, self, args.This());
-		return scope.Close(True());
-	}
-
 // TODO: Read-Only
 #define LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(name) \
 		r->Set(V8STR(#name), Integer::New(self->device_descriptor.name));
@@ -494,19 +475,30 @@ namespace NodeUsb {
 		return scope.Close(r);
 	}
 
-/******************************* DeviceHandle */
-	/** constructor template is needed for creating new Device objects from outside */
-	Persistent<FunctionTemplate> DeviceHandle::constructor_template;
+/******************************* Interface */
+	Persistent<FunctionTemplate> Interface::constructor_template;
 
-	void DeviceHandle::InitalizeDeviceHandle(Handle<Object> target) {
+	Interface::Interface(libusb_device* _device, libusb_interface_descriptor* _interface_descriptor) {
+		DEBUG("Assigning libusb_device and libusb_interface_descriptor structure to self")
+		device = _device;
+		descriptor = _interface_descriptor;
+	}
+
+	Interface::~Interface() {
+		// TODO Close
+		DEBUG("Device object destroyed")
+	}
+
+
+	void Interface::Initalize(Handle<Object> target) {
 		DEBUG("Entering...")
 		HandleScope  scope;
-		Local<FunctionTemplate> t = FunctionTemplate::New(DeviceHandle::New);
+		Local<FunctionTemplate> t = FunctionTemplate::New(Interface::New);
 
 		// Constructor
 		t->InstanceTemplate()->SetInternalFieldCount(1);
-		t->SetClassName(String::NewSymbol("DeviceHandle"));
-		Device::constructor_template = Persistent<FunctionTemplate>::New(t);
+		t->SetClassName(String::NewSymbol("Interface"));
+		Interface::constructor_template = Persistent<FunctionTemplate>::New(t);
 
 		Local<ObjectTemplate> instance_template = t->InstanceTemplate();
 
@@ -514,97 +506,168 @@ namespace NodeUsb {
 		// no constants at the moment
 	
 		// Properties
-		instance_template->SetAccessor(V8STR("isKernelDriverAttached"), DeviceHandle::IsKernelDriverActiveGetter);
+		instance_template->SetAccessor(V8STR("__isKernelDriverAttached"), Interface::IsKernelDriverActiveGetter);
 
 		// methods exposed to node.js
-		NODE_SET_PROTOTYPE_METHOD(t, "write", DeviceHandle::Write);
-		NODE_SET_PROTOTYPE_METHOD(t, "read", DeviceHandle::Read);
 
 		// Make it visible in JavaScript
-		target->Set(String::NewSymbol("DeviceHandle"), t->GetFunction());	
+		target->Set(String::NewSymbol("Interface"), t->GetFunction());	
 		DEBUG("Leave")
 	}
 
-	DeviceHandle::DeviceHandle(libusb_device* _device, int _num_interface) {
-		DEBUG("Assigning libusb_device and libusb_device_handle structure to self")
-		device = _device;
-		num_interface = _num_interface;
-	}
-
-	int DeviceHandle::init() {
-		return libusb_open(device, &handle);
-	}
-
-	DeviceHandle::~DeviceHandle() {
-		// TODO Closing opened streams/device handles
-		if (handle != NULL) {
-			libusb_close(handle);
-		}
-		DEBUG("Device object destroyed")
-	}
-
-	Handle<Value> DeviceHandle::New(const Arguments& args) {
+	Handle<Value> Interface::New(const Arguments& args) {
 		HandleScope scope;
 		DEBUG("New Device object created")
 
 		// need libusb_device structure as first argument
-		if (args.Length() != 2 || !args[0]->IsExternal() || !args[1]->IsInt32()) {
-			THROW_BAD_ARGS("Device::New argument is invalid. [object:external, integer:interface]!") 
+		if (args.Length() != 2 || !args[0]->IsExternal() || !args[1]->IsExternal()) {
+			THROW_BAD_ARGS("Device::New argument is invalid. [object:external:libusb_device, object:external:libusb_interface_descriptor]!") 
 		}
 
-		// make local value reference to first parameter
+		// assign arguments as local references
 		Local<External> refDevice = Local<External>::Cast(args[0]);
+		Local<External> refInterfaceDescriptor = Local<External>::Cast(args[1]);
 
-		// cast local reference to local libusb_device structure 
 		libusb_device *libusbDevice = static_cast<libusb_device*>(refDevice->Value());
+		libusb_interface_descriptor *libusbInterfaceDescriptor = static_cast<libusb_interface_descriptor*>(refInterfaceDescriptor->Value());
 
 		// create new Devicehandle object
-		DeviceHandle *deviceHandle = new DeviceHandle(libusbDevice, args[1]->IntegerValue());
+		Interface *interface = new Interface(libusbDevice, libusbInterfaceDescriptor);
 		// initalize handle
-		CHECK_USB(deviceHandle->init(), scope);
 
 		// wrap created Device object to v8
-		deviceHandle->Wrap(args.This());
+		interface->Wrap(args.This());
+
+#define LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(name) \
+		args.This()->Set(V8STR(#name), Integer::New(interface->descriptor->name));
+		LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bLength)
+		LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bDescriptorType)
+		LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bInterfaceNumber)
+		LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bAlternateSetting)
+		LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bNumEndpoints)
+		LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bInterfaceClass)
+		LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bInterfaceSubClass)
+		LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bInterfaceProtocol)
+		LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(iInterface)
+		LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(extra_length)
 
 		return args.This();
 	}
 
-	void DeviceHandle::DispatchAsynchronousUsbTransfer(libusb_transfer *transfer)
-	{
-	}
-	/**
-	 * @param int endpoint
-	 * @param enum TRANSFER_TYPE
-	 * @param int timeout_ms
-	 * @param array write_data
-	 * @param function js-callback[status]
-	 */
-	Handle<Value> DeviceHandle::Write(const Arguments& args) {
-		LOCAL(DeviceHandle, self, args.This())
-		return scope.Close(True());
-	}
 
-	/**
-	 * @param int endpoint
-	 * @param enum TRANSFER_TYPE
-	 * @param int timeout_ms
-	 * @param function js-callback[status, read-data]
-	 */
-	Handle<Value> DeviceHandle::Read(const Arguments& args) {
-		LOCAL(DeviceHandle, self, args.This())
-		return scope.Close(True());
-	}
-
-	Handle<Value> DeviceHandle::IsKernelDriverActiveGetter(Local<String> property, const AccessorInfo &info) {
-		LOCAL(DeviceHandle, self, info.Holder())
+	Handle<Value> Interface::IsKernelDriverActiveGetter(Local<String> property, const AccessorInfo &info) {
+		LOCAL(Interface, self, info.Holder())
 		
 		int isKernelDriverActive = 0;
 			
 		if ((isKernelDriverActive = libusb_open(self->device, &(self->handle))) >= 0) {
-			isKernelDriverActive = libusb_kernel_driver_active(self->handle, self->num_interface);
+			isKernelDriverActive = libusb_kernel_driver_active(self->handle, self->descriptor->bInterfaceNumber);
 		}
 
 		return scope.Close(Integer::New(isKernelDriverActive));
 	}
 
+/******************************* Endpoint */
+	Persistent<FunctionTemplate> Endpoint::constructor_template;
+
+	Endpoint::Endpoint(libusb_device* _device, libusb_endpoint_descriptor* _endpoint_descriptor) {
+		DEBUG("Assigning libusb_device and libusb_endpoint_descriptor structure to self")
+		device = _device;
+		descriptor = _endpoint_descriptor;
+		
+		// if bit[7] of endpoint address is set => ENDPOINT_IN (device to host), else: ENDPOINT_OUT (host to device)
+		endpoint_type = (descriptor->bEndpointAddress & (1 << 7)) ? (LIBUSB_ENDPOINT_IN) : (LIBUSB_ENDPOINT_OUT);
+	}
+
+	Endpoint::~Endpoint() {
+		// TODO Close
+		DEBUG("Endpoint object destroyed")
+	}
+
+
+	void Endpoint::Initalize(Handle<Object> target) {
+		DEBUG("Entering...")
+		HandleScope  scope;
+		Local<FunctionTemplate> t = FunctionTemplate::New(Endpoint::New);
+
+		// Constructor
+		t->InstanceTemplate()->SetInternalFieldCount(1);
+		t->SetClassName(String::NewSymbol("Endpoint"));
+		Endpoint::constructor_template = Persistent<FunctionTemplate>::New(t);
+
+		Local<ObjectTemplate> instance_template = t->InstanceTemplate();
+
+		// Constants
+		// no constants at the moment
+	
+		// Properties
+		instance_template->SetAccessor(V8STR("__endpointType"), Endpoint::EndpointTypeGetter);
+
+		// methods exposed to node.js
+
+		// Make it visible in JavaScript
+		target->Set(String::NewSymbol("Endpoint"), t->GetFunction());	
+		DEBUG("Leave")
+	}
+
+	Handle<Value> Endpoint::New(const Arguments& args) {
+		HandleScope scope;
+		DEBUG("New Endpoint object created")
+
+		// need libusb_device structure as first argument
+		if (args.Length() != 2 || !args[0]->IsExternal() || !args[1]->IsExternal()) {
+			THROW_BAD_ARGS("Device::New argument is invalid. [object:external:libusb_device, object:external:libusb_external_descriptor]!") 
+		}
+
+		// make local value reference to first parameter
+		Local<External> refDevice = Local<External>::Cast(args[0]);
+		Local<External> refEndpointDescriptor = Local<External>::Cast(args[1]);
+
+		// cast local reference to local 
+		libusb_device *libusbDevice = static_cast<libusb_device*>(refDevice->Value());
+		libusb_endpoint_descriptor *libusbEndpointDescriptor = static_cast<libusb_endpoint_descriptor*>(refEndpointDescriptor->Value());
+
+		// create new Endpoint object
+		Endpoint *endpoint = new Endpoint(libusbDevice, libusbEndpointDescriptor);
+		// initalize handle
+
+		// wrap created Endpoint object to v8
+		endpoint->Wrap(args.This());
+
+#define LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(name) \
+		args.This()->Set(V8STR(#name), Integer::New(endpoint->descriptor->name));
+		LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bLength)
+		LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bDescriptorType)
+		LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bEndpointAddress)
+		LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bmAttributes)
+		LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(wMaxPacketSize)
+		LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bInterval)
+		LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bRefresh)
+		LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bSynchAddress)
+		LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(extra_length)
+
+		return args.This();
+	}
+
+	Handle<Value> Endpoint::EndpointTypeGetter(Local<String> property, const AccessorInfo &info) {
+		LOCAL(Endpoint, self, info.Holder())
+		
+		return scope.Close(Integer::New(self->endpoint_type));
+	}
+
+	void Endpoint::DispatchAsynchronousUsbTransfer(libusb_transfer *transfer)
+	{
+	}
+
+
+	/**
+	 * @param enum TRANSFER_TYPE
+	 * @param int timeout_ms
+	 * @param array write_data
+	 * @param function js-callback[status]
+	 */
+	Handle<Value> Endpoint::Submit(const Arguments& args) {
+		LOCAL(Endpoint, self, args.This())
+		return scope.Close(True());
+	}
 }

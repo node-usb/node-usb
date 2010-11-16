@@ -5,8 +5,10 @@ namespace NodeUsb {
 	void InitalizeAll(Handle<Object> target) {
 		DEBUG("Entering")
 		HandleScope scope;
-		Usb::InitalizeUsb(target);
-		Device::InitalizeDevice(target);
+		Usb::Initalize(target);
+		Device::Initalize(target);
+		Interface::Initalize(target);
+		Endpoint::Initalize(target);
 		target->Set(String::NewSymbol("version"),
 				String::New(NODE_USB_VERSION));
 		Handle<ObjectTemplate> global = ObjectTemplate::New();
