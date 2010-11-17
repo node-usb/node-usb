@@ -131,18 +131,6 @@ namespace NodeUsb {
 		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_ISO_USAGE_TYPE_DATA);
 		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_ISO_USAGE_TYPE_FEEDBACK);
 		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_ISO_USAGE_TYPE_IMPLICIT);
-		// libusb_transfer_status
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_TRANSFER_COMPLETED);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_TRANSFER_ERROR);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_TRANSFER_TIMED_OUT);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_TRANSFER_CANCELLED);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_TRANSFER_STALL);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_TRANSFER_NO_DEVICE);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_TRANSFER_OVERFLOW);
-		// libusb_transfer_flags
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_TRANSFER_SHORT_NOT_OK);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_TRANSFER_FREE_BUFFER);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_TRANSFER_FREE_TRANSFER);
 
 		// Properties
 		// TODO: should get_device_list be a property?
@@ -177,7 +165,7 @@ namespace NodeUsb {
 	/**
 	 * Methods not exposed to v8 - used only internal
 	 */
-	int Usb::Init() {
+	int Usb::InitalizeLibusb() {
 		if (is_initalized) {
 			return LIBUSB_SUCCESS;
 		}
@@ -196,7 +184,9 @@ namespace NodeUsb {
 	 * @return boolean
 	 */
 	Handle<Value> Usb::IsLibusbInitalizedGetter(Local<String> property, const AccessorInfo &info) {
-		LOCAL(Usb, self, info.Holder())
+		HandleScope scope;
+		
+		Usb *self = OBJUNWRAP<Usb>(info.Holder());
 		
 		if (self->is_initalized == true) {
 			return scope.Close(True());
@@ -210,8 +200,9 @@ namespace NodeUsb {
 	 * Creates a new Usb object
 	 */
 	Handle<Value> Usb::New(const Arguments& args) {
-		LOCAL(Usb, self, args.This())
-
+		HandleScope scope;
+		// create a new object
+		Usb *self = new Usb();
 		// wrap self object to arguments
 		self->Wrap(args.This());
 
@@ -222,9 +213,10 @@ namespace NodeUsb {
 	 * Refresh libusb environment
 	 */
 	Handle<Value> Usb::Refresh(const Arguments& args) {
-		LOCAL(Usb, self, args.This())
+		HandleScope scope;
+		Usb *self = OBJUNWRAP<Usb>(args.This());
 
-		CHECK_USB(self->Init(), scope);
+		CHECK_USB(self->InitalizeLibusb(), scope);
 		return scope.Close(True());
 	}
 
@@ -234,9 +226,10 @@ namespace NodeUsb {
 	 * @return array[Device]
 	 */
 	Handle<Value> Usb::GetDeviceList(const Arguments& args) {
-		LOCAL(Usb, self, args.This())
+		HandleScope scope;
+		Usb *self = OBJUNWRAP<Usb>(args.This());
 
-		CHECK_USB(self->Init(), scope);
+		CHECK_USB(self->InitalizeLibusb(), scope);
 
 		// dynamic array (sic!) which contains the devices discovered later
 		Local<Array> discoveredDevices = Array::New();
@@ -273,7 +266,8 @@ namespace NodeUsb {
 	 * @return boolean
 	 */
 	Handle<Value> Usb::Close(const Arguments& args) {
-		LOCAL(Usb, self, args.This())
+		HandleScope scope;
+		Usb *self = OBJUNWRAP<Usb>(args.This());
 
 		if (false == self->is_initalized) {
 			return scope.Close(False());
@@ -583,8 +577,6 @@ namespace NodeUsb {
 		
 		// if bit[7] of endpoint address is set => ENDPOINT_IN (device to host), else: ENDPOINT_OUT (host to device)
 		endpoint_type = (descriptor->bEndpointAddress & (1 << 7)) ? (LIBUSB_ENDPOINT_IN) : (LIBUSB_ENDPOINT_OUT);
-		// bit[0] and bit[1] of bmAttributes masks transfer_type; 3 = 0000 0011
-		transfer_type = (3 & descriptor->bmAttributes);
 	}
 
 	Endpoint::~Endpoint() {
@@ -610,7 +602,6 @@ namespace NodeUsb {
 	
 		// Properties
 		instance_template->SetAccessor(V8STR("__endpointType"), Endpoint::EndpointTypeGetter);
-		instance_template->SetAccessor(V8STR("__transferType"), Endpoint::TransferTypeGetter);
 
 		// methods exposed to node.js
 
@@ -664,74 +655,19 @@ namespace NodeUsb {
 		return scope.Close(Integer::New(self->endpoint_type));
 	}
 
-	Handle<Value> Endpoint::TransferTypeGetter(Local<String> property, const AccessorInfo &info) {
-		LOCAL(Endpoint, self, info.Holder())
-		
-		return scope.Close(Integer::New(self->transfer_type));
+	void Endpoint::DispatchAsynchronousUsbTransfer(libusb_transfer *transfer)
+	{
 	}
 
-	void Callback::DispatchAsynchronousUsbTransfer(libusb_transfer *transfer) {
-		
-	}
-
-#define TRANSFER_ARGUMENTS_LEFT _transfer, handle 
-#define TRANSFER_ARGUMENTS_MIDDLE _buffer, buflen
-#define TRANSFER_ARGUMENTS_RIGHT Callback::DispatchAsynchronousUsbTransfer, _user_data, _timeout
-#define TRANSFER_ARGUMENTS_DEFAULT TRANSFER_ARGUMENTS_LEFT, device->bEndpointAddress, TRANSFER_ARGUMENTS_MIDDLE, TRANSFER_ARGUMENTS_RIGHT
-	int Endpoint::FillTransferStructure(libusb_transfer *_transfer, unsigned char *_buffer, void *_user_data, uint32_t _timeout, unsigned int num_iso_packets) {
-		unsigned int buflen = -1; // TODO
-		int err = 0;
-
-
-		switch (transfer_type) {
-			case LIBUSB_TRANSFER_TYPE_BULK:
-				libusb_fill_bulk_transfer(TRANSFER_ARGUMENTS_DEFAULT);
-				break;
-			case LIBUSB_TRANSFER_TYPE_INTERRUPT:
-				libusb_fill_interrupt_transfer(TRANSFER_ARGUMENTS_DEFAULT);
-				break;
-			case LIBUSB_TRANSFER_TYPE_CONTROL:
-				libusb_fill_control_transfer(TRANSFER_ARGUMENTS_LEFT, _buffer, TRANSFER_ARGUMENTS_RIGHT);
-				break;
-			case LIBUSB_TRANSFER_TYPE_ISOCHRONOUS:
-				libusb_fill_iso_transfer(TRANSFER_ARGUMENTS_LEFT, device->bEndpointAddress, TRANSFER_ARGUMENTS_MIDDLE, num_iso_packets, TRANSFER_ARGUMENTS_RIGHT);
-				break;
-			default:
-				err = -1;
-		}
-
-		return err;
-	}
 
 	/**
-	 * @param array byte-array
+	 * @param enum TRANSFER_TYPE
+	 * @param int timeout_ms
+	 * @param array write_data
 	 * @param function js-callback[status]
-	 * @param int (optional) timeout timeout in milliseconds
 	 */
-	Handle<Value> Endpoint::Write(const Arguments& args) {
+	Handle<Value> Endpoint::Submit(const Arguments& args) {
 		LOCAL(Endpoint, self, args.This())
 		return scope.Close(True());
-
-		uint32_t timeout = 0;
-
-		// need libusb_device structure as first argument
-		if (args.Length() < 2 || !args[0]->IsArray() || !args[1]->IsFunction()) {
-			THROW_BAD_ARGS("Endpoint::Write expects at least 2 arguments [array[] data, function:callback [, uint:timeout_in_ms, uint:transfer_flags]]!") 
-		}
-
-		if (args.Length() >= 3) {
-			if (!args[2]->IsUint32()) {			
-				THROW_BAD_ARGS("Endpoint::Write expects unsigned int as timeout parameter")
-			} else {
-				timeout = args[2]->Uint32Value();
-			}
-		}
-		
-		// TODO Isochronous transfer mode 
-		libusb_transfer* transfer = libusb_alloc_transfer(0);
-
-		if (self->FillTransferStructure(transfer, NULL, NULL, timeout, 0) < 0) {
-			THROW_BAD_ARGS("Could not fill USB packet structure on device!")
-		}
 	}
 }

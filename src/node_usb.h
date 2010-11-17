@@ -1,6 +1,7 @@
 #ifndef SRC_NODE_USB_H_
 #define SRC_NODE_USB_H
 
+#include <libusb.h>
 #include <v8.h>
 #include <string.h>
 #include <errno.h>
