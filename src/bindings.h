@@ -29,7 +29,7 @@ namespace NodeUsb  {
 			int num_devices;
 			libusb_device **devices;
 			// internal methods
-			int InitalizeLibusb();
+			int Init();
 
 			// V8 getter
 			static Handle<Value> IsLibusbInitalizedGetter(Local<String> property, const AccessorInfo &info);
@@ -85,10 +85,16 @@ namespace NodeUsb  {
 			static Handle<Value> New(const Arguments& args);
 	};
 
+	class Callback {
+		public:
+			static void DispatchAsynchronousUsbTransfer(libusb_transfer *transfer);
+	};
+
 	class Endpoint : public EventEmitter {
 		public:
 			static void Initalize(Handle<Object> target);
 			static Persistent<FunctionTemplate> constructor_template;
+			// Dispatcher / callback handler must be static
 			Endpoint(libusb_device*, libusb_endpoint_descriptor*);
 			~Endpoint();
 		protected:
@@ -97,12 +103,16 @@ namespace NodeUsb  {
 			struct libusb_device_handle *handle;
 			struct libusb_endpoint_descriptor *descriptor;
 			int endpoint_type;
-			void DispatchAsynchronousUsbTransfer(libusb_transfer *transfer);
+			int transfer_type;
+
+			int FillTransferStructure(libusb_transfer *_transfer, unsigned char *_buffer, void *_user_data, uint32_t _timeout, unsigned int num_iso_packets = 0);
+
 			// v8 getter
 			static Handle<Value> EndpointTypeGetter(Local<String> property, const AccessorInfo &info);
+			static Handle<Value> TransferTypeGetter(Local<String> property, const AccessorInfo &info);
 			// exposed to V8
 			static Handle<Value> New(const Arguments& args);
-			static Handle<Value> Submit(const Arguments& args);
+			static Handle<Value> Write(const Arguments& args);
 
 	};
 }
