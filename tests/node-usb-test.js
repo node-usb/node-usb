@@ -42,5 +42,13 @@ for (var i = 0; i < devices.length; i++) {
 }
 assert.ok(instance.close());
 
+/*
+endpoint.write(new array(0x01, 0x01), function(status) {
+});
+
+endpoint.read(100./^bytes$/, function(status, bytes) {
+});
+*/
+
 console.log("Tests were successful :-)");
 
