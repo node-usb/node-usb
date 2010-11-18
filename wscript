@@ -28,7 +28,7 @@ def configure(conf):
 def build(bld):
 	obj = bld.new_task_gen('cxx', 'shlib', 'node_addon')
 	obj.target = 'usb_bindings'
-	obj.source = './src/node_usb.cc ./src/bindings.cc'
+	obj.source = './src/node_usb.cc ./src/usb.cc ./src/device.cc ./src/interface.cc ./src/endpoint.cc'
 	# TODO include path hard linked; should be build option
 	obj.includes = '/usr/include /usr/include/libusb-1.0'
 	obj.uselib = ["USB-1.0"]

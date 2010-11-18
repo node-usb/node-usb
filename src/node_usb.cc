@@ -1,7 +1,9 @@
-#include "./bindings.h"
+#include "usb.h"
+#include "device.h"
+#include "interface.h"
+#include "endpoint.h"
 
 namespace NodeUsb {
-
 	void InitalizeAll(Handle<Object> target) {
 		DEBUG("Entering")
 		HandleScope scope;

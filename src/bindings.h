@@ -16,13 +16,8 @@
   #define DEBUG(str)
 #endif
 
-namespace NodeUsb  {
-	class Usb : public EventEmitter {
-		public:
-			static void Initalize(Handle<Object> target);
-			Usb();
-			~Usb();
 
+<<<<<<< HEAD
 		protected:
 			// members
 			bool is_initalized;
@@ -30,61 +25,78 @@ namespace NodeUsb  {
 			libusb_device **devices;
 			// internal methods
 			int InitalizeLibusb();
+=======
+#define THROW_BAD_ARGS(fail) return ThrowException(Exception::TypeError(V8STR(fail)));
+#define THROW_NOT_YET return ThrowException(Exception::TypeError(String::Concat(String::New(__FUNCTION__), String::New("not yet supported"))));
+#define CHECK_USB(r, scope) \
+	if (r < LIBUSB_SUCCESS) { \
+		return scope.Close(ThrowException(errno_exception(r)));\
+	}
+>>>>>>> write-support
 
-			// V8 getter
-			static Handle<Value> IsLibusbInitalizedGetter(Local<String> property, const AccessorInfo &info);
-			
-			// exposed to V8
-			static Handle<Value> New(const Arguments& args);
-			static Handle<Value> GetDeviceList(const Arguments& args);
-			static Handle<Value> Refresh(const Arguments& args);
-			static Handle<Value> Close(const Arguments& args);		
-	};
+#define LOCAL(type, varname, ref) \
+		HandleScope scope;\
+		type *varname = OBJUNWRAP<type>(ref);
 
-	class Device : public EventEmitter {
-		public:
-			// called from outside to initalize V8 class template
-			static void Initalize(Handle<Object> target);
-			static Persistent<FunctionTemplate> constructor_template;
-			Device(libusb_device*);
-			~Device();
+namespace NodeUsb  {
+	static inline Local<Value> errno_exception(int errorno) {
+		Local<Value> e  = Exception::Error(String::NewSymbol(strerror(errorno)));
+		Local<Object> obj = e->ToObject();
+		std::string err = "";
 
-		protected:
-			// members
-			struct libusb_device *device;
-			struct libusb_device_descriptor device_descriptor;
-			struct libusb_config_descriptor *config_descriptor;
+		obj->Set(NODE_PSYMBOL("errno"), Integer::New(errorno));
+		// taken from pyusb
+		switch (errorno) {
+			case LIBUSB_ERROR_IO:
+				err = "Input/output error";
+				break;
+			case LIBUSB_ERROR_INVALID_PARAM:
+				err  = "Invalid parameter";
+				break;
+			case LIBUSB_ERROR_ACCESS:
+				err  = "Access denied (insufficient permissions)";
+				break;
+			case LIBUSB_ERROR_NO_DEVICE:
+				err = "No such device (it may have been disconnected)";
+				break;
+			case LIBUSB_ERROR_NOT_FOUND:
+				err = "Entity not found";
+				break;
+			case LIBUSB_ERROR_BUSY:
+				err = "Resource busy";
+				break;
+			case LIBUSB_ERROR_TIMEOUT:
+				err = "Operation timed out";
+				break;
+			case LIBUSB_ERROR_OVERFLOW:
+				err = "Overflow";
+				break;
+			case LIBUSB_ERROR_PIPE:
+				err = "Pipe error";
+				break;
+			case LIBUSB_ERROR_INTERRUPTED:
+				err = "System call interrupted (perhaps due to signal)";
+				break;
+			case LIBUSB_ERROR_NO_MEM:
+				err = "Insufficient memory";
+				break;
+			case LIBUSB_ERROR_NOT_SUPPORTED:
+				err = "Operation not supported or unimplemented on this platform";
+				break;
+			default:
+				err = "Unknown error";
+				break;
+		}
+		// convert err to const char* with help of c_str()
+		obj->Set(NODE_PSYMBOL("msg"), String::New(err.c_str()));
+		return e;
+	}
 
-			// V8 getter
-			static Handle<Value> BusNumberGetter(Local<String> property, const AccessorInfo &info);
-			static Handle<Value> DeviceAddressGetter(Local<String> property, const AccessorInfo &info);
 
-			// exposed to V8
-			static Handle<Value> New(const Arguments& args);
-			static Handle<Value> Close(const Arguments& args);
-			static Handle<Value> Reset(const Arguments& args);
-			static Handle<Value> GetConfigDescriptor(const Arguments& args);
-			static Handle<Value> GetDeviceDescriptor(const Arguments& args);
-	};
 
-	class Interface : public EventEmitter {
-		public:
-			static void Initalize(Handle<Object> target);
-			static Persistent<FunctionTemplate> constructor_template;
-			Interface(libusb_device*, libusb_interface_descriptor*);
-			~Interface();
 
-		protected:
-			// members
-			struct libusb_device *device;
-			struct libusb_device_handle *handle;
-			struct libusb_interface_descriptor *descriptor;
-			// V8 getter
-			static Handle<Value> IsKernelDriverActiveGetter(Local<String> property, const AccessorInfo &info);
-			// exposed to V8
-			static Handle<Value> New(const Arguments& args);
-	};
 
+<<<<<<< HEAD
 	class Endpoint : public EventEmitter {
 		public:
 			static void Initalize(Handle<Object> target);
@@ -105,5 +117,12 @@ namespace NodeUsb  {
 			static Handle<Value> Submit(const Arguments& args);
 
 	};
+=======
+	class Callback {
+		public:
+			static void DispatchAsynchronousUsbTransfer(libusb_transfer *transfer);
+	};
+
+>>>>>>> write-support
 }
 #endif
