@@ -2,6 +2,11 @@
 #define SRC_ENDPOINT_H
 
 namespace NodeUsb {
+	class Callback {
+		public:
+			static void DispatchAsynchronousUsbTransfer(libusb_transfer *_transfer);
+	};
+
 	class Endpoint : public EventEmitter {
 		public:
 			static void Initalize(Handle<Object> target);
@@ -27,6 +32,7 @@ namespace NodeUsb {
 			static Handle<Value> Write(const Arguments& args);
 
 	};
+	
 }
 
 #endif

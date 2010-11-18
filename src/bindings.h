@@ -16,23 +16,12 @@
   #define DEBUG(str)
 #endif
 
-
-<<<<<<< HEAD
-		protected:
-			// members
-			bool is_initalized;
-			int num_devices;
-			libusb_device **devices;
-			// internal methods
-			int InitalizeLibusb();
-=======
 #define THROW_BAD_ARGS(fail) return ThrowException(Exception::TypeError(V8STR(fail)));
 #define THROW_NOT_YET return ThrowException(Exception::TypeError(String::Concat(String::New(__FUNCTION__), String::New("not yet supported"))));
 #define CHECK_USB(r, scope) \
 	if (r < LIBUSB_SUCCESS) { \
 		return scope.Close(ThrowException(errno_exception(r)));\
 	}
->>>>>>> write-support
 
 #define LOCAL(type, varname, ref) \
 		HandleScope scope;\
@@ -91,38 +80,5 @@ namespace NodeUsb  {
 		obj->Set(NODE_PSYMBOL("msg"), String::New(err.c_str()));
 		return e;
 	}
-
-
-
-
-
-<<<<<<< HEAD
-	class Endpoint : public EventEmitter {
-		public:
-			static void Initalize(Handle<Object> target);
-			static Persistent<FunctionTemplate> constructor_template;
-			Endpoint(libusb_device*, libusb_endpoint_descriptor*);
-			~Endpoint();
-		protected:
-			// members
-			struct libusb_device *device;
-			struct libusb_device_handle *handle;
-			struct libusb_endpoint_descriptor *descriptor;
-			int endpoint_type;
-			void DispatchAsynchronousUsbTransfer(libusb_transfer *transfer);
-			// v8 getter
-			static Handle<Value> EndpointTypeGetter(Local<String> property, const AccessorInfo &info);
-			// exposed to V8
-			static Handle<Value> New(const Arguments& args);
-			static Handle<Value> Submit(const Arguments& args);
-
-	};
-=======
-	class Callback {
-		public:
-			static void DispatchAsynchronousUsbTransfer(libusb_transfer *transfer);
-	};
-
->>>>>>> write-support
 }
 #endif
