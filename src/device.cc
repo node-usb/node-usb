@@ -2,7 +2,7 @@
 #include "device.h"
 #include "interface.h"
 #include "endpoint.h"
-
+#include <assert.h>
 namespace NodeUsb {
 	/** constructor template is needed for creating new Device objects from outside */
 	Persistent<FunctionTemplate> Device::constructor_template;
@@ -43,10 +43,12 @@ namespace NodeUsb {
 	Device::Device(libusb_device* _device) {
 		DEBUG("Assigning libusb_device structure to self")
 		device = _device;
-		config_descriptor = NULL;
+		config_descriptor = (libusb_config_descriptor*)malloc(sizeof(libusb_config_descriptor));
 	}
 
 	Device::~Device() {
+		// free configuration descriptor
+		free(config_descriptor);
 		DEBUG("Device object destroyed")
 	}
 
@@ -112,6 +114,7 @@ namespace NodeUsb {
 		Local<External> refDevice = Local<External>::Cast(args[0]);
 
 		LOCAL(Device, self, args.This())
+		assert((self->device != NULL));
 		CHECK_USB(libusb_get_active_config_descriptor(self->device, &(self->config_descriptor)), scope)
 		Local<Object> r = Object::New();
 
