@@ -144,7 +144,7 @@ namespace NodeUsb {
 		Usb *self = new Usb();
 		// wrap self object to arguments
 		self->Wrap(args.This());
-
+		args.This()->Set(V8STR("revision"),V8STR(NODE_USB_REVISION));
 		return args.This();
 	}
 

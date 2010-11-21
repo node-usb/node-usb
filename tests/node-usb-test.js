@@ -5,6 +5,7 @@ var instance = usb_driver.create()
 
 assert.notEqual(instance, undefined, "instance must be undefined");
 assert.ok((instance.LIBUSB_CLASS_PER_INTERFACE != undefined), "Constants must be defined");
+assert.notEqual(instance.revision, "unknown", "Revision should not unknown");
 assert.equal(instance.isLibusbInitalized, false, "isLibusbInitalized must be false");
 assert.equal(instance.close(), false, "close() must be false because driver is not opened");
 

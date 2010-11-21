@@ -19,6 +19,10 @@
 
 #define NODE_USB_VERSION "0.1"
 
+#ifndef NODE_USB_REVISION
+  #define NODE_USB_REVISION "unknown"
+#endif
+
 using namespace v8;
 using namespace node;
 
