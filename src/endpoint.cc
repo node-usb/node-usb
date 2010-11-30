@@ -39,6 +39,8 @@ namespace NodeUsb {
 		// Properties
 		instance_template->SetAccessor(V8STR("__endpointType"), Endpoint::EndpointTypeGetter);
 		instance_template->SetAccessor(V8STR("__transferType"), Endpoint::TransferTypeGetter);
+		instance_template->SetAccessor(V8STR("__maxIsoPacketSize"), Endpoint::MaxIsoPacketSizeGetter);
+		instance_template->SetAccessor(V8STR("__maxPacketSize"), Endpoint::MaxPacketSizeGetter);
 
 		// methods exposed to node.js
 
@@ -96,6 +98,24 @@ namespace NodeUsb {
 		LOCAL(Endpoint, self, info.Holder())
 		
 		return scope.Close(Integer::New(self->transfer_type));
+	}
+
+	Handle<Value> Endpoint::MaxPacketSizeGetter(Local<String> property, const AccessorInfo &info) {
+		LOCAL(Endpoint, self, info.Holder())
+		int r = 0;
+		
+		CHECK_USB((r = libusb_get_max_packet_size(self->device, self->descriptor->bEndpointAddress)), scope)
+		
+		return scope.Close(Integer::New(r));
+	}
+
+	Handle<Value> Endpoint::MaxIsoPacketSizeGetter(Local<String> property, const AccessorInfo &info) {
+		LOCAL(Endpoint, self, info.Holder())
+		int r = 0;
+		
+		CHECK_USB((r = libusb_get_max_iso_packet_size(self->device, self->descriptor->bEndpointAddress)), scope)
+		
+		return scope.Close(Integer::New(r));
 	}
 
 	void Callback::DispatchAsynchronousUsbTransfer(libusb_transfer *_transfer) {

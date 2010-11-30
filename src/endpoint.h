@@ -27,6 +27,8 @@ namespace NodeUsb {
 			// v8 getter
 			static Handle<Value> EndpointTypeGetter(Local<String> property, const AccessorInfo &info);
 			static Handle<Value> TransferTypeGetter(Local<String> property, const AccessorInfo &info);
+			static Handle<Value> MaxPacketSizeGetter(Local<String> property, const AccessorInfo &info);
+			static Handle<Value> MaxIsoPacketSizeGetter(Local<String> property, const AccessorInfo &info);
 			// exposed to V8
 			static Handle<Value> New(const Arguments& args);
 			static Handle<Value> Write(const Arguments& args);
