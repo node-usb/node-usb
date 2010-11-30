@@ -17,17 +17,50 @@
 #endif
 
 #define THROW_BAD_ARGS(fail) return ThrowException(Exception::TypeError(V8STR(fail)));
-#define THROW_NOT_YET return ThrowException(Exception::TypeError(String::Concat(String::New(__FUNCTION__), String::New("not yet supported"))));
+#define THROW_ERROR(fail) return ThrowException(Exception::Error(V8STR(fail))));
+#define THROW_NOT_YET return ThrowException(Exception::Error(String::Concat(String::New(__FUNCTION__), String::New("not yet supported"))));
 #define CHECK_USB(r, scope) \
 	if (r < LIBUSB_SUCCESS) { \
 		return scope.Close(ThrowException(errno_exception(r)));\
 	}
 
+#define CHECK_USB_HANDLE_OPENED(handle, scope) CHECK_USB(libusb_open(self->device, handle), scope)
+
 #define LOCAL(type, varname, ref) \
 		HandleScope scope;\
 		type *varname = OBJUNWRAP<type>(ref);
+		
+#define	EIO_CAST(type, varname) struct type *varname = reinterpret_cast<struct type *>(req->data);
+#define	EIO_NEW(type, varname) struct type *varname = (struct type *) calloc(1, sizeof(struct type));
+#define EIO_DELEGATION(varname) \
+		Local<Function> callback; \
+		if (args.Length() == 1 && args[0]->IsFunction()) { \
+			callback = Local<Function>::Cast(args[0]); \
+		} \
+		if (!varname) { \
+			V8::LowMemoryNotification(); \
+		} \
+		varname->callback = Persistent<Function>::New(callback); \
+		varname->error = Persistent<Object>::New(Object::New()); \
+
+#define EIO_AFTER(varname) HandleScope scope; \
+		ev_unref(EV_DEFAULT_UC); \
+		if (sizeof(varname->callback) > 0) { \
+			Local<Value> argv[1]; \
+			argv[0] = Local<Value>::New(scope.Close(varname->error)); \
+			varname->callback->Call(Context::GetCurrent()->Global(), 1, argv); \
+			varname->callback.Dispose(); \
+		}
+		
 
 namespace NodeUsb  {
+	// intermediate EIO structure for device
+	struct device_request {
+		Persistent<Function> callback;
+		Persistent<Object> error;
+		libusb_device *device;
+	};
+
 	static inline Local<Value> errno_exception(int errorno) {
 		Local<Value> e  = Exception::Error(String::NewSymbol(strerror(errorno)));
 		Local<Object> obj = e->ToObject();

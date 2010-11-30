@@ -79,6 +79,7 @@ namespace NodeUsb {
 
 		// Bindings to nodejs
 		NODE_SET_PROTOTYPE_METHOD(t, "refresh", Usb::Refresh);
+		NODE_SET_PROTOTYPE_METHOD(t, "setDebugLevel", Usb::SetDebugLevel);
 		NODE_SET_PROTOTYPE_METHOD(t, "getDevices", Usb::GetDeviceList);
 		NODE_SET_PROTOTYPE_METHOD(t, "close", Usb::Close);
 
@@ -158,7 +159,23 @@ namespace NodeUsb {
 		return scope.Close(True());
 	}
 
+	/**
+	 * Set debug level
+	 */
+	Handle<Value> Usb::SetDebugLevel(const Arguments& args) {
+		LOCAL(Usb, self, args.This())
+		CHECK_USB(self->Init(), scope);
 
+		// need libusb_device structure as first argument
+		if (args.Length() != 1 || !args[0]->IsUint32() || !(((uint32_t)args[0]->Uint32Value() >= 0) && ((uint32_t)args[0]->Uint32Value() < 4))) {
+			THROW_BAD_ARGS("Usb::SetDebugLevel argument is invalid. [uint:[0-3]]!") 
+		}
+		
+		libusb_set_debug(NULL, args[0]->Uint32Value());
+
+		return Undefined();
+	}
+	
 	/**
 	 * Returns the devices discovered by libusb
 	 * @return array[Device]

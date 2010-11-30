@@ -20,6 +20,24 @@ namespace NodeUsb {
 			static Handle<Value> IsKernelDriverActiveGetter(Local<String> property, const AccessorInfo &info);
 			// exposed to V8
 			static Handle<Value> New(const Arguments& args);
+			static Handle<Value> DetachKernelDriver(const Arguments& args);
+			static Handle<Value> AttachKernelDriver(const Arguments& args);
+			static Handle<Value> Claim(const Arguments& args);
+		
+			struct release_request:device_request {
+				libusb_device_handle *handle;
+				int interface_number;
+			};
+			static Handle<Value> Release(const Arguments& args);
+			static int EIO_Release(eio_req *req);
+			static int EIO_After_Release(eio_req *req);
+			
+			struct alternate_setting_request:release_request {
+				int alternate_setting;
+			};
+			static Handle<Value> AlternateSetting(const Arguments& args);
+			static int EIO_AlternateSetting(eio_req *req);
+			static int EIO_After_AlternateSetting(eio_req *req);
 	};
 }
 

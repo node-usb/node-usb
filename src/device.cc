@@ -51,7 +51,7 @@ namespace NodeUsb {
 		free(config_descriptor);
 		DEBUG("Device object destroyed")
 	}
-
+	
 	Handle<Value> Device::New(const Arguments& args) {
 		HandleScope scope;
 		DEBUG("New Device object created")
@@ -95,12 +95,80 @@ namespace NodeUsb {
 		return scope.Close(Integer::New(address));
 	}
 
-	Handle<Value> Device::Reset(const Arguments& args) {
-		HandleScope scope;
-		THROW_NOT_YET
-		return scope.Close(True());
+	Handle<Value> Device::Ref(const Arguments& args) {
+		LOCAL(Device, self, args.This())
+		libusb_ref_device(self->device);
+		
+		return Undefined();
 	}
 
+	Handle<Value> Device::Unref(const Arguments& args) {
+		LOCAL(Device, self, args.This())
+		libusb_unref_device(self->device);
+		
+		return Undefined();
+	}
+
+	/**
+	 * libusb_reset_device incurs a noticeable delay, so this is asynchronous
+	 */
+	Handle<Value> Device::Reset(const Arguments& args) {
+		LOCAL(Device, self, args.This())
+		
+		// allocation of intermediate EIO structure
+		EIO_NEW(device_request, reset_req)
+
+		// create default delegation
+		EIO_DELEGATION(reset_req)
+		
+		reset_req->device = self->device;
+		
+		// Make asynchronous call
+		eio_custom(EIO_Reset, EIO_PRI_DEFAULT, EIO_After_Reset, reset_req);
+	
+		// add reference
+		ev_ref(EV_DEFAULT_UC);
+		
+		return Undefined();
+	}
+
+	/**
+	 * Contains the blocking libusb_reset_device function
+	 */
+	int Device::EIO_Reset(eio_req *req) {
+		EIO_CAST(device_request, reset_req)
+		
+		libusb_device_handle *handle;
+
+		int errcode = 0;
+		
+		if ((errcode = libusb_open(reset_req->device, &handle)) >= LIBUSB_SUCCESS) {
+			if ((errcode = libusb_reset_device(handle)) < LIBUSB_SUCCESS) {
+				libusb_close(handle);
+				reset_req->error->Set(V8STR("error_source"), V8STR("reset"));
+			}
+		} else {
+			reset_req->error->Set(V8STR("error_source"), V8STR("open"));
+		}
+		
+		reset_req->error->Set(V8STR("error_code"), Uint32::New(errcode));
+		
+		// needed for EIO so that the EIO_After_Reset method will be called
+		req->result = 0;
+		
+		return 0;
+	}
+
+	int Device::EIO_After_Reset(eio_req *req) {
+		EIO_CAST(device_request, reset_req)
+		EIO_AFTER(reset_req)
+		
+		// release intermediate structure
+		free(reset_req);
+		
+		return 0;
+	}
+	
 
 // TODO: Read-Only
 #define LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(name) \

@@ -12,6 +12,11 @@ assert.equal(instance.close(), false, "close() must be false because driver is n
 assert.ok(instance.refresh(), "refresh() must be true");
 assert.ok(instance.isLibusbInitalized, "isLibusbInitalized must be true after refresh()");
 
+assert.throws(function() { instance.setDebugLevel(); }, TypeError);
+assert.throws(function() { instance.setDebugLevel(-1); }, TypeError);
+assert.throws(function() { instance.setDebugLevel(4); }, TypeError);
+assert.doesNotThrow(function() { instance.setDebugLevel(0); });
+
 var devices = instance.getDevices(); 
 assert.notEqual(devices, undefined, "getDevices() must not be undefined");
 assert.ok((devices.length > 0), "getDevices() must be larger than 0 (assume that at least one host controller is available)");
@@ -25,6 +30,10 @@ for (var i = 0; i < devices.length; i++) {
 	var id = device.busNumber + ":" + device.deviceAddress;
 	assert.ok(((deviceDesc = device.getDeviceDescriptor()) != undefined), "getDeviceDescriptor() must return an object");
 	assert.ok(((deviceConfigDesc = device.getConfigDescriptor()) != undefined), "getConfigDescriptor() must return an object");
+	
+	if (i == 0) {
+		device.reset(function(e) {	console.log(e); console.log(e.error); });
+	}
 
 	var arr = instance.find_by_vid_and_pid(deviceDesc.idVendor, deviceDesc.idProduct);
 	assert.ok((arr != undefined), "usb.find_by_vid_and_pid() must return array");
