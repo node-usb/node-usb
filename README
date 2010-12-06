@@ -1,9 +1,8 @@
 libusb-1.0 bindings for Node.js
 ==============================
-node-usb is just a sample of how to interact between node.js ->  Google V8 -> external libraries (in this case libusb-1.0).
-At the moment only discovering of availble devices is possible and no asynchronous support is integrated.
+node-usb binds libusb-1.0 to Node.js 
 
-Tested with Node version 0.2.4
+Tested with Node version 0.2.4/Linux. OSX has still an issue.
 
 Installation
 ==============================
@@ -27,7 +26,7 @@ or
 
 Examples
 =============================
-A simple version of lsusb can be executed by typing
+A simple port of lsusb can be executed by typing
 	node examples/lsusb.js
 
 More information
