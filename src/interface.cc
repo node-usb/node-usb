@@ -4,9 +4,8 @@
 namespace NodeUsb {
 	Persistent<FunctionTemplate> Interface::constructor_template;
 
-	Interface::Interface(libusb_device* _device, libusb_interface_descriptor* _interface_descriptor) {
-		DEBUG("Assigning libusb_device and libusb_interface_descriptor structure to self")
-		device = _device;
+	Interface::Interface(nodeusb_device_container* _device_container, libusb_interface_descriptor* _interface_descriptor) {
+		device_container = _device_container;
 		descriptor = _interface_descriptor;
 	}
 
@@ -56,14 +55,14 @@ namespace NodeUsb {
 		}
 
 		// assign arguments as local references
-		Local<External> refDevice = Local<External>::Cast(args[0]);
+		Local<External> refDeviceContainer = Local<External>::Cast(args[0]);
 		Local<External> refInterfaceDescriptor = Local<External>::Cast(args[1]);
 
-		libusb_device *libusbDevice = static_cast<libusb_device*>(refDevice->Value());
+		nodeusb_device_container *deviceContainer = static_cast<nodeusb_device_container*>(refDeviceContainer->Value());
 		libusb_interface_descriptor *libusbInterfaceDescriptor = static_cast<libusb_interface_descriptor*>(refInterfaceDescriptor->Value());
 
 		// create new Devicehandle object
-		Interface *interface = new Interface(libusbDevice, libusbInterfaceDescriptor);
+		Interface *interface = new Interface(deviceContainer, libusbInterfaceDescriptor);
 		// initalize handle
 
 		// wrap created Device object to v8
@@ -88,19 +87,19 @@ namespace NodeUsb {
 
 	Handle<Value> Interface::IsKernelDriverActiveGetter(Local<String> property, const AccessorInfo &info) {
 		LOCAL(Interface, self, info.Holder())
-		CHECK_USB_HANDLE_OPENED(&(self->handle), scope)
+		CHECK_USB_HANDLE_OPENED(&(self->device_container->handle), scope)
 
 		int isKernelDriverActive = 0;
 			
-		CHECK_USB((isKernelDriverActive = libusb_kernel_driver_active(self->handle, self->descriptor->bInterfaceNumber)), scope)
+		CHECK_USB((isKernelDriverActive = libusb_kernel_driver_active(self->device_container->handle, self->descriptor->bInterfaceNumber)), scope)
 
 		return scope.Close(Integer::New(isKernelDriverActive));
 	}	
 	
 	Handle<Value> Interface::DetachKernelDriver(const Arguments& args) {
 		LOCAL(Interface, self, args.This())
-		CHECK_USB_HANDLE_OPENED(&(self->handle), scope)
-		CHECK_USB(libusb_detach_kernel_driver(self->handle, self->descriptor->bInterfaceNumber), scope)
+		CHECK_USB_HANDLE_OPENED(&(self->device_container->handle), scope)
+		CHECK_USB(libusb_detach_kernel_driver(self->device_container->handle, self->descriptor->bInterfaceNumber), scope)
 		
 		return Undefined();
 	}
@@ -110,8 +109,8 @@ namespace NodeUsb {
 	 */
 	Handle<Value> Interface::AttachKernelDriver(const Arguments& args) {
 		LOCAL(Interface, self, args.This())
-		CHECK_USB_HANDLE_OPENED(&(self->handle), scope)
-		CHECK_USB(libusb_attach_kernel_driver(self->handle, self->descriptor->bInterfaceNumber), scope)
+		CHECK_USB_HANDLE_OPENED(&(self->device_container->handle), scope)
+		CHECK_USB(libusb_attach_kernel_driver(self->device_container->handle, self->descriptor->bInterfaceNumber), scope)
 		
 		return Undefined();
 	}
@@ -121,8 +120,8 @@ namespace NodeUsb {
 	 */
 	Handle<Value> Interface::Claim(const Arguments& args) {
 		LOCAL(Interface, self, args.This())
-		CHECK_USB_HANDLE_OPENED(&(self->handle), scope)
-		CHECK_USB(libusb_claim_interface(self->handle, self->descriptor->bInterfaceNumber), scope)
+		CHECK_USB_HANDLE_OPENED(&(self->device_container->handle), scope)
+		CHECK_USB(libusb_claim_interface(self->device_container->handle, self->descriptor->bInterfaceNumber), scope)
 		
 		return Undefined();	
 	}
@@ -141,7 +140,7 @@ namespace NodeUsb {
 		// create default delegation
 		EIO_DELEGATION(release_req)
 		
-		release_req->handle = self->handle;
+		release_req->handle = self->device_container->handle;
 		release_req->interface_number = self->descriptor->bInterfaceNumber;
 		eio_custom(EIO_Release, EIO_PRI_DEFAULT, EIO_After_Release, release_req);
 	
@@ -201,7 +200,7 @@ namespace NodeUsb {
 		// create default delegation
 		EIO_DELEGATION(alt_req)
 		
-		alt_req->handle = self->handle;
+		alt_req->handle = self->device_container->handle;
 		alt_req->interface_number = self->descriptor->bInterfaceNumber;
 		alt_req->alternate_setting = args[0]->Uint32Value();
 		eio_custom(EIO_AlternateSetting, EIO_PRI_DEFAULT, EIO_After_AlternateSetting, alt_req);

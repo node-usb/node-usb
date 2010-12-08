@@ -4,9 +4,8 @@
 namespace NodeUsb {
 	Persistent<FunctionTemplate> Endpoint::constructor_template;
 
-	Endpoint::Endpoint(libusb_device* _device, libusb_endpoint_descriptor* _endpoint_descriptor) {
-		DEBUG("Assigning libusb_device and libusb_endpoint_descriptor structure to self")
-		device = _device;
+	Endpoint::Endpoint(nodeusb_device_container* _device_container, libusb_endpoint_descriptor* _endpoint_descriptor) {
+		device_container = _device_container;
 		descriptor = _endpoint_descriptor;
 		
 		// if bit[7] of endpoint address is set => ENDPOINT_IN (device to host), else: ENDPOINT_OUT (host to device)
@@ -59,15 +58,15 @@ namespace NodeUsb {
 		}
 
 		// make local value reference to first parameter
-		Local<External> refDevice = Local<External>::Cast(args[0]);
+		Local<External> refDeviceContainer = Local<External>::Cast(args[0]);
 		Local<External> refEndpointDescriptor = Local<External>::Cast(args[1]);
 
 		// cast local reference to local 
-		libusb_device *libusbDevice = static_cast<libusb_device*>(refDevice->Value());
+		nodeusb_device_container *deviceContainer = static_cast<nodeusb_device_container*>(refDeviceContainer->Value());
 		libusb_endpoint_descriptor *libusbEndpointDescriptor = static_cast<libusb_endpoint_descriptor*>(refEndpointDescriptor->Value());
 
 		// create new Endpoint object
-		Endpoint *endpoint = new Endpoint(libusbDevice, libusbEndpointDescriptor);
+		Endpoint *endpoint = new Endpoint(deviceContainer, libusbEndpointDescriptor);
 		// initalize handle
 
 		// wrap created Endpoint object to v8
@@ -104,7 +103,7 @@ namespace NodeUsb {
 		LOCAL(Endpoint, self, info.Holder())
 		int r = 0;
 		
-		CHECK_USB((r = libusb_get_max_packet_size(self->device, self->descriptor->bEndpointAddress)), scope)
+		CHECK_USB((r = libusb_get_max_packet_size(self->device_container->device, self->descriptor->bEndpointAddress)), scope)
 		
 		return scope.Close(Integer::New(r));
 	}
@@ -113,7 +112,7 @@ namespace NodeUsb {
 		LOCAL(Endpoint, self, info.Holder())
 		int r = 0;
 		
-		CHECK_USB((r = libusb_get_max_iso_packet_size(self->device, self->descriptor->bEndpointAddress)), scope)
+		CHECK_USB((r = libusb_get_max_iso_packet_size(self->device_container->device, self->descriptor->bEndpointAddress)), scope)
 		
 		return scope.Close(Integer::New(r));
 	}
@@ -140,7 +139,7 @@ namespace NodeUsb {
 		(*callback).Dispose();
 	}
 
-#define TRANSFER_ARGUMENTS_LEFT _transfer, handle 
+#define TRANSFER_ARGUMENTS_LEFT _transfer, device_container->handle 
 #define TRANSFER_ARGUMENTS_MIDDLE _buffer, buflen
 #define TRANSFER_ARGUMENTS_RIGHT Callback::DispatchAsynchronousUsbTransfer, &(_callback), _timeout
 #define TRANSFER_ARGUMENTS_DEFAULT TRANSFER_ARGUMENTS_LEFT, descriptor->bEndpointAddress, TRANSFER_ARGUMENTS_MIDDLE, TRANSFER_ARGUMENTS_RIGHT

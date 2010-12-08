@@ -21,10 +21,14 @@
 #define THROW_NOT_YET return ThrowException(Exception::Error(String::Concat(String::New(__FUNCTION__), String::New("not yet supported"))));
 #define CHECK_USB(r, scope) \
 	if (r < LIBUSB_SUCCESS) { \
-		return scope.Close(ThrowException(errno_exception(r)));\
+		Local<Object> error = Object::New();\
+		error->Set(V8STR("errno"), Integer::New(r));\
+		error->Set(V8STR("error"), errno_exception(r));\
+		return scope.Close(error);\
 	}
+		//return scope.Close(ThrowException(errno_exception(r)));
 
-#define CHECK_USB_HANDLE_OPENED(handle, scope) CHECK_USB(libusb_open(self->device, handle), scope)
+#define CHECK_USB_HANDLE_OPENED(handle, scope) CHECK_USB(libusb_open(self->device_container->device, handle), scope)
 
 #define LOCAL(type, varname, ref) \
 		HandleScope scope;\
@@ -59,6 +63,11 @@ namespace NodeUsb  {
 		Persistent<Function> callback;
 		Persistent<Object> error;
 		libusb_device *device;
+	};
+
+	struct nodeusb_device_container {
+		libusb_device *device;
+		libusb_device_handle *handle;
 	};
 
 	static inline Local<Value> errno_exception(int errorno) {

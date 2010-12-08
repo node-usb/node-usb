@@ -17,7 +17,7 @@ assert.throws(function() { instance.setDebugLevel(-1); }, TypeError);
 assert.throws(function() { instance.setDebugLevel(4); }, TypeError);
 assert.doesNotThrow(function() { instance.setDebugLevel(0); });
 
-var devices = instance.getDevices(); 
+var devices = instance.get_devices(); 
 assert.notEqual(devices, undefined, "getDevices() must not be undefined");
 assert.ok((devices.length > 0), "getDevices() must be larger than 0 (assume that at least one host controller is available)");
 
@@ -30,7 +30,7 @@ for (var i = 0; i < devices.length; i++) {
 	var id = device.busNumber + ":" + device.deviceAddress;
 	assert.ok(((deviceDesc = device.getDeviceDescriptor()) != undefined), "getDeviceDescriptor() must return an object");
 	assert.ok(((deviceConfigDesc = device.getConfigDescriptor()) != undefined), "getConfigDescriptor() must return an object");
-	
+
 	if (i == 0) {
 		device.reset(function(e) {	console.log(e); console.log(e.error); });
 	}
@@ -39,12 +39,14 @@ for (var i = 0; i < devices.length; i++) {
 	assert.ok((arr != undefined), "usb.find_by_vid_and_pid() must return array");
 	assert.ok((arr.length > 0), "usb.find_by_vid_and_pid() must return array with length > 0");
 	var found = false;
+
 	for (var j = 0; j < arr.length; j++) {
 		if ((arr[j].deviceAddress == device.deviceAddress) && (arr[j].busNumber == device.busNumber)) {
 			found = true;
 			break;
 		}
 	}
+
 	console.log(deviceConfigDesc);	
 	assert.ok(found, "could not find USB interface with find_by_vid_and_pid with equal busNumber and deviceAddress");
 

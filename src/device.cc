@@ -41,13 +41,15 @@ namespace NodeUsb {
 	}
 
 	Device::Device(libusb_device* _device) {
-		DEBUG("Assigning libusb_device structure to self")
-		device = _device;
+		device_container = (nodeusb_device_container*)malloc(sizeof(nodeusb_device_container));
 		config_descriptor = (libusb_config_descriptor*)malloc(sizeof(libusb_config_descriptor));
+
+		device_container->device = _device;
 	}
 
 	Device::~Device() {
 		// free configuration descriptor
+		free(device_container);
 		free(config_descriptor);
 		DEBUG("Device object destroyed")
 	}
@@ -80,7 +82,7 @@ namespace NodeUsb {
 	 */
 	Handle<Value> Device::BusNumberGetter(Local<String> property, const AccessorInfo &info) {
 		LOCAL(Device, self, info.Holder())
-		uint8_t bus_number = libusb_get_bus_number(self->device);
+		uint8_t bus_number = libusb_get_bus_number(self->device_container->device);
 
 		return scope.Close(Integer::New(bus_number));
 	}
@@ -90,21 +92,21 @@ namespace NodeUsb {
 	 */
 	Handle<Value> Device::DeviceAddressGetter(Local<String> property, const AccessorInfo &info) {
 		LOCAL(Device, self, info.Holder())
-		uint8_t address = libusb_get_device_address(self->device);
+		uint8_t address = libusb_get_device_address(self->device_container->device);
 
 		return scope.Close(Integer::New(address));
 	}
 
 	Handle<Value> Device::Ref(const Arguments& args) {
 		LOCAL(Device, self, args.This())
-		libusb_ref_device(self->device);
+		libusb_ref_device(self->device_container->device);
 		
 		return Undefined();
 	}
 
 	Handle<Value> Device::Unref(const Arguments& args) {
 		LOCAL(Device, self, args.This())
-		libusb_unref_device(self->device);
+		libusb_unref_device(self->device_container->device);
 		
 		return Undefined();
 	}
@@ -121,7 +123,7 @@ namespace NodeUsb {
 		// create default delegation
 		EIO_DELEGATION(reset_req)
 		
-		reset_req->device = self->device;
+		reset_req->device = self->device_container->device;
 		
 		// Make asynchronous call
 		eio_custom(EIO_Reset, EIO_PRI_DEFAULT, EIO_After_Reset, reset_req);
@@ -182,9 +184,13 @@ namespace NodeUsb {
 		Local<External> refDevice = Local<External>::Cast(args[0]);
 
 		LOCAL(Device, self, args.This())
-		assert((self->device != NULL));
-		CHECK_USB(libusb_get_active_config_descriptor(self->device, &(self->config_descriptor)), scope)
+		assert((self->device_container->device != NULL));
+// #ifdef __APPLE__ & __MACH__
+//		CHECK_USB_HANDLE_OPENED(&(self->handle), scope)
+		DEBUG("Get active config descriptor");
+		CHECK_USB(libusb_get_active_config_descriptor(self->device_container->device, &(self->config_descriptor)), scope)
 		Local<Object> r = Object::New();
+		DEBUG("Converting structure");
 
 		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(bLength)
 		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(bDescriptorType)
@@ -206,7 +212,7 @@ namespace NodeUsb {
 				libusb_interface_descriptor interface_descriptor = interface_container.altsetting[j];
 
 				Local<Value> args_new_interface[2] = {
-					External::New(self->device),
+					External::New(self->device_container),
 					External::New(&interface_descriptor),
 				};
 
@@ -219,7 +225,7 @@ namespace NodeUsb {
 					libusb_endpoint_descriptor endpoint_descriptor = interface_descriptor.endpoint[k];
 
 					Local<Value> args_new_endpoint[2] = {
-						External::New(self->device),
+						External::New(self->device_container),
 						External::New(&endpoint_descriptor),
 					};
 
@@ -242,15 +248,17 @@ namespace NodeUsb {
 	
 // TODO: Read-Only
 #define LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(name) \
-		r->Set(V8STR(#name), Integer::New(self->device_descriptor.name));
+		r->Set(V8STR(#name), Uint32::New(self->device_descriptor.name));
 
 	/**
 	 * Returns the device descriptor of current device
 	 * @return object
 	 */
 	Handle<Value> Device::GetDeviceDescriptor(const Arguments& args) {
+		DEBUG("Entering")
 		LOCAL(Device, self, args.This())
-		CHECK_USB(libusb_get_device_descriptor(self->device, &(self->device_descriptor)), scope)
+		CHECK_USB(libusb_get_device_descriptor(self->device_container->device, &(self->device_descriptor)), scope)
+		DEBUG("Create return");
 		Local<Object> r = Object::New();
 
 		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bLength)

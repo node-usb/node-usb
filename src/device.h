@@ -14,7 +14,7 @@ namespace NodeUsb {
 
 		protected:
 			// members
-			struct libusb_device *device;
+			struct nodeusb_device_container *device_container;
 			struct libusb_device_descriptor device_descriptor;
 			struct libusb_config_descriptor *config_descriptor;
 

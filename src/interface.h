@@ -8,14 +8,14 @@ namespace NodeUsb {
 		public:
 			static void Initalize(Handle<Object> target);
 			static Persistent<FunctionTemplate> constructor_template;
-			Interface(libusb_device*, libusb_interface_descriptor*);
+			Interface(nodeusb_device_container*, libusb_interface_descriptor*);
 			~Interface();
 
 		protected:
 			// members
-			struct libusb_device *device;
-			struct libusb_device_handle *handle;
+			struct nodeusb_device_container *device_container;
 			struct libusb_interface_descriptor *descriptor;
+
 			// V8 getter
 			static Handle<Value> IsKernelDriverActiveGetter(Local<String> property, const AccessorInfo &info);
 			// exposed to V8

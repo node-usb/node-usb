@@ -12,12 +12,11 @@ namespace NodeUsb {
 			static void Initalize(Handle<Object> target);
 			static Persistent<FunctionTemplate> constructor_template;
 			// Dispatcher / callback handler must be static
-			Endpoint(libusb_device*, libusb_endpoint_descriptor*);
+			Endpoint(nodeusb_device_container*, libusb_endpoint_descriptor*);
 			~Endpoint();
 		protected:
 			// members
-			struct libusb_device *device;
-			struct libusb_device_handle *handle;
+			struct nodeusb_device_container *device_container;
 			struct libusb_endpoint_descriptor *descriptor;
 			int endpoint_type;
 			int transfer_type;

@@ -2,7 +2,8 @@ libusb-1.0 bindings for Node.js
 ==============================
 node-usb binds libusb-1.0 to Node.js 
 
-Tested with Node version 0.2.4/Linux. OSX has still an issue.
+Tested with Node version 0.2.4/Linux.
+Brew/OSX port of libusb-1.0 has still an issue which results in a segfault. Try using the latest development branch from http://git.libusb.org
 
 Installation
 ==============================
