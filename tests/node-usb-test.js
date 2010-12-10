@@ -31,10 +31,6 @@ for (var i = 0; i < devices.length; i++) {
 	assert.ok(((deviceDesc = device.getDeviceDescriptor()) != undefined), "getDeviceDescriptor() must return an object");
 	assert.ok(((deviceConfigDesc = device.getConfigDescriptor()) != undefined), "getConfigDescriptor() must return an object");
 
-	if (i == 0) {
-		device.reset(function(e) {	console.log(e); console.log(e.error); });
-	}
-
 	var arr = instance.find_by_vid_and_pid(deviceDesc.idVendor, deviceDesc.idProduct);
 	assert.ok((arr != undefined), "usb.find_by_vid_and_pid() must return array");
 	assert.ok((arr.length > 0), "usb.find_by_vid_and_pid() must return array with length > 0");
@@ -46,9 +42,24 @@ for (var i = 0; i < devices.length; i++) {
 			break;
 		}
 	}
-
-	console.log(deviceConfigDesc);	
 	assert.ok(found, "could not find USB interface with find_by_vid_and_pid with equal busNumber and deviceAddress");
+
+	var interfaces = device.getInterfaces();
+
+	assert.ok((interfaces != undefined), "Device.getInterfaces() must return an array");
+	assert.ok((interfaces.length >= 0), "Device.getInterfaces() must return an array with length >= 0");
+
+	for (var j = 0; j < interfaces.length; j++) {
+		var interface = interfaces[j];
+		var endpoints = interface.getEndpoints();
+		assert.ok((endpoints != undefined), "Device.getEndpoints() must return an array");
+		assert.ok((endpoints.length >= 0), "Device.getEndpoints() must return an array with length >= 0");
+
+		for (k = 0; k < endpoints.length; k++) {
+			var endpoint = endpoints[k];
+			console.log(endpoint);
+		}
+	}
 
 //	assert.equal(device.close(), true, "close() must be true because device is opened by prior 
 }

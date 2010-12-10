@@ -1,5 +1,6 @@
 #include "bindings.h"
 #include "interface.h"
+#include "endpoint.h"
 
 namespace NodeUsb {
 	Persistent<FunctionTemplate> Interface::constructor_template;
@@ -31,14 +32,15 @@ namespace NodeUsb {
 		// no constants at the moment
 	
 		// Properties
-		instance_template->SetAccessor(V8STR("__isKernelDriverAttached"), Interface::IsKernelDriverActiveGetter);
 
 		// methods exposed to node.js
-		NODE_SET_PROTOTYPE_METHOD(t, "detach", Interface::DetachKernelDriver); 
-		NODE_SET_PROTOTYPE_METHOD(t, "attach", Interface::AttachKernelDriver); 
+		NODE_SET_PROTOTYPE_METHOD(t, "getEndpoints", Interface::GetEndpoints); 
+		NODE_SET_PROTOTYPE_METHOD(t, "detachKernelDriver", Interface::DetachKernelDriver); 
+		NODE_SET_PROTOTYPE_METHOD(t, "attachKernelDriver", Interface::AttachKernelDriver); 
 		NODE_SET_PROTOTYPE_METHOD(t, "claim", Interface::Claim); 
 		NODE_SET_PROTOTYPE_METHOD(t, "release", Interface::Release); 
 		NODE_SET_PROTOTYPE_METHOD(t, "setAlternateSetting", Interface::AlternateSetting); 
+		NODE_SET_PROTOTYPE_METHOD(t, "isKernelDriverActive", Interface::IsKernelDriverActive);
 
 		// Make it visible in JavaScript
 		target->Set(String::NewSymbol("Interface"), t->GetFunction());	
@@ -85,9 +87,9 @@ namespace NodeUsb {
 	}
 
 
-	Handle<Value> Interface::IsKernelDriverActiveGetter(Local<String> property, const AccessorInfo &info) {
-		LOCAL(Interface, self, info.Holder())
-		CHECK_USB_HANDLE_OPENED(&(self->device_container->handle), scope)
+	Handle<Value> Interface::IsKernelDriverActive(const Arguments& args) {
+		LOCAL(Interface, self, args.This())
+		OPEN_DEVICE_HANDLE_NEEDED(scope)
 
 		int isKernelDriverActive = 0;
 			
@@ -98,7 +100,8 @@ namespace NodeUsb {
 	
 	Handle<Value> Interface::DetachKernelDriver(const Arguments& args) {
 		LOCAL(Interface, self, args.This())
-		CHECK_USB_HANDLE_OPENED(&(self->device_container->handle), scope)
+		OPEN_DEVICE_HANDLE_NEEDED(scope)
+
 		CHECK_USB(libusb_detach_kernel_driver(self->device_container->handle, self->descriptor->bInterfaceNumber), scope)
 		
 		return Undefined();
@@ -109,7 +112,8 @@ namespace NodeUsb {
 	 */
 	Handle<Value> Interface::AttachKernelDriver(const Arguments& args) {
 		LOCAL(Interface, self, args.This())
-		CHECK_USB_HANDLE_OPENED(&(self->device_container->handle), scope)
+		OPEN_DEVICE_HANDLE_NEEDED(scope)
+
 		CHECK_USB(libusb_attach_kernel_driver(self->device_container->handle, self->descriptor->bInterfaceNumber), scope)
 		
 		return Undefined();
@@ -120,7 +124,7 @@ namespace NodeUsb {
 	 */
 	Handle<Value> Interface::Claim(const Arguments& args) {
 		LOCAL(Interface, self, args.This())
-		CHECK_USB_HANDLE_OPENED(&(self->device_container->handle), scope)
+		OPEN_DEVICE_HANDLE_NEEDED(scope)
 		CHECK_USB(libusb_claim_interface(self->device_container->handle, self->descriptor->bInterfaceNumber), scope)
 		
 		return Undefined();	
@@ -134,6 +138,8 @@ namespace NodeUsb {
 	Handle<Value> Interface::Release(const Arguments& args) {
 		LOCAL(Interface, self, args.This())
 		
+		OPEN_DEVICE_HANDLE_NEEDED(scope)
+
 		// allocation of intermediate EIO structure
 		EIO_NEW(release_request, release_req)
 
@@ -156,13 +162,8 @@ namespace NodeUsb {
 
 		int errcode = 0;
 		
-		if ((errcode = libusb_open(release_req->device, &(release_req->handle))) >= LIBUSB_SUCCESS) {
-			if ((errcode = libusb_release_interface(release_req->handle, release_req->interface_number)) < LIBUSB_SUCCESS) {
-				libusb_close(release_req->handle);
-				release_req->error->Set(V8STR("error_source"), V8STR("release"));
-			}
-		} else {
-			release_req->error->Set(V8STR("error_source"), V8STR("open"));
+		if ((errcode = libusb_release_interface(release_req->handle, release_req->interface_number)) < LIBUSB_SUCCESS) {
+			release_req->error->Set(V8STR("error_source"), V8STR("release"));
 		}
 		
 		release_req->error->Set(V8STR("error_code"), Uint32::New(errcode));
@@ -182,7 +183,6 @@ namespace NodeUsb {
 		return 0;
 	}
 
-
 	/**
 	 * alternate setting for interface current interface; delegates to libusb_set_interface_alt_setting()
 	 * non-blocking!
@@ -194,6 +194,8 @@ namespace NodeUsb {
 			THROW_BAD_ARGS("Interface::AlternateSetting expects [uint32:setting] as first parameter")
 		}
 		
+		OPEN_DEVICE_HANDLE_NEEDED(scope)
+
 		// allocation of intermediate EIO structure
 		EIO_NEW(alternate_setting_request, alt_req)
 
@@ -216,13 +218,8 @@ namespace NodeUsb {
 		
 		int errcode = 0;
 		
-		if ((errcode = libusb_open(alt_req->device, &(alt_req->handle))) >= LIBUSB_SUCCESS) {
-			if ((errcode = libusb_set_interface_alt_setting(alt_req->handle, alt_req->interface_number, alt_req->alternate_setting)) < LIBUSB_SUCCESS) {
-				libusb_close(alt_req->handle);
-				alt_req->error->Set(V8STR("error_source"), V8STR("release"));
-			}
-		} else {
-			alt_req->error->Set(V8STR("error_source"), V8STR("open"));
+		if ((errcode = libusb_set_interface_alt_setting(alt_req->handle, alt_req->interface_number, alt_req->alternate_setting)) < LIBUSB_SUCCESS) {
+			alt_req->error->Set(V8STR("error_source"), V8STR("release"));
 		}
 		
 		alt_req->error->Set(V8STR("error_code"), Uint32::New(errcode));
@@ -241,4 +238,25 @@ namespace NodeUsb {
 		return 0;
 	}
 
+	Handle<Value> Interface::GetEndpoints(const Arguments& args) {
+		LOCAL(Interface, self, args.This())
+
+		Local<Array> r = Array::New();
+
+		// interate endpoints
+		for (int i = 0; i < (*self->descriptor).bNumEndpoints; i++) {
+			libusb_endpoint_descriptor endpoint_descriptor = (*self->descriptor).endpoint[i];
+
+			Local<Value> args_new_endpoint[2] = {
+				External::New(self->device_container),
+				External::New(&endpoint_descriptor),
+			};
+
+			// create new object instance of class NodeUsb::Endpoint
+			Persistent<Object> js_endpoint(Endpoint::constructor_template->GetFunction()->NewInstance(2, args_new_endpoint));
+			r->Set(i, js_endpoint);
+		}
+
+		return r;
+	}
 }

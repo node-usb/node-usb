@@ -1,8 +1,8 @@
 #include "bindings.h"
 #include "device.h"
 #include "interface.h"
-#include "endpoint.h"
 #include <assert.h>
+
 namespace NodeUsb {
 	/** constructor template is needed for creating new Device objects from outside */
 	Persistent<FunctionTemplate> Device::constructor_template;
@@ -34,6 +34,7 @@ namespace NodeUsb {
 		NODE_SET_PROTOTYPE_METHOD(t, "reset", Device::Reset); 
 		NODE_SET_PROTOTYPE_METHOD(t, "getDeviceDescriptor", Device::GetDeviceDescriptor);
 		NODE_SET_PROTOTYPE_METHOD(t, "getConfigDescriptor", Device::GetConfigDescriptor);
+		NODE_SET_PROTOTYPE_METHOD(t, "getInterfaces", Device::GetInterfaces);
 
 		// Make it visible in JavaScript
 		target->Set(String::NewSymbol("Device"), t->GetFunction());	
@@ -42,15 +43,16 @@ namespace NodeUsb {
 
 	Device::Device(libusb_device* _device) {
 		device_container = (nodeusb_device_container*)malloc(sizeof(nodeusb_device_container));
-		config_descriptor = (libusb_config_descriptor*)malloc(sizeof(libusb_config_descriptor));
-
 		device_container->device = _device;
 	}
 
 	Device::~Device() {
 		// free configuration descriptor
-		free(device_container);
-		free(config_descriptor);
+		if (device_container) {
+			libusb_free_config_descriptor(device_container->config_descriptor);
+			free(device_container);
+		}
+
 		DEBUG("Device object destroyed")
 	}
 	
@@ -174,7 +176,7 @@ namespace NodeUsb {
 
 // TODO: Read-Only
 #define LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(name) \
-		r->Set(V8STR(#name), Integer::New((*self->config_descriptor).name));
+		r->Set(V8STR(#name), Integer::New((*self->device_container->config_descriptor).name));
 
 	/**
 	 * Returns configuration descriptor structure
@@ -185,10 +187,12 @@ namespace NodeUsb {
 
 		LOCAL(Device, self, args.This())
 		assert((self->device_container->device != NULL));
-// #ifdef __APPLE__ & __MACH__
-//		CHECK_USB_HANDLE_OPENED(&(self->handle), scope)
+#if defined(__APPLE__) && defined(__MACH__)
+		DEBUG("Open device handle for getConfigDescriptor (Darwin fix)")
+		OPEN_DEVICE_HANDLE_NEEDED(scope)
+#endif
 		DEBUG("Get active config descriptor");
-		CHECK_USB(libusb_get_active_config_descriptor(self->device_container->device, &(self->config_descriptor)), scope)
+		CHECK_USB(libusb_get_active_config_descriptor(self->device_container->device, &(self->device_container->config_descriptor)), scope)
 		Local<Object> r = Object::New();
 		DEBUG("Converting structure");
 
@@ -202,11 +206,26 @@ namespace NodeUsb {
 		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(MaxPower)
 		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(extra_length)
 
-		Local<Array> interfaces = Array::New();
-		
+		return scope.Close(r);
+	}
+	
+	Handle<Value> Device::GetInterfaces(const Arguments& args) {
+		LOCAL(Device, self, args.This())
+#if defined(__APPLE__) && defined(__MACH__)
+		DEBUG("Open device handle for GetInterfacse (Darwin fix)")
+		OPEN_DEVICE_HANDLE_NEEDED(scope)
+#endif
+
+		if (!self->device_container->config_descriptor) {
+			CHECK_USB(libusb_get_active_config_descriptor(self->device_container->device, &(self->device_container->config_descriptor)), scope)
+		}
+
+		Local<Array> r = Array::New();
+		int idx = 0;
+
 		// iterate interfaces
-		for (int i = 0; i < (*self->config_descriptor).bNumInterfaces; i++) {
-			libusb_interface interface_container = (*self->config_descriptor).interface[i];
+		for (int i = 0; i < (*self->device_container->config_descriptor).bNumInterfaces; i++) {
+			libusb_interface interface_container = (*self->device_container->config_descriptor).interface[i];
 
 			for (int j = 0; j < interface_container.num_altsetting; j++) {
 				libusb_interface_descriptor interface_descriptor = interface_container.altsetting[j];
@@ -218,34 +237,13 @@ namespace NodeUsb {
 
 				// create new object instance of class NodeUsb::Interface  
 				Persistent<Object> js_interface(Interface::constructor_template->GetFunction()->NewInstance(2, args_new_interface));
-				Local<Array> endpoints = Array::New();
-
-				// interate endpoints
-				for (int k = 0; k < interface_descriptor.bNumEndpoints; k++) {
-					libusb_endpoint_descriptor endpoint_descriptor = interface_descriptor.endpoint[k];
-
-					Local<Value> args_new_endpoint[2] = {
-						External::New(self->device_container),
-						External::New(&endpoint_descriptor),
-					};
-
-					// create new object instance of class NodeUsb::Endpoint
-					Persistent<Object> js_endpoint(Endpoint::constructor_template->GetFunction()->NewInstance(2, args_new_endpoint));
-					endpoints->Set(k, js_endpoint);
-				}
-
-				js_interface->Set(V8STR("endpoints"), endpoints);
-				interfaces->Set(i, js_interface);
+				r->Set(idx++, js_interface);
 			}
 		}
 		
-		r->Set(V8STR("interfaces"), interfaces);
-		// free it
-		libusb_free_config_descriptor(self->config_descriptor);
-
 		return scope.Close(r);
 	}
-	
+
 // TODO: Read-Only
 #define LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(name) \
 		r->Set(V8STR(#name), Uint32::New(self->device_descriptor.name));
@@ -257,8 +255,13 @@ namespace NodeUsb {
 	Handle<Value> Device::GetDeviceDescriptor(const Arguments& args) {
 		DEBUG("Entering")
 		LOCAL(Device, self, args.This())
+
+#if defined(__APPLE__) && defined(__MACH__)
+		DEBUG("Open device handle for getDeviceDescriptor (Darwin fix)")
+		OPEN_DEVICE_HANDLE_NEEDED(scope)
+#endif
+
 		CHECK_USB(libusb_get_device_descriptor(self->device_container->device, &(self->device_descriptor)), scope)
-		DEBUG("Create return");
 		Local<Object> r = Object::New();
 
 		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bLength)

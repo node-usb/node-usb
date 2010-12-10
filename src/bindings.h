@@ -19,16 +19,28 @@
 #define THROW_BAD_ARGS(fail) return ThrowException(Exception::TypeError(V8STR(fail)));
 #define THROW_ERROR(fail) return ThrowException(Exception::Error(V8STR(fail))));
 #define THROW_NOT_YET return ThrowException(Exception::Error(String::Concat(String::New(__FUNCTION__), String::New("not yet supported"))));
+#define CREATE_ERROR_OBJECT_AND_CLOSE_SCOPE(errno) \
+		Local<Object> error = Object::New();\
+		error->Set(V8STR("errno"), Integer::New(errno));\
+		error->Set(V8STR("error"), errno_exception(errno));\
+		return scope.Close(error);\
+
 #define CHECK_USB(r, scope) \
 	if (r < LIBUSB_SUCCESS) { \
-		Local<Object> error = Object::New();\
-		error->Set(V8STR("errno"), Integer::New(r));\
-		error->Set(V8STR("error"), errno_exception(r));\
-		return scope.Close(error);\
+		CREATE_ERROR_OBJECT_AND_CLOSE_SCOPE(r); \
 	}
-		//return scope.Close(ThrowException(errno_exception(r)));
 
-#define CHECK_USB_HANDLE_OPENED(handle, scope) CHECK_USB(libusb_open(self->device_container->device, handle), scope)
+#define OPEN_DEVICE_HANDLE_NEEDED(scope) \
+	if (self->device_container->handle_status == UNINITIALIZED) {\
+		if ((self->device_container->last_error = libusb_open(self->device_container->device, &(self->device_container->handle))) < 0) {\
+			self->device_container->handle_status = FAILED;\
+		} else {\
+			self->device_container->handle_status = OPENED;\
+		}\
+	}\
+	if (self->device_container->handle_status == FAILED) { \
+		CREATE_ERROR_OBJECT_AND_CLOSE_SCOPE(self->device_container->last_error) \
+	} \
 
 #define LOCAL(type, varname, ref) \
 		HandleScope scope;\
@@ -58,16 +70,27 @@
 		
 
 namespace NodeUsb  {
+	// status of device handle
+	enum nodeusb_device_handle_status { 
+		UNINITIALIZED, 
+		FAILED, 
+		OPENED
+	};
+
+	// structure for device and device handle
+	struct nodeusb_device_container {
+		libusb_device *device;
+		libusb_device_handle *handle;
+		libusb_config_descriptor *config_descriptor;
+		nodeusb_device_handle_status handle_status;
+		int last_error;
+	};
+
 	// intermediate EIO structure for device
 	struct device_request {
 		Persistent<Function> callback;
 		Persistent<Object> error;
 		libusb_device *device;
-	};
-
-	struct nodeusb_device_container {
-		libusb_device *device;
-		libusb_device_handle *handle;
 	};
 
 	static inline Local<Value> errno_exception(int errorno) {

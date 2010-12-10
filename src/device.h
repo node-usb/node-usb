@@ -16,7 +16,6 @@ namespace NodeUsb {
 			// members
 			struct nodeusb_device_container *device_container;
 			struct libusb_device_descriptor device_descriptor;
-			struct libusb_config_descriptor *config_descriptor;
 
 			// V8 getter
 			static Handle<Value> BusNumberGetter(Local<String> property, const AccessorInfo &info);
@@ -33,6 +32,7 @@ namespace NodeUsb {
 			static int EIO_Reset(eio_req *req);
 			static Handle<Value> GetConfigDescriptor(const Arguments& args);
 			static Handle<Value> GetDeviceDescriptor(const Arguments& args);
+			static Handle<Value> GetInterfaces(const Arguments& args);
 	};
 }
 #endif

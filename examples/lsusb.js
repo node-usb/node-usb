@@ -74,8 +74,10 @@ for (var i = 0; i < devices.length; i++) {
 	console.log("    bmAttributes                " + cd.bmAttributes);
 	console.log("    MaxPower                    " + cd.MaxPower);
 
-	for (var j = 0; j < cd.interfaces.length; j++) {
-		var interface = cd.interfaces[j];
+	var interfaces = device.getInterfaces();
+
+	for (var j = 0; j < interfaces.length; j++) {
+		var interface = interfaces[j];
 		console.log("    Interface descriptor:");
 		console.log("      bLength                   " + interface.bLength);
 		console.log("      bDescriptorType           " + interface.bDescriptorType);
@@ -86,9 +88,11 @@ for (var i = 0; i < devices.length; i++) {
 		console.log("      bInterfaceSubClass        " + interface.bInterfaceSubClass);
 		console.log("      bInterfaceProtocol        " + interface.bInterfaceProtocol);
 		console.log("      iInterface                " + interface.iInterface);
+		
+		var endpoints = interface.getEndpoints();
 
-		for (var k = 0; k < interface.endpoints.length; k++) {
-			var endpoint = interface.endpoints[k];
+		for (var k = 0; k < endpoints.length; k++) {
+			var endpoint = endpoints[k];
 			console.log("      Endpoint descriptor:");
 			console.log("        bLength                   " + endpoint.bLength);
 			console.log("        bDescriptorType           " + endpoint.bDescriptorType);

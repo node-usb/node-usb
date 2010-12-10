@@ -17,13 +17,14 @@ namespace NodeUsb {
 			struct libusb_interface_descriptor *descriptor;
 
 			// V8 getter
-			static Handle<Value> IsKernelDriverActiveGetter(Local<String> property, const AccessorInfo &info);
 			// exposed to V8
 			static Handle<Value> New(const Arguments& args);
+			static Handle<Value> IsKernelDriverActive(const Arguments& args);
 			static Handle<Value> DetachKernelDriver(const Arguments& args);
 			static Handle<Value> AttachKernelDriver(const Arguments& args);
 			static Handle<Value> Claim(const Arguments& args);
-		
+			static Handle<Value> GetEndpoints(const Arguments& args);
+
 			struct release_request:device_request {
 				libusb_device_handle *handle;
 				int interface_number;
