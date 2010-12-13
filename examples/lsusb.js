@@ -61,6 +61,7 @@ for (var i = 0; i < devices.length; i++) {
 	var bcdDeviceArr = toByteArray(dd.bcdDevice);
 	console.log("  bcdDevice                     " + bcdDeviceArr[0] + "." + pad(bcdDeviceArr[1], 2, "0"));
 	console.log("  iManufacturer                 " + dd.iManufacturer);
+	console.log("  iProduct                      " + dd.iProduct);
 	// iSerialNumber is default of libusb-1.0
 	console.log("  iSerial                       " + dd.iSerialNumber);
 	console.log("  bNumConfigurations            " + dd.bNumConfigurations);
@@ -71,7 +72,7 @@ for (var i = 0; i < devices.length; i++) {
 	console.log("    bNumInterfaces              " + cd.bNumInterfaces);
 	console.log("    bConfigurationValue         " + cd.bConfigurationValue);
 	console.log("    iConfiguration              " + cd.iConfiguration);
-	console.log("    bmAttributes                " + cd.bmAttributes);
+	console.log("    bmAttributes                0x" + toHex(cd.bmAttributes));
 	console.log("    MaxPower                    " + cd.MaxPower);
 
 	var interfaces = device.getInterfaces();

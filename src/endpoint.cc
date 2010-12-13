@@ -7,7 +7,6 @@ namespace NodeUsb {
 	Endpoint::Endpoint(nodeusb_device_container* _device_container, libusb_endpoint_descriptor* _endpoint_descriptor) {
 		device_container = _device_container;
 		descriptor = _endpoint_descriptor;
-		
 		// if bit[7] of endpoint address is set => ENDPOINT_IN (device to host), else: ENDPOINT_OUT (host to device)
 		endpoint_type = (descriptor->bEndpointAddress & (1 << 7)) ? (LIBUSB_ENDPOINT_IN) : (LIBUSB_ENDPOINT_OUT);
 		// bit[0] and bit[1] of bmAttributes masks transfer_type; 3 = 0000 0011
@@ -69,9 +68,6 @@ namespace NodeUsb {
 		Endpoint *endpoint = new Endpoint(deviceContainer, libusbEndpointDescriptor);
 		// initalize handle
 
-		// wrap created Endpoint object to v8
-		endpoint->Wrap(args.This());
-
 #define LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(name) \
 		args.This()->Set(V8STR(#name), Integer::New(endpoint->descriptor->name));
 		LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bLength)
@@ -83,6 +79,9 @@ namespace NodeUsb {
 		LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bRefresh)
 		LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bSynchAddress)
 		LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(extra_length)
+
+		// wrap created Endpoint object to v8
+		endpoint->Wrap(args.This());
 
 		return args.This();
 	}

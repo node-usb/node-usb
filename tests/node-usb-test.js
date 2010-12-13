@@ -57,7 +57,7 @@ for (var i = 0; i < devices.length; i++) {
 
 		for (k = 0; k < endpoints.length; k++) {
 			var endpoint = endpoints[k];
-			console.log(endpoint);
+//			console.log(endpoint);
 		}
 	}
 

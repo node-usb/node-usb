@@ -8,12 +8,13 @@ namespace NodeUsb {
 		public:
 			static void Initalize(Handle<Object> target);
 			static Persistent<FunctionTemplate> constructor_template;
-			Interface(nodeusb_device_container*, libusb_interface_descriptor*);
+			Interface(nodeusb_device_container*, nodeusb_endpoint_selection*, libusb_interface_descriptor*);
 			~Interface();
 
 		protected:
 			// members
 			struct nodeusb_device_container *device_container;
+			struct nodeusb_endpoint_selection *endpoint_selection;
 			struct libusb_interface_descriptor *descriptor;
 
 			// V8 getter

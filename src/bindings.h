@@ -86,6 +86,12 @@ namespace NodeUsb  {
 		int last_error;
 	};
 
+	struct nodeusb_endpoint_selection {
+		int interface_number;
+		int interface_alternate_setting;
+		int endpoint_number;
+	};	
+
 	// intermediate EIO structure for device
 	struct device_request {
 		Persistent<Function> callback;

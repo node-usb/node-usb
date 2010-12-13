@@ -210,6 +210,7 @@ namespace NodeUsb {
 	}
 	
 	Handle<Value> Device::GetInterfaces(const Arguments& args) {
+fprintf(stderr, "IN\n");
 		LOCAL(Device, self, args.This())
 #if defined(__APPLE__) && defined(__MACH__)
 		DEBUG("Open device handle for GetInterfacse (Darwin fix)")
@@ -224,16 +225,32 @@ namespace NodeUsb {
 		int idx = 0;
 
 		// iterate interfaces
-		for (int i = 0; i < (*self->device_container->config_descriptor).bNumInterfaces; i++) {
-			libusb_interface interface_container = (*self->device_container->config_descriptor).interface[i];
+		int numInterfaces = (*self->device_container->config_descriptor).bNumInterfaces;
+		fprintf(stderr, "numInterfaces: %d\n", numInterfaces);
 
-			for (int j = 0; j < interface_container.num_altsetting; j++) {
-				libusb_interface_descriptor interface_descriptor = interface_container.altsetting[j];
+		for (int i = 0; i < numInterfaces; i++) {
+			int numAltSettings = ((*self->device_container->config_descriptor).interface[i]).num_altsetting;
 
-				Local<Value> args_new_interface[2] = {
+			for (int j = 0; j < numAltSettings; j++) {
+				
+				libusb_interface_descriptor *interface_descriptor = (libusb_interface_descriptor*)malloc(sizeof(libusb_interface_descriptor));
+
+				memcpy(interface_descriptor, 
+					&((*self->device_container->config_descriptor).interface[i]).altsetting[j], 
+					sizeof(((*self->device_container->config_descriptor).interface[i]).altsetting[j])
+				);
+
+				nodeusb_endpoint_selection* endpoint_selection = (nodeusb_endpoint_selection*)malloc(sizeof(nodeusb_endpoint_selection));
+
+				endpoint_selection->interface_number = i; 
+				endpoint_selection->interface_alternate_setting = j; 
+
+				Local<Value> args_new_interface[3] = {
 					External::New(self->device_container),
+					External::New(endpoint_selection),
 					External::New(&interface_descriptor),
 				};
+
 
 				// create new object instance of class NodeUsb::Interface  
 				Persistent<Object> js_interface(Interface::constructor_template->GetFunction()->NewInstance(2, args_new_interface));

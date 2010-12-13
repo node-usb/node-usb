@@ -5,14 +5,15 @@
 namespace NodeUsb {
 	Persistent<FunctionTemplate> Interface::constructor_template;
 
-	Interface::Interface(nodeusb_device_container* _device_container, libusb_interface_descriptor* _interface_descriptor) {
+	Interface::Interface(nodeusb_device_container* _device_container, nodeusb_endpoint_selection* _endpoint_selection, libusb_interface_descriptor* _interface_descriptor) {
 		device_container = _device_container;
+		endpoint_selection = _endpoint_selection;
 		descriptor = _interface_descriptor;
 	}
 
 	Interface::~Interface() {
 		// TODO Close
-		DEBUG("Device object destroyed")
+		DEBUG("Interface object destroyed")
 	}
 
 
@@ -49,7 +50,7 @@ namespace NodeUsb {
 
 	Handle<Value> Interface::New(const Arguments& args) {
 		HandleScope scope;
-		DEBUG("New Device object created")
+		DEBUG("New Interface object created")
 
 		// need libusb_device structure as first argument
 		if (args.Length() != 2 || !args[0]->IsExternal() || !args[1]->IsExternal()) {
@@ -58,14 +59,17 @@ namespace NodeUsb {
 
 		// assign arguments as local references
 		Local<External> refDeviceContainer = Local<External>::Cast(args[0]);
-		Local<External> refInterfaceDescriptor = Local<External>::Cast(args[1]);
-
+		Local<External> refEndpointSelection = Local<External>::Cast(args[1]);
+		Local<External> refInterfaceDescriptor = Local<External>::Cast(args[2]);
 		nodeusb_device_container *deviceContainer = static_cast<nodeusb_device_container*>(refDeviceContainer->Value());
+		nodeusb_endpoint_selection *endpointSelection = static_cast<nodeusb_endpoint_selection*>(refEndpointSelection->Value());
 		libusb_interface_descriptor *libusbInterfaceDescriptor = static_cast<libusb_interface_descriptor*>(refInterfaceDescriptor->Value());
 
 		// create new Devicehandle object
-		Interface *interface = new Interface(deviceContainer, libusbInterfaceDescriptor);
+		Interface *interface = new Interface(deviceContainer, endpointSelection, libusbInterfaceDescriptor);
 		// initalize handle
+
+fprintf(stderr, "%d vs %d\n", (endpointSelection->interface_number), endpointSelection->interface_alternate_setting);
 
 		// wrap created Device object to v8
 		interface->Wrap(args.This());
@@ -240,18 +244,18 @@ namespace NodeUsb {
 
 	Handle<Value> Interface::GetEndpoints(const Arguments& args) {
 		LOCAL(Interface, self, args.This())
-
 		Local<Array> r = Array::New();
 
 		// interate endpoints
-		for (int i = 0; i < (*self->descriptor).bNumEndpoints; i++) {
-			libusb_endpoint_descriptor endpoint_descriptor = (*self->descriptor).endpoint[i];
+		int numEndpoints = (*self->descriptor).bNumEndpoints;
+
+		for (int i = 0; i < numEndpoints; i++) {
+	 		libusb_endpoint_descriptor ep = (*self->descriptor).endpoint[i];
 
 			Local<Value> args_new_endpoint[2] = {
 				External::New(self->device_container),
-				External::New(&endpoint_descriptor),
+				External::New(&ep),
 			};
-
 			// create new object instance of class NodeUsb::Endpoint
 			Persistent<Object> js_endpoint(Endpoint::constructor_template->GetFunction()->NewInstance(2, args_new_endpoint));
 			r->Set(i, js_endpoint);
