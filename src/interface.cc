@@ -5,10 +5,11 @@
 namespace NodeUsb {
 	Persistent<FunctionTemplate> Interface::constructor_template;
 
-	Interface::Interface(nodeusb_device_container* _device_container, nodeusb_endpoint_selection* _endpoint_selection, libusb_interface_descriptor* _interface_descriptor) {
+	Interface::Interface(nodeusb_device_container* _device_container, const libusb_interface_descriptor* _interface_descriptor, uint32_t _idx_interface, uint32_t _idx_alt_setting) {
 		device_container = _device_container;
-		endpoint_selection = _endpoint_selection;
 		descriptor = _interface_descriptor;
+		idx_interface = _idx_interface;
+		idx_alt_setting = _idx_alt_setting;
 	}
 
 	Interface::~Interface() {
@@ -33,6 +34,8 @@ namespace NodeUsb {
 		// no constants at the moment
 	
 		// Properties
+		instance_template->SetAccessor(V8STR("__idxInterface"), Interface::IdxInterfaceGetter);
+		instance_template->SetAccessor(V8STR("__idxAltSetting"), Interface::IdxAltSettingGetter);
 
 		// methods exposed to node.js
 		NODE_SET_PROTOTYPE_METHOD(t, "getEndpoints", Interface::GetEndpoints); 
@@ -53,23 +56,23 @@ namespace NodeUsb {
 		DEBUG("New Interface object created")
 
 		// need libusb_device structure as first argument
-		if (args.Length() != 2 || !args[0]->IsExternal() || !args[1]->IsExternal()) {
-			THROW_BAD_ARGS("Device::New argument is invalid. [object:external:libusb_device, object:external:libusb_interface_descriptor]!") 
+
+		if (args.Length() != 3 || !args[0]->IsExternal() || !args[1]->IsUint32() ||  !args[2]->IsUint32()) {
+			THROW_BAD_ARGS("Device::New argument is invalid. [object:external:libusb_device, int:idx_interface, int:idx_alt_setting]!") 
 		}
 
 		// assign arguments as local references
 		Local<External> refDeviceContainer = Local<External>::Cast(args[0]);
-		Local<External> refEndpointSelection = Local<External>::Cast(args[1]);
-		Local<External> refInterfaceDescriptor = Local<External>::Cast(args[2]);
+		uint32_t idxInterface = args[1]->Uint32Value();
+		uint32_t idxAltSetting = args[2]->Uint32Value();
+
 		nodeusb_device_container *deviceContainer = static_cast<nodeusb_device_container*>(refDeviceContainer->Value());
-		nodeusb_endpoint_selection *endpointSelection = static_cast<nodeusb_endpoint_selection*>(refEndpointSelection->Value());
-		libusb_interface_descriptor *libusbInterfaceDescriptor = static_cast<libusb_interface_descriptor*>(refInterfaceDescriptor->Value());
+		const libusb_interface_descriptor *libusbInterfaceDescriptor = &((*deviceContainer->config_descriptor).interface[idxInterface]).altsetting[idxAltSetting];
 
 		// create new Devicehandle object
-		Interface *interface = new Interface(deviceContainer, endpointSelection, libusbInterfaceDescriptor);
+		Interface *interface = new Interface(deviceContainer, libusbInterfaceDescriptor, idxInterface, idxAltSetting);
 		// initalize handle
 
-fprintf(stderr, "%d vs %d\n", (endpointSelection->interface_number), endpointSelection->interface_alternate_setting);
 
 		// wrap created Device object to v8
 		interface->Wrap(args.This());
@@ -90,6 +93,18 @@ fprintf(stderr, "%d vs %d\n", (endpointSelection->interface_number), endpointSel
 		return args.This();
 	}
 
+
+	Handle<Value> Interface::IdxInterfaceGetter(Local<String> property, const AccessorInfo &info) {
+		LOCAL(Interface, self, info.Holder())
+		
+		return scope.Close(Uint32::New(self->idx_interface));
+	}
+
+	Handle<Value> Interface::IdxAltSettingGetter(Local<String> property, const AccessorInfo &info) {
+		LOCAL(Interface, self, info.Holder())
+		
+		return scope.Close(Uint32::New(self->idx_alt_setting));
+	}
 
 	Handle<Value> Interface::IsKernelDriverActive(const Arguments& args) {
 		LOCAL(Interface, self, args.This())

@@ -8,16 +8,20 @@ namespace NodeUsb {
 		public:
 			static void Initalize(Handle<Object> target);
 			static Persistent<FunctionTemplate> constructor_template;
-			Interface(nodeusb_device_container*, nodeusb_endpoint_selection*, libusb_interface_descriptor*);
+			Interface(nodeusb_device_container*, const libusb_interface_descriptor*, uint32_t idx_interface, uint32_t idx_alt_setting);
 			~Interface();
 
 		protected:
 			// members
 			struct nodeusb_device_container *device_container;
-			struct nodeusb_endpoint_selection *endpoint_selection;
-			struct libusb_interface_descriptor *descriptor;
+			const struct libusb_interface_descriptor *descriptor;
+			uint32_t idx_interface;
+			uint32_t idx_alt_setting;
 
 			// V8 getter
+			static Handle<Value> IdxInterfaceGetter(Local<String> property, const AccessorInfo &info);
+			static Handle<Value> IdxAltSettingGetter(Local<String> property, const AccessorInfo &info);
+
 			// exposed to V8
 			static Handle<Value> New(const Arguments& args);
 			static Handle<Value> IsKernelDriverActive(const Arguments& args);

@@ -210,7 +210,6 @@ namespace NodeUsb {
 	}
 	
 	Handle<Value> Device::GetInterfaces(const Arguments& args) {
-fprintf(stderr, "IN\n");
 		LOCAL(Device, self, args.This())
 #if defined(__APPLE__) && defined(__MACH__)
 		DEBUG("Open device handle for GetInterfacse (Darwin fix)")
@@ -226,34 +225,22 @@ fprintf(stderr, "IN\n");
 
 		// iterate interfaces
 		int numInterfaces = (*self->device_container->config_descriptor).bNumInterfaces;
-		fprintf(stderr, "numInterfaces: %d\n", numInterfaces);
 
-		for (int i = 0; i < numInterfaces; i++) {
-			int numAltSettings = ((*self->device_container->config_descriptor).interface[i]).num_altsetting;
+		for (int idxInterface = 0; idxInterface < numInterfaces; idxInterface++) {
+			int numAltSettings = ((*self->device_container->config_descriptor).interface[idxInterface]).num_altsetting;
 
-			for (int j = 0; j < numAltSettings; j++) {
-				
-				libusb_interface_descriptor *interface_descriptor = (libusb_interface_descriptor*)malloc(sizeof(libusb_interface_descriptor));
-
-				memcpy(interface_descriptor, 
-					&((*self->device_container->config_descriptor).interface[i]).altsetting[j], 
-					sizeof(((*self->device_container->config_descriptor).interface[i]).altsetting[j])
-				);
-
-				nodeusb_endpoint_selection* endpoint_selection = (nodeusb_endpoint_selection*)malloc(sizeof(nodeusb_endpoint_selection));
-
-				endpoint_selection->interface_number = i; 
-				endpoint_selection->interface_alternate_setting = j; 
-
+			for (int idxAltSetting = 0; idxAltSetting < numAltSettings; idxAltSetting++) {
+				// passing a pointer of libusb_interface_descriptor does not work. struct is lost by V8
+				// idx of interface and alt_setting is passed so that Interface class can extract the given interface
 				Local<Value> args_new_interface[3] = {
 					External::New(self->device_container),
-					External::New(endpoint_selection),
-					External::New(&interface_descriptor),
+					Uint32::New(idxInterface),
+					Uint32::New(idxAltSetting),
 				};
 
 
 				// create new object instance of class NodeUsb::Interface  
-				Persistent<Object> js_interface(Interface::constructor_template->GetFunction()->NewInstance(2, args_new_interface));
+				Persistent<Object> js_interface(Interface::constructor_template->GetFunction()->NewInstance(3, args_new_interface));
 				r->Set(idx++, js_interface);
 			}
 		}
