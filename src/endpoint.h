@@ -18,11 +18,11 @@ namespace NodeUsb {
 			// members
 			struct nodeusb_device_container *device_container;
 			const struct libusb_endpoint_descriptor *descriptor;
-			uint32_t endpoint_type;
+			int32_t endpoint_type;
 			uint32_t transfer_type;
 			uint32_t idx_endpoint;
 
-			int FillTransferStructure(libusb_transfer *_transfer, unsigned char *_buffer, Persistent<Function> _callback, uint32_t _timeout, unsigned int num_iso_packets = 0);
+			int FillTransferStructure(libusb_transfer *_transfer, unsigned char *_buffer, int32_t _buflen, Persistent<Function> _callback, uint32_t _timeout, unsigned int num_iso_packets = 0);
 
 			// v8 getter
 			static Handle<Value> EndpointTypeGetter(Local<String> property, const AccessorInfo &info);
@@ -31,7 +31,7 @@ namespace NodeUsb {
 			static Handle<Value> MaxIsoPacketSizeGetter(Local<String> property, const AccessorInfo &info);
 			// exposed to V8
 			static Handle<Value> New(const Arguments& args);
-			static Handle<Value> Write(const Arguments& args);
+			static Handle<Value> Submit(const Arguments& args);
 			static Handle<Value> GetExtraData(const Arguments& args);
 
 	};

@@ -43,6 +43,7 @@ namespace NodeUsb {
 
 		// methods exposed to node.js
 		NODE_SET_PROTOTYPE_METHOD(t, "getExtraData", Endpoint::GetExtraData);
+		NODE_SET_PROTOTYPE_METHOD(t, "submit", Endpoint::Submit);
 
 		// Make it visible in JavaScript
 		target->Set(String::NewSymbol("Endpoint"), t->GetFunction());	
@@ -122,7 +123,7 @@ namespace NodeUsb {
 	Handle<Value> Endpoint::GetExtraData(const Arguments& args) {
 		LOCAL(Endpoint, self, args.This())
 		 
-		long m = (*self->descriptor).extra_length;
+		int m = (*self->descriptor).extra_length;
 		
 		Local<Array> r = Array::New(m);
 		
@@ -158,11 +159,10 @@ namespace NodeUsb {
 	}
 
 #define TRANSFER_ARGUMENTS_LEFT _transfer, device_container->handle 
-#define TRANSFER_ARGUMENTS_MIDDLE _buffer, buflen
+#define TRANSFER_ARGUMENTS_MIDDLE _buffer, _buflen
 #define TRANSFER_ARGUMENTS_RIGHT Callback::DispatchAsynchronousUsbTransfer, &(_callback), _timeout
 #define TRANSFER_ARGUMENTS_DEFAULT TRANSFER_ARGUMENTS_LEFT, descriptor->bEndpointAddress, TRANSFER_ARGUMENTS_MIDDLE, TRANSFER_ARGUMENTS_RIGHT
-	int Endpoint::FillTransferStructure(libusb_transfer *_transfer, unsigned char *_buffer, Persistent<Function> _callback, uint32_t _timeout, unsigned int num_iso_packets) {
-		unsigned int buflen = -1; // TODO
+	int Endpoint::FillTransferStructure(libusb_transfer *_transfer, unsigned char *_buffer, int32_t _buflen, Persistent<Function> _callback, uint32_t _timeout, unsigned int num_iso_packets) {
 		int err = 0;
 
 		switch (transfer_type) {
@@ -186,37 +186,89 @@ namespace NodeUsb {
 	}
 
 	/**
-	 * @param array byte-array
 	 * @param function js-callback[status]
+	 * @param array byte-array
 	 * @param int (optional) timeout timeout in milliseconds
 	 */
-	Handle<Value> Endpoint::Write(const Arguments& args) {
+	Handle<Value> Endpoint::Submit(const Arguments& args) {
 		LOCAL(Endpoint, self, args.This())
+		libusb_endpoint_direction modus;
 
 		uint32_t timeout = 0;
-
+		uint32_t iso_packets = 0;
+		uint8_t flags = 0;
+		int32_t buflen = 0;
+		unsigned char *buf;
+		
 		// need libusb_device structure as first argument
-		if (args.Length() < 2 || !args[0]->IsArray() || !args[1]->IsFunction()) {
-			THROW_BAD_ARGS("Endpoint::Write expects at least 2 arguments [array[] data, function:callback[data, status] [, uint:timeout_in_ms, uint:transfer_flags]]!") 
+		if (args.Length() < 2 || !args[1]->IsFunction()) {
+			THROW_BAD_ARGS("Endpoint::Submit expects at least 2 arguments [array[] data, function:callback[data, status] [, uint:timeout_in_ms, uint:transfer_flags, uint32_t:iso_packets]]!") 
 		}
 
+		// Write mode
+		if (args[0]->IsArray()) {
+			modus = LIBUSB_ENDPOINT_OUT;
+		} else {
+			modus = LIBUSB_ENDPOINT_IN;
+
+			if (!args[0]->IsUint32()) {
+			      THROW_BAD_ARGS("Endpoint::Submit in READ mode expects uint32_t as first parameter")
+			}
+		}
+		
+		if (modus != self->endpoint_type) {
+			THROW_BAD_ARGS("Endpoint::Submit is used as a wrong endpoint type. Change your parameters")
+		}
+		
+		
+		if (modus == LIBUSB_ENDPOINT_OUT) {
+		  	Local<Array> _buffer = Local<Array>::Cast(args[0]);
+			
+			buflen = _buffer->Length();
+			buf = new unsigned char[buflen];
+			
+			for (int i = 0; i < buflen; i++) {
+			  Local<Value> val = _buffer->Get(i);
+			  buf[i] = (uint8_t)val->Uint32Value();
+			}
+		}
+		else {
+			buflen = args[0]->Uint32Value();
+			buf = new unsigned char[buflen];
+		}
+		
 		if (args.Length() >= 3) {
 			if (!args[2]->IsUint32()) {			
-				THROW_BAD_ARGS("Endpoint::Write expects unsigned int as timeout parameter")
+				THROW_BAD_ARGS("Endpoint::Submit expects unsigned int as timeout parameter")
 			} else {
 				timeout = args[2]->Uint32Value();
 			}
 		}
+
+		if (args.Length() >= 4) {
+			if (!args[3]->IsUint32()) {			
+				THROW_BAD_ARGS("Endpoint::Submit expects unsigned char as flags parameter")
+			} else {
+				flags = (uint8_t)args[3]->Uint32Value();
+			}
+		}
+
 		Local<Function> callback = Local<Function>::Cast(args[1]);
 
 		// TODO Isochronous transfer mode 
-		libusb_transfer* transfer = libusb_alloc_transfer(0);
+		if (self->transfer_type == LIBUSB_TRANSFER_TYPE_ISOCHRONOUS) {
+		}
+		
+		libusb_transfer* transfer = libusb_alloc_transfer(iso_packets);
 		
 
-		if (self->FillTransferStructure(transfer, NULL, Persistent<Function>::New(callback), timeout, 0) < 0) {
+		if (self->FillTransferStructure(transfer, buf, buflen, Persistent<Function>::New(callback), timeout, iso_packets) < 0) {
 			THROW_BAD_ARGS("Could not fill USB packet structure on device!")
 		}
 
+		transfer->flags = flags;
+		libusb_submit_transfer(transfer);
+		
 		return scope.Close(True());
 	}
 }

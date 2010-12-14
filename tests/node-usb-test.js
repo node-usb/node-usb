@@ -5,6 +5,7 @@ var instance = usb_driver.create()
 
 assert.notEqual(instance, undefined, "instance must be undefined");
 assert.ok((instance.LIBUSB_CLASS_PER_INTERFACE != undefined), "Constants must be defined");
+assert.ok((instance.LIBUSB_ENDPOINT_IN == 128));
 assert.notEqual(instance.revision, "unknown", "Revision should not unknown");
 assert.equal(instance.isLibusbInitalized, false, "isLibusbInitalized must be false");
 assert.equal(instance.close(), false, "close() must be false because driver is not opened");
@@ -66,6 +67,28 @@ for (var i = 0; i < devices.length; i++) {
 		for (k = 0; k < endpoints.length; k++) {
 			var endpoint = endpoints[k];
 			assert_extra_length(endpoint);
+		
+			assert.throws(function() { endpoint.submit(); });
+			assert.throws(function() { endpoint.submit(1,2); });	
+
+//console.log("ENDPOINT_IN:" + instance.LIBUSB_ENDPOINT_IN + "; ENDPOINT_OUT: " + instance.LIBUSB_ENDPOINT_OUT);
+			if (endpoint.__endpointType == instance.LIBUSB_ENDPOINT_OUT) {
+//console.log("Usage as In -Read");
+				// wrong usage of endpoint. Endpoint is OUT, usage is IN
+				assert.throws(function() { endpoint.submit(100, function(_stat) {}, 0, 0); });
+				var param = new Array();
+				param.push(0x01);
+//				assert.ok(endpoint.submit(param, function (_stat, _data) {}, 10, 10));
+
+			}
+			else {
+//console.log("Usage as OUT - Write");
+				// endoint is IN, usage is OUT
+				var param = new Array(1);
+				param.push(0x01);
+				assert.throws(function() { endpoint.submit(param, function (_stat, _data) {}, 0, 0); });
+			//	assert.ok(endpoint.submit(100, function (stat, _data) {}, 10, 10));
+			}
 		}
 	}
 
