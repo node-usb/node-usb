@@ -45,6 +45,7 @@ namespace NodeUsb {
 		NODE_SET_PROTOTYPE_METHOD(t, "release", Interface::Release); 
 		NODE_SET_PROTOTYPE_METHOD(t, "setAlternateSetting", Interface::AlternateSetting); 
 		NODE_SET_PROTOTYPE_METHOD(t, "isKernelDriverActive", Interface::IsKernelDriverActive);
+		NODE_SET_PROTOTYPE_METHOD(t, "getExtraData", Interface::GetExtraData);
 
 		// Make it visible in JavaScript
 		target->Set(String::NewSymbol("Interface"), t->GetFunction());	
@@ -78,7 +79,7 @@ namespace NodeUsb {
 		interface->Wrap(args.This());
 
 #define LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(name) \
-		args.This()->Set(V8STR(#name), Integer::New(interface->descriptor->name));
+		args.This()->Set(V8STR(#name), Uint32::New(interface->descriptor->name));
 		LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bLength)
 		LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bDescriptorType)
 		LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bInterfaceNumber)
@@ -104,6 +105,22 @@ namespace NodeUsb {
 		LOCAL(Interface, self, info.Holder())
 		
 		return scope.Close(Uint32::New(self->idx_alt_setting));
+	}
+
+	Handle<Value> Interface::GetExtraData(const Arguments& args) {
+		LOCAL(Interface, self, args.This())
+		 
+		int m = (*self->descriptor).extra_length;
+		
+		Local<Array> r = Array::New(m);
+		
+		for (int i = 0; i < m; i++) {
+		  uint32_t c = (*self->descriptor).extra[i];
+		  
+		  r->Set(i, Uint32::New(c));
+		}
+		
+		return scope.Close(r);
 	}
 
 	Handle<Value> Interface::IsKernelDriverActive(const Arguments& args) {
@@ -265,14 +282,14 @@ namespace NodeUsb {
 		int numEndpoints = (*self->descriptor).bNumEndpoints;
 
 		for (int i = 0; i < numEndpoints; i++) {
-	 		libusb_endpoint_descriptor ep = (*self->descriptor).endpoint[i];
-
-			Local<Value> args_new_endpoint[2] = {
+			Local<Value> args_new_endpoint[4] = {
 				External::New(self->device_container),
-				External::New(&ep),
+				Uint32::New(self->idx_interface),
+				Uint32::New(self->idx_alt_setting),
+				Uint32::New(i)
 			};
 			// create new object instance of class NodeUsb::Endpoint
-			Persistent<Object> js_endpoint(Endpoint::constructor_template->GetFunction()->NewInstance(2, args_new_endpoint));
+			Persistent<Object> js_endpoint(Endpoint::constructor_template->GetFunction()->NewInstance(4, args_new_endpoint));
 			r->Set(i, js_endpoint);
 		}
 

@@ -11,6 +11,12 @@ exports.create = function() {
 	usbInstance.get_devices = function() {
 		if (devices == undefined) {
 			devices = this.getDevices();
+			
+			for (var i = 0, m = devices.length; i < m; i++) {
+				var device = devices[i];
+				var dd = device.getConfigDescriptor();
+				device.extra_length = dd.extra_length;
+			}
 		}
 
 		return devices;

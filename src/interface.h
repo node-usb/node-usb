@@ -28,6 +28,7 @@ namespace NodeUsb {
 			static Handle<Value> DetachKernelDriver(const Arguments& args);
 			static Handle<Value> AttachKernelDriver(const Arguments& args);
 			static Handle<Value> Claim(const Arguments& args);
+			static Handle<Value> GetExtraData(const Arguments& args);
 			static Handle<Value> GetEndpoints(const Arguments& args);
 
 			struct release_request:device_request {

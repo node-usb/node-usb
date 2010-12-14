@@ -27,6 +27,23 @@ function toByteArray(_i) {
 	return array.reverse();
 }
 
+function get_extra_data(obj) {
+	var data = obj.getExtraData(), r = "";
+	
+	if (!max_bytes) {
+		var max_bytes = 5;
+	}
+	
+	for (var i = 0; (i < data.length && i < max_bytes); i++) {
+		r += "0x" + pad(toHex(data[i]), 2, 0) + " ";
+	}
+
+	if (i < data.length) {
+		r += "(" + (data.length - i) + " bytes more)";
+	}
+
+	return r;
+}
 
 function pad(v, len, fill) {
 	var s = v.toString();
@@ -74,6 +91,8 @@ for (var i = 0; i < devices.length; i++) {
 	console.log("    iConfiguration              " + cd.iConfiguration);
 	console.log("    bmAttributes                0x" + toHex(cd.bmAttributes));
 	console.log("    MaxPower                    " + cd.MaxPower);
+	console.log("    __extra_length              " + cd.extra_length);
+	console.log("    __extra_data (first 5b)     " + get_extra_data(device));
 
 	var interfaces = device.getInterfaces();
 
@@ -89,6 +108,8 @@ for (var i = 0; i < devices.length; i++) {
 		console.log("      bInterfaceSubClass        " + interface.bInterfaceSubClass);
 		console.log("      bInterfaceProtocol        " + interface.bInterfaceProtocol);
 		console.log("      iInterface                " + interface.iInterface);
+		console.log("      __extra_length            " + interface.extra_length);
+		console.log("      __extra_data (first 5b)   " + get_extra_data(interface));
 		
 		var endpoints = interface.getEndpoints();
 
@@ -101,6 +122,8 @@ for (var i = 0; i < devices.length; i++) {
 			console.log("        bmAttributes              " + endpoint.bmAttributes);
 			console.log("        wMaxPacketSize            0x" + pad(toHex(endpoint.wMaxPacketSize), 4, "0"));
 			console.log("        bInterval                 " + endpoint.bInterval);
+			console.log("        __extra_length            " + endpoint.extra_length);
+			console.log("        __extra_data (first 5b)   " + get_extra_data(endpoint));
 		}
 	}
 }

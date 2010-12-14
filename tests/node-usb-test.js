@@ -21,6 +21,11 @@ var devices = instance.get_devices();
 assert.notEqual(devices, undefined, "getDevices() must not be undefined");
 assert.ok((devices.length > 0), "getDevices() must be larger than 0 (assume that at least one host controller is available)");
 
+function assert_extra_length(obj) {
+	var r = obj.getExtraData();
+	assert.ok((r.length == obj.extra_length), "getExtraLength() (length is: " + r.length + ") + must be equal to .extra_length (is: " + obj.extra_length + ")");
+}
+
 for (var i = 0; i < devices.length; i++) {
 	var device = devices[i];
 	var deviceDesc = undefined;
@@ -43,6 +48,7 @@ for (var i = 0; i < devices.length; i++) {
 		}
 	}
 	assert.ok(found, "could not find USB interface with find_by_vid_and_pid with equal busNumber and deviceAddress");
+	assert_extra_length(device);
 
 	var interfaces = device.getInterfaces();
 
@@ -51,13 +57,15 @@ for (var i = 0; i < devices.length; i++) {
 
 	for (var j = 0; j < interfaces.length; j++) {
 		var interface = interfaces[j];
+		assert_extra_length(interface);
+
 		var endpoints = interface.getEndpoints();
 		assert.ok((endpoints != undefined), "Device.getEndpoints() must return an array");
 		assert.ok((endpoints.length >= 0), "Device.getEndpoints() must return an array with length >= 0");
 
 		for (k = 0; k < endpoints.length; k++) {
 			var endpoint = endpoints[k];
-//			console.log(endpoint);
+			assert_extra_length(endpoint);
 		}
 	}
 

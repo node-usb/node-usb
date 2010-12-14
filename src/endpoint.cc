@@ -4,13 +4,14 @@
 namespace NodeUsb {
 	Persistent<FunctionTemplate> Endpoint::constructor_template;
 
-	Endpoint::Endpoint(nodeusb_device_container* _device_container, libusb_endpoint_descriptor* _endpoint_descriptor) {
+	Endpoint::Endpoint(nodeusb_device_container* _device_container, const libusb_endpoint_descriptor* _endpoint_descriptor, uint32_t _idx_endpoint) {
 		device_container = _device_container;
 		descriptor = _endpoint_descriptor;
 		// if bit[7] of endpoint address is set => ENDPOINT_IN (device to host), else: ENDPOINT_OUT (host to device)
 		endpoint_type = (descriptor->bEndpointAddress & (1 << 7)) ? (LIBUSB_ENDPOINT_IN) : (LIBUSB_ENDPOINT_OUT);
 		// bit[0] and bit[1] of bmAttributes masks transfer_type; 3 = 0000 0011
 		transfer_type = (3 & descriptor->bmAttributes);
+		idx_endpoint = _idx_endpoint;
 	}
 
 	Endpoint::~Endpoint() {
@@ -41,6 +42,7 @@ namespace NodeUsb {
 		instance_template->SetAccessor(V8STR("__maxPacketSize"), Endpoint::MaxPacketSizeGetter);
 
 		// methods exposed to node.js
+		NODE_SET_PROTOTYPE_METHOD(t, "getExtraData", Endpoint::GetExtraData);
 
 		// Make it visible in JavaScript
 		target->Set(String::NewSymbol("Endpoint"), t->GetFunction());	
@@ -52,24 +54,25 @@ namespace NodeUsb {
 		DEBUG("New Endpoint object created")
 
 		// need libusb_device structure as first argument
-		if (args.Length() != 2 || !args[0]->IsExternal() || !args[1]->IsExternal()) {
-			THROW_BAD_ARGS("Device::New argument is invalid. [object:external:libusb_device, object:external:libusb_external_descriptor]!") 
+		if (args.Length() != 4 || !args[0]->IsExternal() || !args[1]->IsUint32() || !args[2]->IsUint32()|| !args[3]->IsUint32()) {
+			THROW_BAD_ARGS("Device::New argument is invalid. [object:external:libusb_device, uint32_t:idx_interface, uint32_t:idx_alt_setting, uint32_t:idx_endpoint]!") 
 		}
 
 		// make local value reference to first parameter
 		Local<External> refDeviceContainer = Local<External>::Cast(args[0]);
-		Local<External> refEndpointDescriptor = Local<External>::Cast(args[1]);
+		uint32_t idxInterface = args[1]->Uint32Value();
+		uint32_t idxAltSetting = args[2]->Uint32Value();
+		uint32_t idxEndpoint = args[3]->Uint32Value();
 
-		// cast local reference to local 
 		nodeusb_device_container *deviceContainer = static_cast<nodeusb_device_container*>(refDeviceContainer->Value());
-		libusb_endpoint_descriptor *libusbEndpointDescriptor = static_cast<libusb_endpoint_descriptor*>(refEndpointDescriptor->Value());
+		const libusb_endpoint_descriptor *libusbEndpointDescriptor = &(((*deviceContainer->config_descriptor).interface[idxInterface]).altsetting[idxAltSetting]).endpoint[idxEndpoint];
 
 		// create new Endpoint object
-		Endpoint *endpoint = new Endpoint(deviceContainer, libusbEndpointDescriptor);
+		Endpoint *endpoint = new Endpoint(deviceContainer, libusbEndpointDescriptor, idxEndpoint);
 		// initalize handle
 
 #define LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(name) \
-		args.This()->Set(V8STR(#name), Integer::New(endpoint->descriptor->name));
+		args.This()->Set(V8STR(#name), Uint32::New(endpoint->descriptor->name));
 		LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bLength)
 		LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bDescriptorType)
 		LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bEndpointAddress)
@@ -114,6 +117,22 @@ namespace NodeUsb {
 		CHECK_USB((r = libusb_get_max_iso_packet_size(self->device_container->device, self->descriptor->bEndpointAddress)), scope)
 		
 		return scope.Close(Integer::New(r));
+	}
+
+	Handle<Value> Endpoint::GetExtraData(const Arguments& args) {
+		LOCAL(Endpoint, self, args.This())
+		 
+		long m = (*self->descriptor).extra_length;
+		
+		Local<Array> r = Array::New(m);
+		
+		for (int i = 0; i < m; i++) {
+		  uint32_t c = (*self->descriptor).extra[i];
+		  
+		  r->Set(i, Uint32::New(c));
+		}
+		
+		return scope.Close(r);
 	}
 
 	void Callback::DispatchAsynchronousUsbTransfer(libusb_transfer *_transfer) {

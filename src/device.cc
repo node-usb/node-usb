@@ -35,6 +35,7 @@ namespace NodeUsb {
 		NODE_SET_PROTOTYPE_METHOD(t, "getDeviceDescriptor", Device::GetDeviceDescriptor);
 		NODE_SET_PROTOTYPE_METHOD(t, "getConfigDescriptor", Device::GetConfigDescriptor);
 		NODE_SET_PROTOTYPE_METHOD(t, "getInterfaces", Device::GetInterfaces);
+		NODE_SET_PROTOTYPE_METHOD(t, "getExtraData", Device::GetExtraData);
 
 		// Make it visible in JavaScript
 		target->Set(String::NewSymbol("Device"), t->GetFunction());	
@@ -176,7 +177,7 @@ namespace NodeUsb {
 
 // TODO: Read-Only
 #define LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(name) \
-		r->Set(V8STR(#name), Integer::New((*self->device_container->config_descriptor).name));
+		r->Set(V8STR(#name), Uint32::New((*self->device_container->config_descriptor).name));
 
 	/**
 	 * Returns configuration descriptor structure
@@ -206,6 +207,22 @@ namespace NodeUsb {
 		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(MaxPower)
 		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(extra_length)
 
+		return scope.Close(r);
+	}
+	
+	Handle<Value> Device::GetExtraData(const Arguments& args) {
+		LOCAL(Device, self, args.This())
+		 
+		int m = (*self->device_container->config_descriptor).extra_length;
+		
+		Local<Array> r = Array::New(m);
+		
+		for (int i = 0; i < m; i++) {
+		  uint32_t c = (*self->device_container->config_descriptor).extra[i];
+		  
+		  r->Set(i, Uint32::New(c));
+		}
+		
 		return scope.Close(r);
 	}
 	

@@ -32,6 +32,7 @@ namespace NodeUsb {
 			static int EIO_Reset(eio_req *req);
 			static Handle<Value> GetConfigDescriptor(const Arguments& args);
 			static Handle<Value> GetDeviceDescriptor(const Arguments& args);
+			static Handle<Value> GetExtraData(const Arguments& args);
 			static Handle<Value> GetInterfaces(const Arguments& args);
 	};
 }
