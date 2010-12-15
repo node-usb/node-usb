@@ -9,7 +9,7 @@
 #define V8STR(str) String::New(str)
 
 #ifdef ENABLE_DEBUG
-  #define DEBUG(str) fprintf(stderr, "node-usb [%s:%s() %d]: %s", __FILE__, __FUNCTION__, __LINE__, str); fprintf(stderr, "\n");
+  #define DEBUG(...) fprintf(stderr, "node-usb [%s:%s() %d]: %s", __FILE__, __FUNCTION__, __LINE__, __VA_ARGS__); fprintf(stderr, "\n");
 #endif
 
 #ifndef ENABLE_DEBUG
