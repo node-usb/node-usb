@@ -78,16 +78,16 @@ for (var i = 0; i < devices.length; i++) {
 				assert.throws(function() { endpoint.submit(100, function(_stat) {}, 0, 0); });
 				var param = new Array();
 				param.push(0x01);
-//				assert.ok(endpoint.submit(param, function (_stat, _data) {}, 10, 10));
+				assert.ok(endpoint.submit(param, function (_stat, _data) {}, 10, 10));
 
 			}
 			else {
-//console.log("Usage as OUT - Write");
+console.log("Usage as OUT - Write");
 				// endoint is IN, usage is OUT
 				var param = new Array(1);
 				param.push(0x01);
 				assert.throws(function() { endpoint.submit(param, function (_stat, _data) {}, 0, 0); });
-			//	assert.ok(endpoint.submit(100, function (stat, _data) {}, 10, 10));
+				assert.ok(endpoint.submit(100, function (stat, _data) {}, 10, 10));
 			}
 		}
 	}

@@ -231,6 +231,9 @@ namespace NodeUsb {
 			  Local<Value> val = _buffer->Get(i);
 			  buf[i] = (uint8_t)val->Uint32Value();
 			}
+			
+			DEBUG("Dumping OUT byte stream...")
+			DUMP_BYTE_STREAM(buf, buflen);
 		}
 		else {
 			buflen = args[0]->Uint32Value();

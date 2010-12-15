@@ -9,11 +9,17 @@
 #define V8STR(str) String::New(str)
 
 #ifdef ENABLE_DEBUG
-  #define DEBUG(...) fprintf(stderr, "node-usb [%s:%s() %d]: %s", __FILE__, __FUNCTION__, __LINE__, __VA_ARGS__); fprintf(stderr, "\n");
+  #define DEBUG_HEADER fprintf(stderr, "node-usb [%s:%s() %d]: ", __FILE__, __FUNCTION__, __LINE__); 
+  #define DEBUG_FOOTER fprintf(stderr, "\n");
+  #define DEBUG(str) DEBUG_HEADER fprintf(stderr, "%s", str); DEBUG_FOOTER
+  #define DEBUG_OPT(...) DEBUG_HEADER fprintf(stderr, __VA_ARGS__); DEBUG_FOOTER
+  #define DUMP_BYTE_STREAM(stream, len) DEBUG_HEADER for (int i = 0; i < buflen; i++) { fprintf(stderr, "0x%02X ", stream[i]); }
 #endif
 
 #ifndef ENABLE_DEBUG
+  #define DEBUG(...)
   #define DEBUG(str)
+  #define DUMP_BYTE_STREAM(stream)
 #endif
 
 #define THROW_BAD_ARGS(fail) return ThrowException(Exception::TypeError(V8STR(fail)));
