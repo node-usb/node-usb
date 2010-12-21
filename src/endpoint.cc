@@ -43,7 +43,9 @@ namespace NodeUsb {
 
 		// methods exposed to node.js
 		NODE_SET_PROTOTYPE_METHOD(t, "getExtraData", Endpoint::GetExtraData);
-		NODE_SET_PROTOTYPE_METHOD(t, "submit", Endpoint::Submit);
+		NODE_SET_PROTOTYPE_METHOD(t, "submitNative", Endpoint::Submit);
+		NODE_SET_PROTOTYPE_METHOD(t, "bulkTransfer", Endpoint::BulkTransfer);
+		NODE_SET_PROTOTYPE_METHOD(t, "interruptTransfer", Endpoint::InterruptTransfer);
 
 		// Make it visible in JavaScript
 		target->Set(String::NewSymbol("Endpoint"), t->GetFunction());	
@@ -185,6 +187,11 @@ namespace NodeUsb {
 		return err;
 	}
 
+#define CHECK_MODUS_EQUALS_ENDPOINT_TYPE \
+		if (modus != self->endpoint_type) {\
+			THROW_BAD_ARGS("Endpoint::Transfer is used as a wrong endpoint type. Change your parameters") \
+		}\
+
 	/**
 	 * @param function js-callback[status]
 	 * @param array byte-array
@@ -192,64 +199,14 @@ namespace NodeUsb {
 	 */
 	Handle<Value> Endpoint::Submit(const Arguments& args) {
 		LOCAL(Endpoint, self, args.This())
-		libusb_endpoint_direction modus;
-
-		uint32_t timeout = 0;
 		uint32_t iso_packets = 0;
 		uint8_t flags = 0;
-		int32_t buflen = 0;
-		unsigned char *buf;
 		
-		// need libusb_device structure as first argument
-		if (args.Length() < 2 || !args[1]->IsFunction()) {
-			THROW_BAD_ARGS("Endpoint::Submit expects at least 2 arguments [array[] data, function:callback[data, status] [, uint:timeout_in_ms, uint:transfer_flags, uint32_t:iso_packets]]!") 
-		}
-
-		// Write mode
-		if (args[0]->IsArray()) {
-			modus = LIBUSB_ENDPOINT_OUT;
-		} else {
-			modus = LIBUSB_ENDPOINT_IN;
-
-			if (!args[0]->IsUint32()) {
-			      THROW_BAD_ARGS("Endpoint::Submit in READ mode expects uint32_t as first parameter")
-			}
-		}
-		
-		if (modus != self->endpoint_type) {
-			THROW_BAD_ARGS("Endpoint::Submit is used as a wrong endpoint type. Change your parameters")
-		}
-		
-		
-		if (modus == LIBUSB_ENDPOINT_OUT) {
-		  	Local<Array> _buffer = Local<Array>::Cast(args[0]);
-			
-			buflen = _buffer->Length();
-			buf = new unsigned char[buflen];
-			
-			for (int i = 0; i < buflen; i++) {
-			  Local<Value> val = _buffer->Get(i);
-			  buf[i] = (uint8_t)val->Uint32Value();
-			}
-			
-			DEBUG("Dumping OUT byte stream...")
-			DUMP_BYTE_STREAM(buf, buflen);
-		}
-		else {
-			buflen = args[0]->Uint32Value();
-			buf = new unsigned char[buflen];
-		}
-		
-		if (args.Length() >= 3) {
-			if (!args[2]->IsUint32()) {			
-				THROW_BAD_ARGS("Endpoint::Submit expects unsigned int as timeout parameter")
-			} else {
-				timeout = args[2]->Uint32Value();
-			}
-		}
+		INIT_TRANSFER_CALL(2, 1, 2)
+		CHECK_MODUS_EQUALS_ENDPOINT_TYPE
 
 		if (args.Length() >= 4) {
-			if (!args[3]->IsUint32()) {			
+			if (!args[3]->IsUint32()) {
 				THROW_BAD_ARGS("Endpoint::Submit expects unsigned char as flags parameter")
 			} else {
 				flags = (uint8_t)args[3]->Uint32Value();
@@ -273,5 +230,59 @@ namespace NodeUsb {
 		libusb_submit_transfer(transfer);
 		
 		return scope.Close(True());
+	}
+
+#define BULK_INTERRUPT_EIO(EIO_TO_EXECUTE, EIO_AFTER)\
+		LOCAL(Endpoint, self, args.This())\
+		INIT_TRANSFER_CALL(2, 1, 2)\
+		CHECK_MODUS_EQUALS_ENDPOINT_TYPE\
+		OPEN_DEVICE_HANDLE_NEEDED(scope)\
+		EIO_NEW(bulk_interrupt_transfer_request, bulk_interrupt_transfer_req)\
+		EIO_DELEGATION(bulk_interrupt_transfer_req, 1)\
+		bulk_interrupt_transfer_req->handle = self->device_container->handle;\
+		bulk_interrupt_transfer_req->timeout = timeout;\
+		bulk_interrupt_transfer_req->length = buflen;\
+		bulk_interrupt_transfer_req->data = buf;\
+		bulk_interrupt_transfer_req->endpoint = self->descriptor->bEndpointAddress;\
+		eio_custom(EIO_TO_EXECUTE, EIO_PRI_DEFAULT, EIO_AFTER, bulk_interrupt_transfer_req);\
+		ev_ref(EV_DEFAULT_UC);\
+		return Undefined();	
+
+#define BULK_INTERRUPT_FREE TRANSFER_REQUEST_FREE(bulk_interrupt_transfer_request)
+
+
+#define BULK_INTERRUPT_EXECUTE(METHOD, SOURCE)\
+		EIO_CAST(bulk_interrupt_transfer_request, bit_req)\
+		int errcode = 0;\
+		if ((errcode = libusb_bulk_transfer(bit_req->handle, bit_req->endpoint, bit_req->data, bit_req->length, &(bit_req->transferred), bit_req->timeout)) < LIBUSB_SUCCESS) {\
+			bit_req->error->Set(V8STR("error_source"), V8STR(SOURCE));\
+		}\
+		bit_req->error->Set(V8STR("error_code"), Uint32::New(errcode));\
+		req->result = 0;\
+		return 0;
+
+
+	Handle<Value> Endpoint::BulkTransfer(const Arguments& args) {
+		BULK_INTERRUPT_EIO(EIO_BulkTransfer, EIO_After_BulkTransfer)
+	}
+
+	int Endpoint::EIO_BulkTransfer(eio_req *req) {
+		BULK_INTERRUPT_EXECUTE(libusb_bulk_transfer, "bulkTransfer")
+	}
+
+	int Endpoint::EIO_After_BulkTransfer(eio_req *req) {
+		BULK_INTERRUPT_FREE
+	}
+
+	Handle<Value> Endpoint::InterruptTransfer(const Arguments& args) {
+		BULK_INTERRUPT_EIO(EIO_InterruptTransfer, EIO_After_InterruptTransfer)
+	}
+
+	int Endpoint::EIO_InterruptTransfer(eio_req *req) {
+		BULK_INTERRUPT_EXECUTE(libusb_interrupt_transfer, "interruptTransfer")
+	}
+
+	int Endpoint::EIO_After_InterruptTransfer(eio_req *req) {
+		BULK_INTERRUPT_FREE
 	}
 }

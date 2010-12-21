@@ -15,7 +15,16 @@ namespace NodeUsb {
 		protected:
 			// members
 			struct nodeusb_device_container *device_container;
+
 			struct libusb_device_descriptor device_descriptor;
+
+			struct control_transfer_request:nodeusb_transfer {
+				uint8_t bmRequestType;
+				uint8_t bRequest;
+				uint16_t wValue;
+				uint16_t wIndex;
+				uint16_t wLength;
+			};
 
 			// V8 getter
 			static Handle<Value> BusNumberGetter(Local<String> property, const AccessorInfo &info);
@@ -34,6 +43,9 @@ namespace NodeUsb {
 			static Handle<Value> GetDeviceDescriptor(const Arguments& args);
 			static Handle<Value> GetExtraData(const Arguments& args);
 			static Handle<Value> GetInterfaces(const Arguments& args);
+			static Handle<Value> ControlTransfer(const Arguments& args);
+			static int EIO_ControlTransfer(eio_req *req);
+			static int EIO_After_ControlTransfer(eio_req *req);
 	};
 }
 #endif

@@ -180,7 +180,7 @@ namespace NodeUsb {
 		EIO_NEW(release_request, release_req)
 
 		// create default delegation
-		EIO_DELEGATION(release_req)
+		EIO_DELEGATION(release_req, 0)
 		
 		release_req->handle = self->device_container->handle;
 		release_req->interface_number = self->descriptor->bInterfaceNumber;
@@ -236,7 +236,7 @@ namespace NodeUsb {
 		EIO_NEW(alternate_setting_request, alt_req)
 
 		// create default delegation
-		EIO_DELEGATION(alt_req)
+		EIO_DELEGATION(alt_req, 1)
 		
 		alt_req->handle = self->device_container->handle;
 		alt_req->interface_number = self->descriptor->bInterfaceNumber;

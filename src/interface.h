@@ -31,8 +31,7 @@ namespace NodeUsb {
 			static Handle<Value> GetExtraData(const Arguments& args);
 			static Handle<Value> GetEndpoints(const Arguments& args);
 
-			struct release_request:device_request {
-				libusb_device_handle *handle;
+			struct release_request:device_handle_request {
 				int interface_number;
 			};
 			static Handle<Value> Release(const Arguments& args);

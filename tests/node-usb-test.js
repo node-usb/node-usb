@@ -68,17 +68,17 @@ for (var i = 0; i < devices.length; i++) {
 			var endpoint = endpoints[k];
 			assert_extra_length(endpoint);
 		
-			assert.throws(function() { endpoint.submit(); });
-			assert.throws(function() { endpoint.submit(1,2); });	
+			assert.throws(function() { endpoint.submitNative(); });
+			assert.throws(function() { endpoint.submitNative(1,2); });	
 
 //console.log("ENDPOINT_IN:" + instance.LIBUSB_ENDPOINT_IN + "; ENDPOINT_OUT: " + instance.LIBUSB_ENDPOINT_OUT);
 			if (endpoint.__endpointType == instance.LIBUSB_ENDPOINT_OUT) {
 //console.log("Usage as In -Read");
 				// wrong usage of endpoint. Endpoint is OUT, usage is IN
-				assert.throws(function() { endpoint.submit(100, function(_stat) {}, 0, 0); });
+				assert.throws(function() { endpoint.submitNative(100, function(_stat) {}, 0, 0); });
 				var param = new Array();
 				param.push(0x01);
-				assert.ok(endpoint.submit(param, function (_stat, _data) {}, 10, 10));
+				assert.ok(endpoint.submitNative(param, function (_stat, _data) {}, 10, 10));
 
 			}
 			else {
@@ -86,8 +86,8 @@ console.log("Usage as OUT - Write");
 				// endoint is IN, usage is OUT
 				var param = new Array(1);
 				param.push(0x01);
-				assert.throws(function() { endpoint.submit(param, function (_stat, _data) {}, 0, 0); });
-				assert.ok(endpoint.submit(100, function (stat, _data) {}, 10, 10));
+				assert.throws(function() { endpoint.submitNative(param, function (_stat, _data) {}, 0, 0); });
+				assert.ok(endpoint.submitNative(100, function (stat, _data) {}, 10, 10));
 			}
 		}
 	}
