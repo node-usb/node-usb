@@ -14,12 +14,10 @@
   #define DEBUG(str) DEBUG_HEADER fprintf(stderr, "%s", str); DEBUG_FOOTER
   #define DEBUG_OPT(...) DEBUG_HEADER fprintf(stderr, __VA_ARGS__); DEBUG_FOOTER
   #define DUMP_BYTE_STREAM(stream, len) DEBUG_HEADER for (int i = 0; i < buflen; i++) { fprintf(stderr, "0x%02X ", stream[i]); }
-#endif
-
-#ifndef ENABLE_DEBUG
-  #define DEBUG(...)
+#else
   #define DEBUG(str)
-  #define DUMP_BYTE_STREAM(stream)
+  #define DEBUG_OPT(...)
+  #define DUMP_BYTE_STREAM(stream, len)
 #endif
 
 #define THROW_BAD_ARGS(fail) return ThrowException(Exception::TypeError(V8STR(fail)));
