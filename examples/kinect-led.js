@@ -1,3 +1,4 @@
+// usage without warranty
 var usb_driver = require("../usb.js"),
 	assert = require('assert'),
 	http = require('http'),
@@ -16,6 +17,8 @@ LED_OPTIONS['YELLOW']		= 3;
 LED_OPTIONS['BLINK_YELLOW']	= 4;
 LED_OPTIONS['BLINK_GREEN']	= 5;
 LED_OPTIONS['BLINK_RED_YELLOW'] = 6;
+
+var MAX_TILT_ANGLE = 31, MIN_TILT_ANGLE = -31;
 
 // Search for motor device
 var usb = usb_driver.create()
@@ -44,32 +47,52 @@ http.createServer(function(req, res) {
 	req.on('end', function() {
 		var postData = qs.parse(incomingBody);
 
-		if (req.url == '/update') {
-			var light = postData['light'];
+		switch (req.url) {
+			case '/updateLed':
+				var light = postData['light'];
 
-			if (!light || (typeof(LED_OPTIONS[light]) == undefined)) {
-				console.log("No light available");
-			}
-			else {
-				var lightId = LED_OPTIONS[light];
+				if (!light || (typeof(LED_OPTIONS[light]) == undefined)) {
+					console.log(" - No light available");
+				}
+				else {
+					var lightId = LED_OPTIONS[light];
 				
-				// send control information
-				motor.controlTransfer(new Array("0"), 0x40, 0x06, lightId, 0x0, function(data) {
-					console.log("LED toggled");
+					// send control information
+					motor.controlTransfer(new Array("0"), 0x40, 0x06, lightId, 0x0, function(data) {
+						console.log(" + LED toggled");
+					}, 0);
+				}
+				break;
+			case '/updateAngle':
+				var angle = parseInt(postData['angle']);
+
+				if (isNaN(angle)) {
+					angle = 0;
+				}
+
+				angle = (angle < MIN_TILT_ANGLE) ? MIN_TILT_ANGLE : ((angle > MAX_TILT_ANGLE) ? MAX_TILT_ANGLE : angle);
+				angle = angle * 2;
+console.log("Angle set to " + angle);
+				motor.controlTransfer(new Array("0"), 0x40, 0x31, angle, 0x0, function(data) {
+					console.log(" + Angle set");
 				}, 0);
-			}
+
+				break;
 		}
 	});
 
-	var html = "<html><head><title>node-usb :: Microsoft Kinect example</title></head><body><h1>Control your Microsoft Kinect via node.js / node-usb</h1><form method='post' action='update'>";
+	var html = "<html><head><title>node-usb :: Microsoft Kinect example</title></head><body><h1>Control your Microsoft Kinect via node.js / node-usb</h1><form method='post' action='updateLed'>";
 	html += "Select LED light: <select name='light'>";
 
 	for (var prop in LED_OPTIONS) {
 		html += "<option value='" + prop + "'>" + prop + "</option>";
 	}
 
-	html += "</select><input type='submit' value='change color' /></form></body></html>";
-
+	html += "</select><input type='submit' value='change color' /></form>";
+	html += "<form method='post' action='updateAngle'>";
+	html += "Set angle (-31 - +31) <input type='text' name='angle' size='2' /><input type='submit' value='change angle'/></form>";
+	html += "</body></html>";
+ 
 	res.write(html);
 	res.end();
 }).listen(8080);

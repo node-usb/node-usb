@@ -322,31 +322,31 @@ namespace NodeUsb {
 		EIO_NEW(control_transfer_request, control_transfer_req)
 
 		// 2. param: bmRequestType
-		if (!args[1]->IsUint32()) {
-			THROW_BAD_ARGS("Device::ControlTransfer expects unsigned int as bmRequestType parameter")
+		if (!args[1]->IsInt32()) {
+			THROW_BAD_ARGS("Device::ControlTransfer expects int as bmRequestType parameter")
 		} else {
-			control_transfer_req->bmRequestType = (uint8_t)args[1]->Uint32Value();
+			control_transfer_req->bmRequestType = (uint8_t)args[1]->Int32Value();
 		}
 
 		// 3. param: bRequest
-		if (!args[2]->IsUint32()) {
-			THROW_BAD_ARGS("Device::ControlTransfer expects unsigned int as bRequest parameter")
+		if (!args[2]->IsInt32()) {
+			THROW_BAD_ARGS("Device::ControlTransfer expects int as bRequest parameter")
 		} else {
-			control_transfer_req->bRequest = (uint8_t)args[2]->Uint32Value();
+			control_transfer_req->bRequest = (uint8_t)args[2]->Int32Value();
 		}
 
 		// 4. param: wValue
-		if (!args[3]->IsUint32()) {
-			THROW_BAD_ARGS("Device::ControlTransfer expects unsigned int as wValue parameter")
+		if (!args[3]->IsInt32()) {
+			THROW_BAD_ARGS("Device::ControlTransfer expects int as wValue parameter")
 		} else {
-			control_transfer_req->wValue = (uint16_t)args[3]->Uint32Value();
+			control_transfer_req->wValue = (uint16_t)args[3]->Int32Value();
 		}
 
 		// 5. param: wIndex
-		if (!args[4]->IsUint32()) {
-			THROW_BAD_ARGS("Device::ControlTransfer expects unsigned int as wIndex parameter")
+		if (!args[4]->IsInt32()) {
+			THROW_BAD_ARGS("Device::ControlTransfer expects int as wIndex parameter")
 		} else {
-			control_transfer_req->wIndex = (uint16_t)args[4]->Uint32Value();
+			control_transfer_req->wIndex = (uint16_t)args[4]->Int32Value();
 		}
 
 		control_transfer_req->handle = self->device_container->handle;
