@@ -229,7 +229,7 @@ namespace NodeUsb {
 	Handle<Value> Interface::AlternateSetting(const Arguments& args) {
 		LOCAL(Interface, self, args.This())
 		
-		if (args.Length() != 1 || args[0]->IsUint32()) {
+		if (args.Length() != 2 || args[0]->IsUint32()) {
 			THROW_BAD_ARGS("Interface::AlternateSetting expects [uint32:setting] as first parameter")
 		}
 		
