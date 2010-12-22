@@ -315,11 +315,11 @@ namespace NodeUsb {
 	 * @param int timeout (optional)
 	 */
 	Handle<Value> Device::ControlTransfer(const Arguments& args) {
-		LOCAL(Device, self, args.This())\
+		LOCAL(Device, self, args.This())
 		INIT_TRANSFER_CALL(7, 5, 6)
 		
-		OPEN_DEVICE_HANDLE_NEEDED(scope)\
-		EIO_NEW(control_transfer_request, control_transfer_req)\
+		OPEN_DEVICE_HANDLE_NEEDED(scope)
+		EIO_NEW(control_transfer_request, control_transfer_req)
 
 		// 2. param: bmRequestType
 		if (!args[1]->IsUint32()) {
@@ -346,13 +346,14 @@ namespace NodeUsb {
 		if (!args[4]->IsUint32()) {
 			THROW_BAD_ARGS("Device::ControlTransfer expects unsigned int as wIndex parameter")
 		} else {
-			control_transfer_req->bmRequestType = (uint16_t)args[4]->Uint32Value();
+			control_transfer_req->wIndex = (uint16_t)args[4]->Uint32Value();
 		}
 
 		control_transfer_req->handle = self->device_container->handle;
 		control_transfer_req->timeout = timeout;
 		control_transfer_req->wLength = buflen;
 		control_transfer_req->data = buf;
+		DEBUG_OPT("bmRequestType 0x%X, bRequest: 0x%X, wValue: 0x%X, wIndex: 0x%X, wLength: 0x%X, timeout: 0x%X", control_transfer_req->bmRequestType, control_transfer_req->bRequest, control_transfer_req->wValue, control_transfer_req->wIndex, control_transfer_req->wLength, control_transfer_req->timeout);
 
 		EIO_DELEGATION(control_transfer_req, 5)
 

@@ -1,8 +1,9 @@
-var usb_driver = require("../usb.js");
-var assert = require('assert');
+var usb_driver = require("../usb.js"),
+	assert = require('assert'),
+	http = require('http'),
+	qs = require('querystring');
 
-var usb = usb_driver.create()
-
+	
 // taken from freenect_internal.h
 var VID_MICROSOFT = 0x45e, PID_NUI_CAMERA = 0x02ae, PID_NUI_MOTOR = 0x02b0;
 
@@ -17,6 +18,8 @@ LED_OPTIONS['BLINK_GREEN']	= 5;
 LED_OPTIONS['BLINK_RED_YELLOW'] = 6;
 
 // Search for motor device
+var usb = usb_driver.create()
+
 var motorDevices = usb.find_by_vid_and_pid(VID_MICROSOFT, PID_NUI_MOTOR);
 assert.ok((motorDevices.length >= 1));
 console.log("Total motor devices found: " + motorDevices.length);
@@ -33,8 +36,40 @@ var motorInterface = motorInterfaces[0];
 console.log("Claiming motor interface for further actions");
 motorInterface.claim();
 
-console.log("Toggling LED light ...");
-// send toggle command 
-motor.controlTransfer(new Array(), 0x40, 0x06, LED_OPTIONS['BLINK_GREEN'], 0x0, function(data) {
-	console.log("LED toggled");
-});
+// create simple web GUI. don't blame me - I know it's dirty
+http.createServer(function(req, res) {
+	res.writeHead(200, {'Content-Type': 'text/html'});
+	var incomingBody = "";
+	req.on('data', function(data) { incomingBody += data; });
+	req.on('end', function() {
+		var postData = qs.parse(incomingBody);
+
+		if (req.url == '/update') {
+			var light = postData['light'];
+
+			if (!light || (typeof(LED_OPTIONS[light]) == undefined)) {
+				console.log("No light available");
+			}
+			else {
+				var lightId = LED_OPTIONS[light];
+				
+				// send control information
+				motor.controlTransfer(new Array("0"), 0x40, 0x06, lightId, 0x0, function(data) {
+					console.log("LED toggled");
+				}, 0);
+			}
+		}
+	});
+
+	var html = "<html><head><title>node-usb :: Microsoft Kinect example</title></head><body><h1>Control your Microsoft Kinect via node.js / node-usb</h1><form method='post' action='update'>";
+	html += "Select LED light: <select name='light'>";
+
+	for (var prop in LED_OPTIONS) {
+		html += "<option value='" + prop + "'>" + prop + "</option>";
+	}
+
+	html += "</select><input type='submit' value='change color' /></form></body></html>";
+
+	res.write(html);
+	res.end();
+}).listen(8080);
