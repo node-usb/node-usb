@@ -32,6 +32,8 @@ namespace NodeUsb {
 
 		// Bindings to nodejs
 		NODE_SET_PROTOTYPE_METHOD(t, "reset", Device::Reset); 
+		NODE_SET_PROTOTYPE_METHOD(t, "ref", Device::AddReference); 
+		NODE_SET_PROTOTYPE_METHOD(t, "unref", Device::RemoveReference); 
 		NODE_SET_PROTOTYPE_METHOD(t, "getDeviceDescriptor", Device::GetDeviceDescriptor);
 		NODE_SET_PROTOTYPE_METHOD(t, "getConfigDescriptor", Device::GetConfigDescriptor);
 		NODE_SET_PROTOTYPE_METHOD(t, "getInterfaces", Device::GetInterfaces);
@@ -78,6 +80,9 @@ namespace NodeUsb {
 		// wrap created Device object to v8
 		device->Wrap(args.This());
 
+		// increment object reference, otherwise object will be GCed by V8
+		device->Ref();
+
 		return args.This();
 	}
 	
@@ -101,14 +106,14 @@ namespace NodeUsb {
 		return scope.Close(Integer::New(address));
 	}
 
-	Handle<Value> Device::Ref(const Arguments& args) {
+	Handle<Value> Device::AddReference(const Arguments& args) {
 		LOCAL(Device, self, args.This())
 		libusb_ref_device(self->device_container->device);
 		
 		return Undefined();
 	}
 
-	Handle<Value> Device::Unref(const Arguments& args) {
+	Handle<Value> Device::RemoveReference(const Arguments& args) {
 		LOCAL(Device, self, args.This())
 		libusb_unref_device(self->device_container->device);
 		
@@ -316,7 +321,7 @@ namespace NodeUsb {
 	 */
 	Handle<Value> Device::ControlTransfer(const Arguments& args) {
 		LOCAL(Device, self, args.This())
-		INIT_TRANSFER_CALL(7, 5, 6)
+		INIT_TRANSFER_CALL(6, 5, 7)
 		
 		OPEN_DEVICE_HANDLE_NEEDED(scope)
 		EIO_NEW(control_transfer_request, control_transfer_req)

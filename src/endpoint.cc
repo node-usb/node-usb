@@ -88,6 +88,9 @@ namespace NodeUsb {
 
 		// wrap created Endpoint object to v8
 		endpoint->Wrap(args.This());
+		
+		// increment object reference, otherwise object will be GCed by V8
+		endpoint->Ref();
 
 		return args.This();
 	}
@@ -173,9 +176,6 @@ namespace NodeUsb {
 				break;
 			case LIBUSB_TRANSFER_TYPE_INTERRUPT:
 				libusb_fill_interrupt_transfer(TRANSFER_ARGUMENTS_DEFAULT);
-				break;
-			case LIBUSB_TRANSFER_TYPE_CONTROL:
-				libusb_fill_control_transfer(TRANSFER_ARGUMENTS_LEFT, _buffer, TRANSFER_ARGUMENTS_RIGHT);
 				break;
 			case LIBUSB_TRANSFER_TYPE_ISOCHRONOUS:
 				libusb_fill_iso_transfer(TRANSFER_ARGUMENTS_LEFT, descriptor->bEndpointAddress, TRANSFER_ARGUMENTS_MIDDLE, num_iso_packets, TRANSFER_ARGUMENTS_RIGHT);

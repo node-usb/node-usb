@@ -91,6 +91,9 @@ namespace NodeUsb {
 		LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(iInterface)
 		LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(extra_length)
 
+		// increment object reference, otherwise object will be GCed by V8
+		interface->Ref();
+
 		return args.This();
 	}
 

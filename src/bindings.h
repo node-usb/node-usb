@@ -85,7 +85,7 @@
 		unsigned char *buf; \
 \
 		if (args.Length() < MINIMUM_ARG_LENGTH || !args[CALLBACK_ARG_IDX]->IsFunction()) { \
-			THROW_BAD_ARGS("Endpoint::Transfer expects at least MINIMUM_ARG_LENGTH arguments [mixed data, function:callback[data, status] [, uint:timeout_in_ms, uint:transfer_flags, uint32_t:iso_packets]]!") \
+			THROW_BAD_ARGS("Endpoint::Transfer missing arguments!!") \
 		} \
 \
 		if (args[0]->IsArray()) { \

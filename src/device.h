@@ -33,8 +33,8 @@ namespace NodeUsb {
 			// exposed to V8
 			static Handle<Value> New(const Arguments& args);
 			static Handle<Value> Close(const Arguments& args);
-			static Handle<Value> Ref(const Arguments& args);
-			static Handle<Value> Unref(const Arguments& args);
+			static Handle<Value> AddReference(const Arguments& args);
+			static Handle<Value> RemoveReference(const Arguments& args);
 			static Handle<Value> Reset(const Arguments& args);
 			// Reset -> Async
 			static int EIO_After_Reset(eio_req *req);

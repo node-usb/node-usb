@@ -142,10 +142,14 @@ namespace NodeUsb {
 	Handle<Value> Usb::New(const Arguments& args) {
 		HandleScope scope;
 		// create new object
-		Usb *self = new Usb();
-		// wrap self object to arguments
-		self->Wrap(args.This());
+		Usb *usb = new Usb();
+		// wrap object to arguments
+		usb->Wrap(args.This());
 		args.This()->Set(V8STR("revision"),V8STR(NODE_USB_REVISION));
+
+		// increment object reference, otherwise object will be GCed by V8
+		usb->Ref();
+
 		return args.This();
 	}
 

@@ -1,4 +1,4 @@
-// usage without warranty
+// usage without warranty!
 var usb_driver = require("../usb.js"),
 	assert = require('assert'),
 	http = require('http'),
@@ -60,7 +60,7 @@ http.createServer(function(req, res) {
 					// send control information
 					motor.controlTransfer(new Array("0"), 0x40, 0x06, lightId, 0x0, function(data) {
 						console.log(" + LED toggled");
-					}, 0);
+					});
 				}
 				break;
 			case '/updateAngle':
@@ -75,7 +75,7 @@ http.createServer(function(req, res) {
 console.log("Angle set to " + angle);
 				motor.controlTransfer(new Array("0"), 0x40, 0x31, angle, 0x0, function(data) {
 					console.log(" + Angle set");
-				}, 0);
+				});
 
 				break;
 		}

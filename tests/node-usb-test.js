@@ -48,6 +48,7 @@ for (var i = 0; i < devices.length; i++) {
 			break;
 		}
 	}
+
 	assert.ok(found, "could not find USB interface with find_by_vid_and_pid with equal busNumber and deviceAddress");
 	assert_extra_length(device);
 
@@ -63,6 +64,14 @@ for (var i = 0; i < devices.length; i++) {
 		var endpoints = interface.getEndpoints();
 		assert.ok((endpoints != undefined), "Device.getEndpoints() must return an array");
 		assert.ok((endpoints.length >= 0), "Device.getEndpoints() must return an array with length >= 0");
+		
+		// if we do not claim the interface, we'll get some pthrad_mutex_lock errors from libusb/glibc
+		var r = interface.claim();
+
+		if (r != undefined) {
+			console.log("Failed to claim endpoint; error: " + r.errno);
+			continue;
+		}
 
 		for (k = 0; k < endpoints.length; k++) {
 			var endpoint = endpoints[k];
@@ -71,9 +80,7 @@ for (var i = 0; i < devices.length; i++) {
 			assert.throws(function() { endpoint.submitNative(); });
 			assert.throws(function() { endpoint.submitNative(1,2); });	
 
-//console.log("ENDPOINT_IN:" + instance.LIBUSB_ENDPOINT_IN + "; ENDPOINT_OUT: " + instance.LIBUSB_ENDPOINT_OUT);
 			if (endpoint.__endpointType == instance.LIBUSB_ENDPOINT_OUT) {
-//console.log("Usage as In -Read");
 				// wrong usage of endpoint. Endpoint is OUT, usage is IN
 				assert.throws(function() { endpoint.submitNative(100, function(_stat) {}, 0, 0); });
 				var param = new Array();
@@ -82,7 +89,6 @@ for (var i = 0; i < devices.length; i++) {
 
 			}
 			else {
-console.log("Usage as OUT - Write");
 				// endoint is IN, usage is OUT
 				var param = new Array(1);
 				param.push(0x01);
