@@ -1,0 +1,105 @@
+<html>
+	<head>
+		<title>Vox Tonelab ST</title>
+		<script type="text/javascript" src="http://code.jquery.com/jquery-1.5.js"></script>
+		<script type="text/javascript" src="http://jquery-json.googlecode.com/files/jquery.json-2.2.js"></script>
+	</head>
+	<body>
+		Preset: <select name="preset" id="preset" class="input"></select><br />
+		<hr />
+		<form id="myform" method="put" action="?">
+		Amp: <select name="amp" id="amp" class="input">
+		<% amps.forEach(function(entry) { %>
+			<option value="<%= entry.id %>"><%= entry.name %></option>
+		<% }) %>
+		</select><br />
+		Amp type: <select name="amp_type" id="amp_type" class="input">
+		<% amp_types.forEach(function(entry) { %>
+			<option value="<%= entry.id %>"><%= entry.name %></option>
+		<% }) %>
+		</select><br />
+		<hr />
+		Gain: <input type="text" id="gain" name="gain"  class="input"/><br />
+		Treble: <input type="text" id="treble" name="treble"  class="input"/><br />	
+		Middle: <input type="text" id="middle" name="middle" class="input" /><br />
+		Bass: <input type="text" id="bass" name="bass" class="input" /><br />
+		Volume: <input type="text" id="volume" name="volume" class="input" /><br />
+		Presence: <input type="text" id="presence" name="presence" class="input" /><br />
+		<hr />
+		Cabinet: <input type="checkbox" id="cabinet_on_off" name="cabinet_on_off" value="1" class="input" /><br />
+		Cabinet type: <select id="cabinet" name="cabinet" class="input">
+		<% cabinets.forEach(function(entry) { %>
+			<option value="<%= entry.id %>"><%= entry.name %></option>
+		<% }) %>
+		</select>	<br />
+		<hr />
+		Reverb effect: <input id="reverb_effect_on_off" type="checkbox" name="reverb_effect_on_off" value="1"  class="input"/><br />
+		Reverb effect: <select id="reverb_effect" name="reverb_effect" class="input">
+		<% reverb_effects.forEach(function(entry) { %>
+			<option value="<%= entry.id %>"><%= entry.name %></option>
+		<% }) %>
+		</select><br />
+		Reverb value: <input id="reverb_value" type="text" name="reverb_value" class="input"/><br />
+		<hr />
+		Pedal effect: <input id="pedal_effect_on_off" type="checkbox" name="pedal_effect_on_off" value="1" class="input" /><br />
+		Pedal effect: <select id="pedal_effect" name="pedal_effect" class="input">
+		<% pedal_effects.forEach(function(entry) { %>
+			<option value="<%= entry.id %>"><%= entry.name %></option>
+		<% }) %>
+		</select><br />
+		Pedal value: <input id="pedal_value" type="text" name="pedal_value" class="input" /><br />
+		<hr />
+		Mod/Delay: <input id="mod_delay_on_off" type="checkbox" name="mod_delay_on_off" value="1" class="input" /><br />
+		Mod/Delay effect: <select id="mod_delay_effect" name="mod_delay_effect" class="input">
+		<% mod_delay_effects.forEach(function(entry) { %>
+			<option value="<%= entry.id %>"><%= entry.name %></option>
+		<% }) %>
+		</select><br />
+		Delay depth: <input id="delay_depth" type="text" name="delay_depth" class="input" /><br />
+		Delay feedback: <input id="delay_feedback" type="text" name="delay_feedback" class="input" /><br />
+		</form>
+		<input type="submit" value="Save" class="input2" id="save" />
+	</body>
+
+<script type="text/javascript">
+$.fn.serializeObject = function()
+{
+    var o = {};
+    var a = this.serializeArray();
+    $.each(a, function() {
+        if (o[this.name]) {
+            if (!o[this.name].push) {
+                o[this.name] = [o[this.name]];
+            }
+            o[this.name].push(this.value || '');
+        } else {
+            o[this.name] = this.value || '';
+        }
+    });
+    return o;
+};
+
+$(document).ready(function() {
+	$(".input").not("#preset").attr('disabled', true);
+});
+
+
+$("#save").click(function() {
+	$(".input").not("#preset").removeAttr('disabled');
+
+	$.ajax({
+		url: "/slot/" + $("#preset").val(),
+		type: "PUT",
+		data: $.toJSON($('#myform').serializeObject()),
+		success: function(_data) {
+			var data = jQuery.parseJSON(_data);
+			if (data.has_errors) {
+				for (var i in data.errors) {
+					$("#" + data.errors[i].object).css("background-color", "#ff0000");
+				}
+			}
+		},
+	});
+});
+</script>
+</html>

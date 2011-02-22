@@ -28,7 +28,7 @@ or
 Examples
 =============================
 A simple port of lsusb can be executed by typing
-	node examples/lsusb.js
+	node examples/lsusb/lsusb.js
 
 More information
 ==============================
