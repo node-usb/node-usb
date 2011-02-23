@@ -32,10 +32,13 @@ namespace NodeUsb {
 
 		// Bindings to nodejs
 		NODE_SET_PROTOTYPE_METHOD(t, "reset", Device::Reset); 
+		NODE_SET_PROTOTYPE_METHOD(t, "ref", Device::AddReference); 
+		NODE_SET_PROTOTYPE_METHOD(t, "unref", Device::RemoveReference); 
 		NODE_SET_PROTOTYPE_METHOD(t, "getDeviceDescriptor", Device::GetDeviceDescriptor);
 		NODE_SET_PROTOTYPE_METHOD(t, "getConfigDescriptor", Device::GetConfigDescriptor);
 		NODE_SET_PROTOTYPE_METHOD(t, "getInterfaces", Device::GetInterfaces);
 		NODE_SET_PROTOTYPE_METHOD(t, "getExtraData", Device::GetExtraData);
+		NODE_SET_PROTOTYPE_METHOD(t, "controlTransfer", Device::ControlTransfer);
 
 		// Make it visible in JavaScript
 		target->Set(String::NewSymbol("Device"), t->GetFunction());	
@@ -77,6 +80,9 @@ namespace NodeUsb {
 		// wrap created Device object to v8
 		device->Wrap(args.This());
 
+		// increment object reference, otherwise object will be GCed by V8
+		device->Ref();
+
 		return args.This();
 	}
 	
@@ -100,14 +106,14 @@ namespace NodeUsb {
 		return scope.Close(Integer::New(address));
 	}
 
-	Handle<Value> Device::Ref(const Arguments& args) {
+	Handle<Value> Device::AddReference(const Arguments& args) {
 		LOCAL(Device, self, args.This())
 		libusb_ref_device(self->device_container->device);
 		
 		return Undefined();
 	}
 
-	Handle<Value> Device::Unref(const Arguments& args) {
+	Handle<Value> Device::RemoveReference(const Arguments& args) {
 		LOCAL(Device, self, args.This())
 		libusb_unref_device(self->device_container->device);
 		
@@ -124,7 +130,7 @@ namespace NodeUsb {
 		EIO_NEW(device_request, reset_req)
 
 		// create default delegation
-		EIO_DELEGATION(reset_req)
+		EIO_DELEGATION(reset_req, 0)
 		
 		reset_req->device = self->device_container->device;
 		
@@ -301,5 +307,83 @@ namespace NodeUsb {
 		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bNumConfigurations)
 
 		return scope.Close(r);
+	}
+
+	/**
+	 * Sends control transfer commands to device
+	 * @param Array|int data to send OR bytes to retrieve
+	 * @param uint8_t bmRequestType
+	 * @param uint8_t bRequest
+	 * @param uint16_t wValue
+	 * @param uint16_t wIndex
+	 * @param function callback handler (data, status)
+	 * @param int timeout (optional)
+	 */
+	Handle<Value> Device::ControlTransfer(const Arguments& args) {
+		LOCAL(Device, self, args.This())
+		INIT_TRANSFER_CALL(6, 5, 7)
+		
+		OPEN_DEVICE_HANDLE_NEEDED(scope)
+		EIO_NEW(control_transfer_request, control_transfer_req)
+
+		// 2. param: bmRequestType
+		if (!args[1]->IsInt32()) {
+			THROW_BAD_ARGS("Device::ControlTransfer expects int as bmRequestType parameter")
+		} else {
+			control_transfer_req->bmRequestType = (uint8_t)args[1]->Int32Value();
+		}
+
+		// 3. param: bRequest
+		if (!args[2]->IsInt32()) {
+			THROW_BAD_ARGS("Device::ControlTransfer expects int as bRequest parameter")
+		} else {
+			control_transfer_req->bRequest = (uint8_t)args[2]->Int32Value();
+		}
+
+		// 4. param: wValue
+		if (!args[3]->IsInt32()) {
+			THROW_BAD_ARGS("Device::ControlTransfer expects int as wValue parameter")
+		} else {
+			control_transfer_req->wValue = (uint16_t)args[3]->Int32Value();
+		}
+
+		// 5. param: wIndex
+		if (!args[4]->IsInt32()) {
+			THROW_BAD_ARGS("Device::ControlTransfer expects int as wIndex parameter")
+		} else {
+			control_transfer_req->wIndex = (uint16_t)args[4]->Int32Value();
+		}
+
+		control_transfer_req->handle = self->device_container->handle;
+		control_transfer_req->timeout = timeout;
+		control_transfer_req->wLength = buflen;
+		control_transfer_req->data = buf;
+		DEBUG_OPT("bmRequestType 0x%X, bRequest: 0x%X, wValue: 0x%X, wIndex: 0x%X, wLength: 0x%X, timeout: 0x%X", control_transfer_req->bmRequestType, control_transfer_req->bRequest, control_transfer_req->wValue, control_transfer_req->wIndex, control_transfer_req->wLength, control_transfer_req->timeout);
+
+		EIO_DELEGATION(control_transfer_req, 5)
+
+		eio_custom(EIO_ControlTransfer, EIO_PRI_DEFAULT, EIO_After_ControlTransfer, control_transfer_req);
+		ev_ref(EV_DEFAULT_UC);
+
+		return Undefined();	
+
+	}
+
+	int Device::EIO_ControlTransfer(eio_req *req) {
+		EIO_CAST(control_transfer_request, ct_req)
+		int errcode = 0;
+
+		if ((errcode = libusb_control_transfer(ct_req->handle, ct_req->bmRequestType, ct_req->bRequest, ct_req->wValue, ct_req->wIndex, ct_req->data, ct_req->wLength, ct_req->timeout)) < LIBUSB_SUCCESS) {
+			ct_req->error->Set(V8STR("error_source"), V8STR("controlTransfer"));
+		}
+
+		ct_req->error->Set(V8STR("error_code"), Uint32::New(errcode));
+		req->result = 0;
+
+		return 0;
+	}
+
+	int Device::EIO_After_ControlTransfer(eio_req *req) {
+		TRANSFER_REQUEST_FREE(control_transfer_request)
 	}
 }

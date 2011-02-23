@@ -4,6 +4,7 @@
 namespace NodeUsb {
 	class Callback {
 		public:
+			// Dispatcher / callback handler must be static
 			static void DispatchAsynchronousUsbTransfer(libusb_transfer *_transfer);
 	};
 
@@ -11,13 +12,19 @@ namespace NodeUsb {
 		public:
 			static void Initalize(Handle<Object> target);
 			static Persistent<FunctionTemplate> constructor_template;
-			// Dispatcher / callback handler must be static
 			Endpoint(nodeusb_device_container*, const libusb_endpoint_descriptor*, uint32_t);
 			~Endpoint();
 		protected:
 			// members
 			struct nodeusb_device_container *device_container;
 			const struct libusb_endpoint_descriptor *descriptor;
+
+			struct bulk_interrupt_transfer_request:nodeusb_transfer {
+				unsigned char endpoint;
+				int length;
+				int transferred;
+			};
+
 			int32_t endpoint_type;
 			uint32_t transfer_type;
 			uint32_t idx_endpoint;
@@ -33,6 +40,12 @@ namespace NodeUsb {
 			static Handle<Value> New(const Arguments& args);
 			static Handle<Value> Submit(const Arguments& args);
 			static Handle<Value> GetExtraData(const Arguments& args);
+			static Handle<Value> BulkTransfer(const Arguments& args);
+			static int EIO_BulkTransfer(eio_req *req);
+			static int EIO_After_BulkTransfer(eio_req *req);
+			static Handle<Value> InterruptTransfer(const Arguments& args);
+			static int EIO_InterruptTransfer(eio_req *req);
+			static int EIO_After_InterruptTransfer(eio_req *req);
 
 	};
 	

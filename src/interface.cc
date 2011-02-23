@@ -91,6 +91,9 @@ namespace NodeUsb {
 		LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(iInterface)
 		LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(extra_length)
 
+		// increment object reference, otherwise object will be GCed by V8
+		interface->Ref();
+
 		return args.This();
 	}
 
@@ -180,7 +183,7 @@ namespace NodeUsb {
 		EIO_NEW(release_request, release_req)
 
 		// create default delegation
-		EIO_DELEGATION(release_req)
+		EIO_DELEGATION(release_req, 0)
 		
 		release_req->handle = self->device_container->handle;
 		release_req->interface_number = self->descriptor->bInterfaceNumber;
@@ -226,7 +229,7 @@ namespace NodeUsb {
 	Handle<Value> Interface::AlternateSetting(const Arguments& args) {
 		LOCAL(Interface, self, args.This())
 		
-		if (args.Length() != 1 || args[0]->IsUint32()) {
+		if (args.Length() != 2 || args[0]->IsUint32()) {
 			THROW_BAD_ARGS("Interface::AlternateSetting expects [uint32:setting] as first parameter")
 		}
 		
@@ -236,7 +239,7 @@ namespace NodeUsb {
 		EIO_NEW(alternate_setting_request, alt_req)
 
 		// create default delegation
-		EIO_DELEGATION(alt_req)
+		EIO_DELEGATION(alt_req, 1)
 		
 		alt_req->handle = self->device_container->handle;
 		alt_req->interface_number = self->descriptor->bInterfaceNumber;

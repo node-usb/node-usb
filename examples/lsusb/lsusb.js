@@ -1,6 +1,5 @@
-var usb_driver = require("../../usb.js");
-var usb_ids = require("../../usb_ids.js");
-
+var usb_driver = require("../usb.js");
+var usb_ids = require("../usb_ids.js");
 var instance = usb_driver.create()
 var devices = instance.getDevices(); 
 
