@@ -47,6 +47,7 @@ namespace NodeUsb {
 
 	Device::Device(libusb_device* _device) {
 		device_container = (nodeusb_device_container*)malloc(sizeof(nodeusb_device_container));
+		device_container->handle_status = UNINITIALIZED;
 		device_container->device = _device;
 	}
 
