@@ -49,29 +49,43 @@
 #define LOCAL(TYPE, VARNAME, REF) \
 		HandleScope scope;\
 		TYPE *VARNAME = OBJUNWRAP<TYPE>(REF);
-		
+
 #define	EIO_CAST(TYPE, VARNAME) struct TYPE *VARNAME = reinterpret_cast<struct TYPE *>(req->data);
-#define	EIO_NEW(TYPE, VARNAME) struct TYPE *VARNAME = (struct TYPE *) calloc(1, sizeof(struct TYPE));
-#define EIO_DELEGATION(VARNAME, CALLBACK_ARG_IDX) \
-		Local<Function> callback; \
-		if (args[CALLBACK_ARG_IDX]->IsFunction()) { \
-			callback = Local<Function>::Cast(args[CALLBACK_ARG_IDX]); \
-		} \
+#define	EIO_NEW(TYPE, VARNAME) \
+		struct TYPE *VARNAME = (struct TYPE *) calloc(1, sizeof(struct TYPE)); \
 		if (!VARNAME) { \
 			V8::LowMemoryNotification(); \
-		} \
-		VARNAME->callback = Persistent<Function>::New(callback); \
-		VARNAME->error = Persistent<Object>::New(Object::New()); \
+		}
 
-#define EIO_AFTER(VARNAME) HandleScope scope; \
+#define EIO_DELEGATION(VARNAME, CALLBACK_ARG_IDX) \
+		Local<Function> callback; \
+		if (args.Length() > (CALLBACK_ARG_IDX)) { \
+			if (!args[CALLBACK_ARG_IDX]->IsFunction()) { \
+				return ThrowException(Exception::TypeError( String::New("Argument " #CALLBACK_ARG_IDX " must be a function"))); \
+			} \
+			callback = Local<Function>::Cast(args[CALLBACK_ARG_IDX]); \
+		} \
+		VARNAME->callback = Persistent<Function>::New(callback);
+
+#define EIO_AFTER(VARNAME) \
 		ev_unref(EV_DEFAULT_UC); \
-		if (sizeof(VARNAME->callback) > 0) { \
+		if (!VARNAME->callback.IsEmpty()) { \
+			HandleScope scope; \
+			Handle<Object> error = Object::New(); \
+			if(VARNAME->errsource) { \
+				error->Set(V8STR("error_source"), V8STR(VARNAME->errsource)); \
+			} \
+	                error->Set(V8STR("error_code"), Uint32::New(VARNAME->errcode)); \
 			Local<Value> argv[1]; \
-			argv[0] = Local<Value>::New(scope.Close(VARNAME->error)); \
+			argv[0] = Local<Value>::New(scope.Close(error)); \
+			TryCatch try_catch; \
 			VARNAME->callback->Call(Context::GetCurrent()->Global(), 1, argv); \
+			if (try_catch.HasCaught()) { \
+				FatalException(try_catch); \
+			} \
 			VARNAME->callback.Dispose(); \
 		}
-		
+
 #define TRANSFER_REQUEST_FREE(STRUCT)\
 		EIO_CAST(STRUCT, transfer_req)\
 		EIO_AFTER(transfer_req)\
@@ -145,8 +159,9 @@ namespace NodeUsb  {
 	// intermediate EIO structure for device
 	struct device_request {
 		Persistent<Function> callback;
-		Persistent<Object> error;
 		libusb_device *device;
+		int errcode;
+		const char * errsource;
 	};
 
 	// intermediate EIO structure for device handle

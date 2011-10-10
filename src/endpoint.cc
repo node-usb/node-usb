@@ -253,11 +253,10 @@ namespace NodeUsb {
 
 #define BULK_INTERRUPT_EXECUTE(METHOD, SOURCE)\
 		EIO_CAST(bulk_interrupt_transfer_request, bit_req)\
-		int errcode = 0;\
-		if ((errcode = libusb_bulk_transfer(bit_req->handle, bit_req->endpoint, bit_req->data, bit_req->length, &(bit_req->transferred), bit_req->timeout)) < LIBUSB_SUCCESS) {\
-			bit_req->error->Set(V8STR("error_source"), V8STR(SOURCE));\
+		bit_req->errcode = libusb_bulk_transfer(bit_req->handle, bit_req->endpoint, bit_req->data, bit_req->length, &(bit_req->transferred), bit_req->timeout);\
+		if (bit_req->errcode < LIBUSB_SUCCESS) {\
+			bit_req->errsource = SOURCE;\
 		}\
-		bit_req->error->Set(V8STR("error_code"), Uint32::New(errcode));\
 		req->result = 0;\
 		return 0;
 

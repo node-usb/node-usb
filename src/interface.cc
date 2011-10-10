@@ -128,6 +128,7 @@ namespace NodeUsb {
 
 	Handle<Value> Interface::IsKernelDriverActive(const Arguments& args) {
 		LOCAL(Interface, self, args.This())
+
 		OPEN_DEVICE_HANDLE_NEEDED(scope)
 
 		int isKernelDriverActive = 0;
@@ -196,16 +197,15 @@ namespace NodeUsb {
 	}
 	
 	int Interface::EIO_Release(eio_req *req) {
+                // Inside EIO Threadpool, so don't touch V8.
+                // Be careful!
+
 		EIO_CAST(release_request, release_req)
 		
-
-		int errcode = 0;
-		
-		if ((errcode = libusb_release_interface(release_req->handle, release_req->interface_number)) < LIBUSB_SUCCESS) {
-			release_req->error->Set(V8STR("error_source"), V8STR("release"));
+		release_req->errcode = libusb_release_interface(release_req->handle, release_req->interface_number);
+		if (release_req->errcode < LIBUSB_SUCCESS) {
+			release_req->errsource = "release";
 		}
-		
-		release_req->error->Set(V8STR("error_code"), Uint32::New(errcode));
 		
 		// needed for EIO so that the EIO_After_Reset method will be called
 		req->result = 0;
@@ -214,12 +214,7 @@ namespace NodeUsb {
 	}
 
 	int Interface::EIO_After_Release(eio_req *req) {
-		EIO_CAST(release_request, release_req)
-		EIO_AFTER(release_req)
-		
-		free(release_req);
-		
-		return 0;
+		TRANSFER_REQUEST_FREE(release_request);
 	}
 
 	/**
@@ -253,15 +248,15 @@ namespace NodeUsb {
 	}
 	
 	int Interface::EIO_AlternateSetting(eio_req *req) {
+                // Inside EIO Threadpool, so don't touch V8.
+                // Be careful!
+
 		EIO_CAST(alternate_setting_request, alt_req)
 		
-		int errcode = 0;
-		
-		if ((errcode = libusb_set_interface_alt_setting(alt_req->handle, alt_req->interface_number, alt_req->alternate_setting)) < LIBUSB_SUCCESS) {
-			alt_req->error->Set(V8STR("error_source"), V8STR("release"));
+		alt_req->errcode = libusb_set_interface_alt_setting(alt_req->handle, alt_req->interface_number, alt_req->alternate_setting);
+		if (alt_req->errcode < LIBUSB_SUCCESS) {
+			alt_req->errsource = "alt_setting";
 		}
-		
-		alt_req->error->Set(V8STR("error_code"), Uint32::New(errcode));
 		
 		req->result = 0;
 		
@@ -269,12 +264,7 @@ namespace NodeUsb {
 	}
 
 	int Interface::EIO_After_AlternateSetting(eio_req *req) {
-		EIO_CAST(alternate_setting_request, alt_req)
-		EIO_AFTER(alt_req)
-		
-		free(alt_req);
-		
-		return 0;
+		TRANSFER_REQUEST_FREE(alternate_setting_request);
 	}
 
 	Handle<Value> Interface::GetEndpoints(const Arguments& args) {

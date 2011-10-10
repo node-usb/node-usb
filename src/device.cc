@@ -148,6 +148,9 @@ namespace NodeUsb {
 	 * Contains the blocking libusb_reset_device function
 	 */
 	int Device::EIO_Reset(eio_req *req) {
+		// Inside EIO Threadpool, so don't touch V8.
+		// Be careful!
+
 		EIO_CAST(device_request, reset_req)
 		
 		libusb_device_handle *handle;
@@ -157,13 +160,13 @@ namespace NodeUsb {
 		if ((errcode = libusb_open(reset_req->device, &handle)) >= LIBUSB_SUCCESS) {
 			if ((errcode = libusb_reset_device(handle)) < LIBUSB_SUCCESS) {
 				libusb_close(handle);
-				reset_req->error->Set(V8STR("error_source"), V8STR("reset"));
+				reset_req->errsource = "reset";
 			}
 		} else {
-			reset_req->error->Set(V8STR("error_source"), V8STR("open"));
+			reset_req->errsource = "open";
 		}
-		
-		reset_req->error->Set(V8STR("error_code"), Uint32::New(errcode));
+
+		reset_req->errcode = errcode;
 		
 		// needed for EIO so that the EIO_After_Reset method will be called
 		req->result = 0;
@@ -172,13 +175,7 @@ namespace NodeUsb {
 	}
 
 	int Device::EIO_After_Reset(eio_req *req) {
-		EIO_CAST(device_request, reset_req)
-		EIO_AFTER(reset_req)
-		
-		// release intermediate structure
-		free(reset_req);
-		
-		return 0;
+		TRANSFER_REQUEST_FREE(device_request)
 	}
 	
 
@@ -366,19 +363,19 @@ namespace NodeUsb {
 		eio_custom(EIO_ControlTransfer, EIO_PRI_DEFAULT, EIO_After_ControlTransfer, control_transfer_req);
 		ev_ref(EV_DEFAULT_UC);
 
-		return Undefined();	
-
+		return Undefined();
 	}
 
 	int Device::EIO_ControlTransfer(eio_req *req) {
+		// Inside EIO Threadpool, so don't touch V8.
+		// Be careful!
+
 		EIO_CAST(control_transfer_request, ct_req)
-		int errcode = 0;
 
-		if ((errcode = libusb_control_transfer(ct_req->handle, ct_req->bmRequestType, ct_req->bRequest, ct_req->wValue, ct_req->wIndex, ct_req->data, ct_req->wLength, ct_req->timeout)) < LIBUSB_SUCCESS) {
-			ct_req->error->Set(V8STR("error_source"), V8STR("controlTransfer"));
+		ct_req->errcode = libusb_control_transfer(ct_req->handle, ct_req->bmRequestType, ct_req->bRequest, ct_req->wValue, ct_req->wIndex, ct_req->data, ct_req->wLength, ct_req->timeout);
+		if (ct_req->errcode < LIBUSB_SUCCESS) {
+			ct_req->errsource = "controlTransfer";
 		}
-
-		ct_req->error->Set(V8STR("error_code"), Uint32::New(errcode));
 		req->result = 0;
 
 		return 0;
