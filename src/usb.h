@@ -1,7 +1,8 @@
-#ifndef SRC_USB_H_
+#ifndef SRC_USB_H
 #define SRC_USB_H
 
 #include "bindings.h"
+
 namespace NodeUsb {
 	class Usb : public EventEmitter {
 		public:

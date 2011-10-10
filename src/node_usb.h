@@ -1,4 +1,4 @@
-#ifndef SRC_NODE_USB_H_
+#ifndef SRC_NODE_USB_H
 #define SRC_NODE_USB_H
 
 #include <libusb.h>

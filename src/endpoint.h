@@ -1,4 +1,4 @@
-#ifndef SRC_ENDPOINT_H_
+#ifndef SRC_ENDPOINT_H
 #define SRC_ENDPOINT_H
 
 namespace NodeUsb {

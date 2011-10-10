@@ -1,5 +1,5 @@
-#ifndef SRC_BINDINGS_H_
-#define SRC_BINDINGS_H_
+#ifndef SRC_BINDINGS_H
+#define SRC_BINDINGS_H
 
 #include "node_usb.h"
 #include "libusb.h"

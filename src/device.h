@@ -1,4 +1,4 @@
-#ifndef SRC_DEVICE_H_
+#ifndef SRC_DEVICE_H
 #define SRC_DEVICE_H
 
 #include "bindings.h"
