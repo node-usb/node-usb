@@ -7,6 +7,7 @@
 // Taken from node-libmysqlclient
 #define OBJUNWRAP ObjectWrap::Unwrap
 #define V8STR(str) String::New(str)
+#define V8SYM(str) String::NewSymbol(str)
 
 #ifdef ENABLE_DEBUG
   #define DEBUG_HEADER fprintf(stderr, "node-usb [%s:%s() %d]: ", __FILE__, __FUNCTION__, __LINE__); 
@@ -25,8 +26,8 @@
 #define THROW_NOT_YET return ThrowException(Exception::Error(String::Concat(String::New(__FUNCTION__), String::New("not yet supported"))));
 #define CREATE_ERROR_OBJECT_AND_CLOSE_SCOPE(ERRNO) \
 		Local<Object> error = Object::New();\
-		error->Set(V8STR("errno"), Integer::New(ERRNO));\
-		error->Set(V8STR("error"), errno_exception(ERRNO));\
+		error->Set(V8SYM("errno"), Integer::New(ERRNO));\
+		error->Set(V8SYM("error"), errno_exception(ERRNO));\
 		return scope.Close(error);\
 
 #define CHECK_USB(r, scope) \
@@ -67,15 +68,15 @@
 		} \
 		VARNAME->callback = Persistent<Function>::New(callback);
 
-#define EIO_AFTER(VARNAME) \
+#define EIO_AFTER(VARNAME, SELF) \
 		ev_unref(EV_DEFAULT_UC); \
 		if (!VARNAME->callback.IsEmpty()) { \
 			HandleScope scope; \
 			Handle<Object> error = Object::New(); \
 			if(VARNAME->errsource) { \
-				error->Set(V8STR("error_source"), V8STR(VARNAME->errsource)); \
+				error->Set(V8SYM("error_source"), V8STR(VARNAME->errsource)); \
 			} \
-	                error->Set(V8STR("error_code"), Uint32::New(VARNAME->errcode)); \
+	                error->Set(V8SYM("error_code"), Uint32::New(VARNAME->errcode)); \
 			Local<Value> argv[1]; \
 			argv[0] = Local<Value>::New(scope.Close(error)); \
 			TryCatch try_catch; \
