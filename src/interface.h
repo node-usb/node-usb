@@ -4,6 +4,22 @@
 #include "bindings.h"
 
 namespace NodeUsb {
+
+	class Interface;
+
+	struct interface_request:request {
+		Interface * interface;
+		//libusb_device_handle *handle;
+	};
+
+	struct release_request:interface_request {
+		//int interface_number;
+	};
+
+	struct alternate_setting_request:release_request {
+		int alternate_setting;
+	};
+
 	class Interface : public EventEmitter {
 		public:
 			static void Initalize(Handle<Object> target);
@@ -13,10 +29,10 @@ namespace NodeUsb {
 
 		protected:
 			// members
-			struct nodeusb_device_container *device_container;
-			const struct libusb_interface_descriptor *descriptor;
-			uint32_t idx_interface;
-			uint32_t idx_alt_setting;
+			struct nodeusb_device_container * const device_container;
+			const struct libusb_interface_descriptor * const descriptor;
+			const uint32_t idx_interface;
+			const uint32_t idx_alt_setting;
 
 			// V8 getter
 			static Handle<Value> IdxInterfaceGetter(Local<String> property, const AccessorInfo &info);
@@ -31,16 +47,10 @@ namespace NodeUsb {
 			static Handle<Value> GetExtraData(const Arguments& args);
 			static Handle<Value> GetEndpoints(const Arguments& args);
 
-			struct release_request:device_handle_request {
-				int interface_number;
-			};
 			static Handle<Value> Release(const Arguments& args);
 			static int EIO_Release(eio_req *req);
 			static int EIO_After_Release(eio_req *req);
-			
-			struct alternate_setting_request:release_request {
-				int alternate_setting;
-			};
+
 			static Handle<Value> AlternateSetting(const Arguments& args);
 			static int EIO_AlternateSetting(eio_req *req);
 			static int EIO_After_AlternateSetting(eio_req *req);

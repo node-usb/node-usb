@@ -1,5 +1,6 @@
-#include "./bindings.h"
+#include "bindings.h"
 #include "endpoint.h"
+#include "device.h"
 
 namespace NodeUsb {
 	Persistent<FunctionTemplate> Endpoint::constructor_template;
@@ -88,9 +89,6 @@ namespace NodeUsb {
 
 		// wrap created Endpoint object to v8
 		endpoint->Wrap(args.This());
-		
-		// increment object reference, otherwise object will be GCed by V8
-		endpoint->Ref();
 
 		return args.This();
 	}
@@ -239,21 +237,22 @@ namespace NodeUsb {
 		OPEN_DEVICE_HANDLE_NEEDED(scope)\
 		EIO_NEW(bulk_interrupt_transfer_request, bulk_interrupt_transfer_req)\
 		EIO_DELEGATION(bulk_interrupt_transfer_req, 1)\
-		bulk_interrupt_transfer_req->handle = self->device_container->handle;\
+		bulk_interrupt_transfer_req->endpoint = self;\
+		bulk_interrupt_transfer_req->endpoint->Ref();\
 		bulk_interrupt_transfer_req->timeout = timeout;\
 		bulk_interrupt_transfer_req->length = buflen;\
 		bulk_interrupt_transfer_req->data = buf;\
-		bulk_interrupt_transfer_req->endpoint = self->descriptor->bEndpointAddress;\
 		eio_custom(EIO_TO_EXECUTE, EIO_PRI_DEFAULT, EIO_AFTER, bulk_interrupt_transfer_req);\
 		ev_ref(EV_DEFAULT_UC);\
 		return Undefined();	
 
-#define BULK_INTERRUPT_FREE TRANSFER_REQUEST_FREE(bulk_interrupt_transfer_request)
+#define BULK_INTERRUPT_FREE TRANSFER_REQUEST_FREE(bulk_interrupt_transfer_request, endpoint)
 
 
 #define BULK_INTERRUPT_EXECUTE(METHOD, SOURCE)\
 		EIO_CAST(bulk_interrupt_transfer_request, bit_req)\
-		bit_req->errcode = libusb_bulk_transfer(bit_req->handle, bit_req->endpoint, bit_req->data, bit_req->length, &(bit_req->transferred), bit_req->timeout);\
+		Endpoint * self = bit_req->endpoint;\
+		bit_req->errcode = libusb_bulk_transfer(self->device_container->handle, self->descriptor->bEndpointAddress, bit_req->data, bit_req->length, &(bit_req->transferred), bit_req->timeout);\
 		if (bit_req->errcode < LIBUSB_SUCCESS) {\
 			bit_req->errsource = SOURCE;\
 		}\

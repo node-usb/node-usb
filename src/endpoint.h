@@ -1,11 +1,26 @@
 #ifndef SRC_ENDPOINT_H
 #define SRC_ENDPOINT_H
 
+#include "bindings.h"
+
 namespace NodeUsb {
+	class Endpoint;
+
 	class Callback {
 		public:
 			// Dispatcher / callback handler must be static
 			static void DispatchAsynchronousUsbTransfer(libusb_transfer *_transfer);
+	};
+
+	struct endpoint_request:request {
+		Endpoint * endpoint;
+	};
+
+	struct bulk_interrupt_transfer_request:endpoint_request {
+		unsigned char *data;
+		unsigned int timeout;
+		int length;
+		int transferred;
 	};
 
 	class Endpoint : public EventEmitter {
@@ -18,12 +33,6 @@ namespace NodeUsb {
 			// members
 			struct nodeusb_device_container *device_container;
 			const struct libusb_endpoint_descriptor *descriptor;
-
-			struct bulk_interrupt_transfer_request:nodeusb_transfer {
-				unsigned char endpoint;
-				int length;
-				int transferred;
-			};
 
 			int32_t endpoint_type;
 			uint32_t transfer_type;

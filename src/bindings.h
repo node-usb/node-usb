@@ -85,11 +85,12 @@
 				FatalException(try_catch); \
 			} \
 			VARNAME->callback.Dispose(); \
-		}
+		} \
+		VARNAME->SELF->Unref();
 
-#define TRANSFER_REQUEST_FREE(STRUCT)\
+#define TRANSFER_REQUEST_FREE(STRUCT, SELF)\
 		EIO_CAST(STRUCT, transfer_req)\
-		EIO_AFTER(transfer_req)\
+		EIO_AFTER(transfer_req, SELF)\
 		free(transfer_req);\
 		return 0;
 
@@ -135,6 +136,8 @@
 		}
 
 namespace NodeUsb  {
+	class Device;
+
 	// status of device handle
 	enum nodeusb_device_handle_status { 
 		UNINITIALIZED, 
@@ -157,25 +160,11 @@ namespace NodeUsb  {
 		int endpoint_number;
 	};	
 
-	// intermediate EIO structure for device
-	struct device_request {
+	struct request {
 		Persistent<Function> callback;
-		libusb_device *device;
 		int errcode;
 		const char * errsource;
 	};
-
-	// intermediate EIO structure for device handle
-	struct device_handle_request:device_request {
-		libusb_device_handle *handle;
-	};
-
-	struct nodeusb_transfer:device_handle_request {
-		unsigned char *data;
-		unsigned int timeout;
-	};
-
-
 
 	static inline Local<Value> errno_exception(int errorno) {
 		Local<Value> e  = Exception::Error(String::NewSymbol(strerror(errorno)));

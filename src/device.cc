@@ -52,12 +52,15 @@ namespace NodeUsb {
 	}
 
 	Device::~Device() {
+
+		// TODO How can we test if there are no interfaces/endpoints spawned from here still using
+		// our device_container data?
+
 		// free configuration descriptor
 		if (device_container) {
 			libusb_free_config_descriptor(device_container->config_descriptor);
 			free(device_container);
 		}
-
 		DEBUG("Device object destroyed")
 	}
 	
@@ -72,7 +75,7 @@ namespace NodeUsb {
 
 		Local<External> refDevice = Local<External>::Cast(args[0]);
 
-		// cast local reference to local libusb_device structure 
+		// cast local reference to local libusb_device structure
 		libusb_device *libusbDevice = static_cast<libusb_device*>(refDevice->Value());
 
 		// create new Device object
@@ -80,9 +83,6 @@ namespace NodeUsb {
 
 		// wrap created Device object to v8
 		device->Wrap(args.This());
-
-		// increment object reference, otherwise object will be GCed by V8
-		device->Ref();
 
 		return args.This();
 	}
@@ -132,12 +132,13 @@ namespace NodeUsb {
 
 		// create default delegation
 		EIO_DELEGATION(reset_req, 0)
-		
-		reset_req->device = self->device_container->device;
-		
+
+		reset_req->device = self;
+		reset_req->device->Ref();
+
 		// Make asynchronous call
 		eio_custom(EIO_Reset, EIO_PRI_DEFAULT, EIO_After_Reset, reset_req);
-	
+
 		// add reference
 		ev_ref(EV_DEFAULT_UC);
 		
@@ -153,11 +154,12 @@ namespace NodeUsb {
 
 		EIO_CAST(device_request, reset_req)
 		
+		libusb_device *device = reset_req->device->device_container->device;
 		libusb_device_handle *handle;
 
 		int errcode = 0;
 		
-		if ((errcode = libusb_open(reset_req->device, &handle)) >= LIBUSB_SUCCESS) {
+		if ((errcode = libusb_open(device, &handle)) >= LIBUSB_SUCCESS) {
 			if ((errcode = libusb_reset_device(handle)) < LIBUSB_SUCCESS) {
 				libusb_close(handle);
 				reset_req->errsource = "reset";
@@ -175,7 +177,7 @@ namespace NodeUsb {
 	}
 
 	int Device::EIO_After_Reset(eio_req *req) {
-		TRANSFER_REQUEST_FREE(device_request)
+		TRANSFER_REQUEST_FREE(device_request, device)
 	}
 	
 
@@ -352,13 +354,14 @@ namespace NodeUsb {
 			control_transfer_req->wIndex = (uint16_t)args[4]->Int32Value();
 		}
 
-		control_transfer_req->handle = self->device_container->handle;
+		EIO_DELEGATION(control_transfer_req, 5)
+
+		control_transfer_req->device = self;
+		control_transfer_req->device->Ref();
 		control_transfer_req->timeout = timeout;
 		control_transfer_req->wLength = buflen;
 		control_transfer_req->data = buf;
 		DEBUG_OPT("bmRequestType 0x%X, bRequest: 0x%X, wValue: 0x%X, wIndex: 0x%X, wLength: 0x%X, timeout: 0x%X", control_transfer_req->bmRequestType, control_transfer_req->bRequest, control_transfer_req->wValue, control_transfer_req->wIndex, control_transfer_req->wLength, control_transfer_req->timeout);
-
-		EIO_DELEGATION(control_transfer_req, 5)
 
 		eio_custom(EIO_ControlTransfer, EIO_PRI_DEFAULT, EIO_After_ControlTransfer, control_transfer_req);
 		ev_ref(EV_DEFAULT_UC);
@@ -372,7 +375,10 @@ namespace NodeUsb {
 
 		EIO_CAST(control_transfer_request, ct_req)
 
-		ct_req->errcode = libusb_control_transfer(ct_req->handle, ct_req->bmRequestType, ct_req->bRequest, ct_req->wValue, ct_req->wIndex, ct_req->data, ct_req->wLength, ct_req->timeout);
+		Device * self = ct_req->device;
+		libusb_device_handle * handle = self->device_container->handle;
+
+		ct_req->errcode = libusb_control_transfer(handle, ct_req->bmRequestType, ct_req->bRequest, ct_req->wValue, ct_req->wIndex, ct_req->data, ct_req->wLength, ct_req->timeout);
 		if (ct_req->errcode < LIBUSB_SUCCESS) {
 			ct_req->errsource = "controlTransfer";
 		}
@@ -382,6 +388,6 @@ namespace NodeUsb {
 	}
 
 	int Device::EIO_After_ControlTransfer(eio_req *req) {
-		TRANSFER_REQUEST_FREE(control_transfer_request)
+		TRANSFER_REQUEST_FREE(control_transfer_request, device)
 	}
 }

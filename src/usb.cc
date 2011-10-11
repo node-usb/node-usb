@@ -114,7 +114,7 @@ namespace NodeUsb {
 
 		int r = libusb_init(NULL);
 
-		if (0 == r) {
+		if (LIBUSB_SUCCESS == r) {
 			is_initalized = true;
 		}
 
@@ -143,13 +143,10 @@ namespace NodeUsb {
 		HandleScope scope;
 		// create new object
 		Usb *usb = new Usb();
+
 		// wrap object to arguments
 		usb->Wrap(args.This());
 		args.This()->Set(V8STR("revision"),V8STR(NODE_USB_REVISION));
-
-		// increment object reference, otherwise object will be GCed by V8
-		usb->Ref();
-
 		return args.This();
 	}
 
@@ -207,11 +204,12 @@ namespace NodeUsb {
 
 		for (; i < self->num_devices; i++) {
 			// wrap libusb_device structure into a Local<Value>
-			Local<Value> arg = External::New(self->devices[i]);
+			Local<Value> argv[1];
+			argv[0] = External::New(self->devices[i]);
 
-			// create new object instance of class NodeUsb::Device  
-			Persistent<Object> js_device(Device::constructor_template->GetFunction()->NewInstance(1, &arg));
-			
+			// create new object instance of class NodeUsb::Device
+			Persistent<Object> js_device(Device::constructor_template->GetFunction()->NewInstance(1, argv));
+
 			// push to array
 			discoveredDevices->Set(Integer::New(i), js_device);
 		}
