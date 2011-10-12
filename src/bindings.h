@@ -24,7 +24,7 @@
 #define THROW_BAD_ARGS(FAIL_MSG) return ThrowException(Exception::TypeError(V8STR(FAIL_MSG)));
 #define THROW_ERROR(FAIL_MSG) return ThrowException(Exception::Error(V8STR(FAIL_MSG))));
 #define THROW_NOT_YET return ThrowException(Exception::Error(String::Concat(String::New(__FUNCTION__), String::New("not yet supported"))));
-#define CREATE_ERROR_OBJECT_AND_CLOSE_SCOPE(ERRNO) \
+#define CREATE_ERROR_OBJECT_AND_CLOSE_SCOPE(ERRNO, scope) \
 		Local<Object> error = Object::New();\
 		error->Set(V8SYM("errno"), Integer::New(ERRNO));\
 		error->Set(V8SYM("error"), errno_exception(ERRNO));\
@@ -32,7 +32,7 @@
 
 #define CHECK_USB(r, scope) \
 	if (r < LIBUSB_SUCCESS) { \
-		CREATE_ERROR_OBJECT_AND_CLOSE_SCOPE(r); \
+		CREATE_ERROR_OBJECT_AND_CLOSE_SCOPE(r, scope); \
 	}
 
 #define OPEN_DEVICE_HANDLE_NEEDED(scope) \
@@ -44,7 +44,7 @@
 		}\
 	}\
 	if (self->device_container->handle_status == FAILED) { \
-		CREATE_ERROR_OBJECT_AND_CLOSE_SCOPE(self->device_container->last_error) \
+		CREATE_ERROR_OBJECT_AND_CLOSE_SCOPE(self->device_container->last_error, scope) \
 	} \
 
 #define LOCAL(TYPE, VARNAME, REF) \
