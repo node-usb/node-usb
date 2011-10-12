@@ -12,7 +12,7 @@ namespace NodeUsb {
 
 		protected:
 			// members
-			bool is_initalized;
+			libusb_context *context;
 			int num_devices;
 			libusb_device **devices;
 			// internal methods

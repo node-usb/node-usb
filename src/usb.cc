@@ -89,7 +89,7 @@ namespace NodeUsb {
 	}
 
 	Usb::Usb() : EventEmitter() {
-		is_initalized = false;
+		context = NULL;
 		num_devices = 0;
 		devices = NULL;
 	}
@@ -99,7 +99,10 @@ namespace NodeUsb {
 			libusb_free_device_list(devices, 1);
 		}
 
-		libusb_exit(NULL);
+		if (context) {
+			libusb_exit(context);
+			context = NULL;
+		}
 		DEBUG("NodeUsb::Usb object destroyed")
 		// TODO Freeing opened USB devices?
 	}
@@ -108,17 +111,11 @@ namespace NodeUsb {
 	 * Methods not exposed to v8 - used only internal
 	 */
 	int Usb::Init() {
-		if (is_initalized) {
+		if (context) {
 			return LIBUSB_SUCCESS;
 		}
 
-		int r = libusb_init(NULL);
-
-		if (LIBUSB_SUCCESS == r) {
-			is_initalized = true;
-		}
-
-		return r;
+		return libusb_init(&context);
 	}
 	
 	/**
@@ -128,7 +125,7 @@ namespace NodeUsb {
 	Handle<Value> Usb::IsLibusbInitalizedGetter(Local<String> property, const AccessorInfo &info) {
 		LOCAL(Usb, self, info.Holder())
 		
-		if (self->is_initalized == true) {
+		if (self->context) {
 			return scope.Close(True());
 		}
 
@@ -224,7 +221,7 @@ namespace NodeUsb {
 	Handle<Value> Usb::Close(const Arguments& args) {
 		LOCAL(Usb, self, args.This())
 
-		if (false == self->is_initalized) {
+		if (!self->context) {
 			return scope.Close(False());
 		}
 
