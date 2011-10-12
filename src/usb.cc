@@ -169,7 +169,7 @@ namespace NodeUsb {
 			THROW_BAD_ARGS("Usb::SetDebugLevel argument is invalid. [uint:[0-3]]!") 
 		}
 		
-		libusb_set_debug(NULL, args[0]->Uint32Value());
+		libusb_set_debug(self->context, args[0]->Uint32Value());
 
 		return Undefined();
 	}
@@ -192,7 +192,7 @@ namespace NodeUsb {
 		// if no devices were covered => get device list
 		if (self->devices == NULL) {
 			DEBUG("Discover device list");
-			self->num_devices = libusb_get_device_list(NULL, &(self->devices));
+			self->num_devices = libusb_get_device_list(self->context, &(self->devices));
 			CHECK_USB(self->num_devices, scope);
 		}
 
