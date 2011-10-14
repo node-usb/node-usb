@@ -2,13 +2,14 @@
 #include "device.h"
 
 namespace NodeUsb {
+
 	/**
 	 * @param usb.isLibusbInitalized: boolean
 	 */
 	void Usb::Initalize(Handle<Object> target) {
 		DEBUG("Entering")
 		HandleScope  scope;
-		
+
 		Local<FunctionTemplate> t = FunctionTemplate::New(Usb::New);
 
 		// Constructor
@@ -95,16 +96,15 @@ namespace NodeUsb {
 	}
 
 	Usb::~Usb() {
-		if (devices != NULL) {
-			libusb_free_device_list(devices, 1);
-		}
-
 		if (context) {
+			if (devices != NULL) {
+				libusb_free_device_list(devices, 1);
+			}
+
 			libusb_exit(context);
 			context = NULL;
 		}
 		DEBUG("NodeUsb::Usb object destroyed")
-		// TODO Freeing opened USB devices?
 	}
 
 	/**
@@ -196,16 +196,15 @@ namespace NodeUsb {
 			CHECK_USB(self->num_devices, scope);
 		}
 
-		// js_device contains the Device instance
-		Local<Object> js_device;
-
 		for (; i < self->num_devices; i++) {
 			// wrap libusb_device structure into a Local<Value>
-			Local<Value> argv[1];
-			argv[0] = External::New(self->devices[i]);
+			Local<Value> argv[2] = {
+				args.This(),
+				External::New(self->devices[i])
+			};
 
 			// create new object instance of class NodeUsb::Device
-			Persistent<Object> js_device(Device::constructor_template->GetFunction()->NewInstance(1, argv));
+			Local<Object> js_device(Device::constructor_template->GetFunction()->NewInstance(2, argv));
 
 			// push to array
 			discoveredDevices->Set(Integer::New(i), js_device);
@@ -225,7 +224,7 @@ namespace NodeUsb {
 			return scope.Close(False());
 		}
 
-		delete self;
+		delete self; // TODO Is this safe to do?!
 
 		return scope.Close(True());
 	}

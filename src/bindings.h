@@ -37,6 +37,8 @@
 
 #define OPEN_DEVICE_HANDLE_NEEDED(scope) \
 	if (self->device_container->handle_status == UNINITIALIZED) {\
+		assert(self->device_container->device != NULL); \
+		assert(self->device_container->handle == NULL); \
 		if ((self->device_container->last_error = libusb_open(self->device_container->device, &(self->device_container->handle))) < 0) {\
 			self->device_container->handle_status = FAILED;\
 		} else {\

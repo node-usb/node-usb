@@ -45,41 +45,53 @@ namespace NodeUsb {
 		DEBUG("Leave")
 	}
 
-	Device::Device(libusb_device* _device) {
+	Device::Device(Handle<Object> _usb, libusb_device* _device) {
+		usb = Persistent<Object>::New(_usb); // Ensure USB is around for the duration of this Device object
+
 		device_container = (nodeusb_device_container*)malloc(sizeof(nodeusb_device_container));
-		device_container->handle_status = UNINITIALIZED;
 		device_container->device = _device;
+		device_container->handle = NULL;
+		device_container->config_descriptor = NULL;
+		device_container->handle_status = UNINITIALIZED;
+		device_container->last_error = 0;
+
+		DEBUG_OPT("Device object %p created", device_container->device)
 	}
 
 	Device::~Device() {
-
-		// TODO How can we test if there are no interfaces/endpoints spawned from here still using
-		// our device_container data?
-
+		DEBUG_OPT("Device object %p destroyed", device_container->device)
 		// free configuration descriptor
 		if (device_container) {
 			libusb_free_config_descriptor(device_container->config_descriptor);
 			free(device_container);
 		}
-		DEBUG("Device object destroyed")
+		usb.Dispose();
 	}
 	
 	Handle<Value> Device::New(const Arguments& args) {
 		HandleScope scope;
-		DEBUG("New Device object created")
 
 		// need libusb_device structure as first argument
-		if (args.Length() <= 0 || !args[0]->IsExternal()) {
-			THROW_BAD_ARGS("Device::New argument is invalid. Must be external!") 
+		if (args.Length() < 2) {
+			THROW_BAD_ARGS("Device::New argument is invalid. Must be external!")
 		}
 
-		Local<External> refDevice = Local<External>::Cast(args[0]);
+		if (!args[0]->IsObject()) {
+			THROW_BAD_ARGS("Device::New argument is invalid. Must be Object!")
+		}
+
+		if (!args[1]->IsExternal()) {
+			THROW_BAD_ARGS("Device::New argument is invalid. Must be external!")
+		}
+
+		Local<Object> usb = Local<Object>::Cast(args[0]);
+		Local<External> refDevice = Local<External>::Cast(args[1]);
 
 		// cast local reference to local libusb_device structure
 		libusb_device *libusbDevice = static_cast<libusb_device*>(refDevice->Value());
 
 		// create new Device object
-		Device *device = new Device(libusbDevice);
+		Device *device = new Device(usb, libusbDevice);
 
 		// wrap created Device object to v8
 		device->Wrap(args.This());
@@ -183,7 +195,14 @@ namespace NodeUsb {
 
 // TODO: Read-Only
 #define LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(name) \
-		r->Set(V8STR(#name), Uint32::New((*self->device_container->config_descriptor).name));
+		r->Set(V8STR(#name), Uint32::New((*container->config_descriptor).name));
+
+#define LIBUSB_GET_CONFIG_DESCRIPTOR(scope) \
+		DEBUG("Get active config descriptor"); \
+		struct nodeusb_device_container *container = self->device_container; \
+		if (!container->config_descriptor) { \
+			CHECK_USB(libusb_get_active_config_descriptor(container->device, &(container->config_descriptor)), scope) \
+		}
 
 	/**
 	 * Returns configuration descriptor structure
@@ -193,13 +212,14 @@ namespace NodeUsb {
 		Local<External> refDevice = Local<External>::Cast(args[0]);
 
 		LOCAL(Device, self, args.This())
-		assert((self->device_container->device != NULL));
+
 #if defined(__APPLE__) && defined(__MACH__)
 		DEBUG("Open device handle for getConfigDescriptor (Darwin fix)")
 		OPEN_DEVICE_HANDLE_NEEDED(scope)
 #endif
-		DEBUG("Get active config descriptor");
-		CHECK_USB(libusb_get_active_config_descriptor(self->device_container->device, &(self->device_container->config_descriptor)), scope)
+
+		LIBUSB_GET_CONFIG_DESCRIPTOR(scope);
+
 		Local<Object> r = Object::New();
 		DEBUG("Converting structure");
 
@@ -218,7 +238,9 @@ namespace NodeUsb {
 	
 	Handle<Value> Device::GetExtraData(const Arguments& args) {
 		LOCAL(Device, self, args.This())
-		 
+
+		LIBUSB_GET_CONFIG_DESCRIPTOR(scope);
+
 		int m = (*self->device_container->config_descriptor).extra_length;
 		
 		Local<Array> r = Array::New(m);
@@ -239,9 +261,7 @@ namespace NodeUsb {
 		OPEN_DEVICE_HANDLE_NEEDED(scope)
 #endif
 
-		if (!self->device_container->config_descriptor) {
-			CHECK_USB(libusb_get_active_config_descriptor(self->device_container->device, &(self->device_container->config_descriptor)), scope)
-		}
+		LIBUSB_GET_CONFIG_DESCRIPTOR(scope);
 
 		Local<Array> r = Array::New();
 		int idx = 0;
@@ -255,16 +275,15 @@ namespace NodeUsb {
 			for (int idxAltSetting = 0; idxAltSetting < numAltSettings; idxAltSetting++) {
 				// passing a pointer of libusb_interface_descriptor does not work. struct is lost by V8
 				// idx of interface and alt_setting is passed so that Interface class can extract the given interface
-				Local<Value> args_new_interface[3] = {
+				Local<Value> args_new_interface[4] = {
+					args.This(),
 					External::New(self->device_container),
 					Uint32::New(idxInterface),
 					Uint32::New(idxAltSetting),
 				};
 
-
 				// create new object instance of class NodeUsb::Interface  
-				Persistent<Object> js_interface(Interface::constructor_template->GetFunction()->NewInstance(3, args_new_interface));
-				r->Set(idx++, js_interface);
+				r->Set(idx++, Interface::constructor_template->GetFunction()->NewInstance(4, args_new_interface));
 			}
 		}
 		
@@ -274,6 +293,11 @@ namespace NodeUsb {
 // TODO: Read-Only
 #define LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(name) \
 		r->Set(V8STR(#name), Uint32::New(self->device_descriptor.name));
+
+#define LIBUSB_GET_DEVICE_DESCRIPTOR(scope) \
+		DEBUG("Get device descriptor"); \
+		assert(self->device_container->device != NULL); \
+		CHECK_USB(libusb_get_device_descriptor(self->device_container->device, &(self->device_descriptor)), scope) \
 
 	/**
 	 * Returns the device descriptor of current device
@@ -288,7 +312,8 @@ namespace NodeUsb {
 		OPEN_DEVICE_HANDLE_NEEDED(scope)
 #endif
 
-		CHECK_USB(libusb_get_device_descriptor(self->device_container->device, &(self->device_descriptor)), scope)
+		LIBUSB_GET_DEVICE_DESCRIPTOR(scope);
+
 		Local<Object> r = Object::New();
 
 		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bLength)

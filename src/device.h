@@ -29,12 +29,13 @@ namespace NodeUsb {
 			// called from outside to initalize V8 class template
 			static void Initalize(Handle<Object> target);
 			static Persistent<FunctionTemplate> constructor_template;
-			Device(libusb_device*);
+			Device(Handle<Object>, libusb_device*);
 			~Device();
 
 		protected:
-			struct nodeusb_device_container *device_container;
+			Persistent<Object> usb;
 
+			struct nodeusb_device_container *device_container;
 			struct libusb_device_descriptor device_descriptor;
 
 			// V8 getter

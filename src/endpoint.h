@@ -27,10 +27,12 @@ namespace NodeUsb {
 		public:
 			static void Initalize(Handle<Object> target);
 			static Persistent<FunctionTemplate> constructor_template;
-			Endpoint(nodeusb_device_container*, const libusb_endpoint_descriptor*, uint32_t);
+			Endpoint(Handle<Object>, nodeusb_device_container*, const libusb_endpoint_descriptor*, uint32_t);
 			~Endpoint();
+
 		protected:
 			// members
+			Persistent<Object> device;
 			struct nodeusb_device_container *device_container;
 			const struct libusb_endpoint_descriptor *descriptor;
 

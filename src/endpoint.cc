@@ -5,7 +5,8 @@
 namespace NodeUsb {
 	Persistent<FunctionTemplate> Endpoint::constructor_template;
 
-	Endpoint::Endpoint(nodeusb_device_container* _device_container, const libusb_endpoint_descriptor* _endpoint_descriptor, uint32_t _idx_endpoint) {
+	Endpoint::Endpoint(Handle<Object> _device, nodeusb_device_container* _device_container, const libusb_endpoint_descriptor* _endpoint_descriptor, uint32_t _idx_endpoint) {
+		device = Persistent<Object>::New(_device);
 		device_container = _device_container;
 		descriptor = _endpoint_descriptor;
 		// if bit[7] of endpoint address is set => ENDPOINT_IN (device to host), else: ENDPOINT_OUT (host to device)
@@ -17,9 +18,9 @@ namespace NodeUsb {
 
 	Endpoint::~Endpoint() {
 		// TODO Close
+		device.Dispose();
 		DEBUG("Endpoint object destroyed")
 	}
-
 
 	void Endpoint::Initalize(Handle<Object> target) {
 		DEBUG("Entering...")
@@ -57,22 +58,22 @@ namespace NodeUsb {
 		HandleScope scope;
 		DEBUG("New Endpoint object created")
 
-		// need libusb_device structure as first argument
-		if (args.Length() != 4 || !args[0]->IsExternal() || !args[1]->IsUint32() || !args[2]->IsUint32()|| !args[3]->IsUint32()) {
-			THROW_BAD_ARGS("Device::New argument is invalid. [object:external:libusb_device, uint32_t:idx_interface, uint32_t:idx_alt_setting, uint32_t:idx_endpoint]!") 
+		if (args.Length() != 5 || !args[0]->IsObject() || !args[1]->IsExternal() || !args[2]->IsUint32() || !args[3]->IsUint32()|| !args[4]->IsUint32()) {
+			THROW_BAD_ARGS("Device::New argument is invalid. [object:device, object:external:libusb_device, uint32_t:idx_interface, uint32_t:idx_alt_setting, uint32_t:idx_endpoint]!")
 		}
 
 		// make local value reference to first parameter
-		Local<External> refDeviceContainer = Local<External>::Cast(args[0]);
-		uint32_t idxInterface = args[1]->Uint32Value();
-		uint32_t idxAltSetting = args[2]->Uint32Value();
-		uint32_t idxEndpoint = args[3]->Uint32Value();
+		Local<Object> device = Local<Object>::Cast(args[0]);
+		Local<External> refDeviceContainer = Local<External>::Cast(args[1]);
+		uint32_t idxInterface  = args[2]->Uint32Value();
+		uint32_t idxAltSetting = args[3]->Uint32Value();
+		uint32_t idxEndpoint   = args[4]->Uint32Value();
 
 		nodeusb_device_container *deviceContainer = static_cast<nodeusb_device_container*>(refDeviceContainer->Value());
 		const libusb_endpoint_descriptor *libusbEndpointDescriptor = &(((*deviceContainer->config_descriptor).interface[idxInterface]).altsetting[idxAltSetting]).endpoint[idxEndpoint];
 
 		// create new Endpoint object
-		Endpoint *endpoint = new Endpoint(deviceContainer, libusbEndpointDescriptor, idxEndpoint);
+		Endpoint *endpoint = new Endpoint(device, deviceContainer, libusbEndpointDescriptor, idxEndpoint);
 		// initalize handle
 
 #define LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(name) \
