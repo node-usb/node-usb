@@ -5,7 +5,7 @@
 namespace NodeUsb {
 	Persistent<FunctionTemplate> Interface::constructor_template;
 
-	Interface::Interface(nodeusb_device_container* _device_container, const libusb_interface_descriptor* _interface_descriptor, uint32_t _idx_interface, uint32_t _idx_alt_setting) {
+	Interface::Interface(nodeusb_device_container* _device_container, const libusb_interface_descriptor* _interface_descriptor, uint32_t _idx_interface, uint32_t _idx_alt_setting) : ObjectWrap()  {
 		device_container = _device_container;
 		descriptor = _interface_descriptor;
 		idx_interface = _idx_interface;
@@ -187,17 +187,14 @@ namespace NodeUsb {
 		
 		release_req->handle = self->device_container->handle;
 		release_req->interface_number = self->descriptor->bInterfaceNumber;
-		eio_custom(EIO_Release, EIO_PRI_DEFAULT, EIO_After_Release, release_req);
+
+		EIO_CUSTOM(EIO_Release, release_req, EIO_After_Release);
 	
-		// add reference
-		ev_ref(EV_DEFAULT_UC);
-		
 		return Undefined();		
 	}
 	
-	int Interface::EIO_Release(eio_req *req) {
+	void Interface::EIO_Release(uv_work_t *req) {
 		EIO_CAST(release_request, release_req)
-		
 
 		int errcode = 0;
 		
@@ -206,20 +203,13 @@ namespace NodeUsb {
 		}
 		
 		release_req->error->Set(V8STR("error_code"), Uint32::New(errcode));
-		
-		// needed for EIO so that the EIO_After_Reset method will be called
-		req->result = 0;
-		
-		return 0;
 	}
 
-	int Interface::EIO_After_Release(eio_req *req) {
+	void Interface::EIO_After_Release(uv_work_t *req) {
 		EIO_CAST(release_request, release_req)
 		EIO_AFTER(release_req)
 		
 		free(release_req);
-		
-		return 0;
 	}
 
 	/**
@@ -244,15 +234,13 @@ namespace NodeUsb {
 		alt_req->handle = self->device_container->handle;
 		alt_req->interface_number = self->descriptor->bInterfaceNumber;
 		alt_req->alternate_setting = args[0]->Uint32Value();
-		eio_custom(EIO_AlternateSetting, EIO_PRI_DEFAULT, EIO_After_AlternateSetting, alt_req);
+
+		EIO_CUSTOM(EIO_AlternateSetting, alt_req, EIO_After_AlternateSetting);
 	
-		// add reference
-		ev_ref(EV_DEFAULT_UC);
-		
 		return Undefined();		
 	}
 	
-	int Interface::EIO_AlternateSetting(eio_req *req) {
+	void Interface::EIO_AlternateSetting(uv_work_t *req) {
 		EIO_CAST(alternate_setting_request, alt_req)
 		
 		int errcode = 0;
@@ -262,19 +250,13 @@ namespace NodeUsb {
 		}
 		
 		alt_req->error->Set(V8STR("error_code"), Uint32::New(errcode));
-		
-		req->result = 0;
-		
-		return 0;
 	}
 
-	int Interface::EIO_After_AlternateSetting(eio_req *req) {
+	void Interface::EIO_After_AlternateSetting(uv_work_t *req) {
 		EIO_CAST(alternate_setting_request, alt_req)
 		EIO_AFTER(alt_req)
 		
 		free(alt_req);
-		
-		return 0;
 	}
 
 	Handle<Value> Interface::GetEndpoints(const Arguments& args) {

@@ -3,9 +3,10 @@
 
 #include "bindings.h"
 namespace NodeUsb {
-	class Usb : public EventEmitter {
+	class Usb : public ObjectWrap {
 		public:
 			static void Initalize(Handle<Object> target);
+			static Persistent<FunctionTemplate> constructor_template;
 			Usb();
 			~Usb();
 

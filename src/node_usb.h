@@ -11,8 +11,10 @@
 #include <unistd.h>
 
 #include <node.h>
+#include <node_version.h>
 #include <node_buffer.h>
-#include <node_events.h>
+#include <uv.h>
+#include <uv-private/ev.h>
 #include <cstring>
 #include <string>
 #include <cstdlib>

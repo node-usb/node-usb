@@ -8,7 +8,7 @@ namespace NodeUsb {
 			static void DispatchAsynchronousUsbTransfer(libusb_transfer *_transfer);
 	};
 
-	class Endpoint : public EventEmitter {
+	class Endpoint : public ObjectWrap {
 		public:
 			static void Initalize(Handle<Object> target);
 			static Persistent<FunctionTemplate> constructor_template;
@@ -41,11 +41,11 @@ namespace NodeUsb {
 			static Handle<Value> Submit(const Arguments& args);
 			static Handle<Value> GetExtraData(const Arguments& args);
 			static Handle<Value> BulkTransfer(const Arguments& args);
-			static int EIO_BulkTransfer(eio_req *req);
-			static int EIO_After_BulkTransfer(eio_req *req);
+			static void EIO_BulkTransfer(uv_work_t *req);
+			static void EIO_After_BulkTransfer(uv_work_t *req);
 			static Handle<Value> InterruptTransfer(const Arguments& args);
-			static int EIO_InterruptTransfer(eio_req *req);
-			static int EIO_After_InterruptTransfer(eio_req *req);
+			static void EIO_InterruptTransfer(uv_work_t *req);
+			static void EIO_After_InterruptTransfer(uv_work_t *req);
 
 	};
 	

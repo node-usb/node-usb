@@ -4,7 +4,7 @@
 #include "bindings.h"
 
 namespace NodeUsb {
-	class Interface : public EventEmitter {
+	class Interface : public ObjectWrap {
 		public:
 			static void Initalize(Handle<Object> target);
 			static Persistent<FunctionTemplate> constructor_template;
@@ -35,15 +35,15 @@ namespace NodeUsb {
 				int interface_number;
 			};
 			static Handle<Value> Release(const Arguments& args);
-			static int EIO_Release(eio_req *req);
-			static int EIO_After_Release(eio_req *req);
+			static void EIO_Release(uv_work_t *req);
+			static void EIO_After_Release(uv_work_t *req);
 			
 			struct alternate_setting_request:release_request {
 				int alternate_setting;
 			};
 			static Handle<Value> AlternateSetting(const Arguments& args);
-			static int EIO_AlternateSetting(eio_req *req);
-			static int EIO_After_AlternateSetting(eio_req *req);
+			static void EIO_AlternateSetting(uv_work_t *req);
+			static void EIO_After_AlternateSetting(uv_work_t *req);
 	};
 }
 

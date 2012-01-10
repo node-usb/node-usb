@@ -4,7 +4,7 @@
 namespace NodeUsb {
 	Persistent<FunctionTemplate> Endpoint::constructor_template;
 
-	Endpoint::Endpoint(nodeusb_device_container* _device_container, const libusb_endpoint_descriptor* _endpoint_descriptor, uint32_t _idx_endpoint) {
+	Endpoint::Endpoint(nodeusb_device_container* _device_container, const libusb_endpoint_descriptor* _endpoint_descriptor, uint32_t _idx_endpoint) : ObjectWrap()  {
 		device_container = _device_container;
 		descriptor = _endpoint_descriptor;
 		// if bit[7] of endpoint address is set => ENDPOINT_IN (device to host), else: ENDPOINT_OUT (host to device)
@@ -244,12 +244,10 @@ namespace NodeUsb {
 		bulk_interrupt_transfer_req->length = buflen;\
 		bulk_interrupt_transfer_req->data = buf;\
 		bulk_interrupt_transfer_req->endpoint = self->descriptor->bEndpointAddress;\
-		eio_custom(EIO_TO_EXECUTE, EIO_PRI_DEFAULT, EIO_AFTER, bulk_interrupt_transfer_req);\
-		ev_ref(EV_DEFAULT_UC);\
+		EIO_CUSTOM(EIO_TO_EXECUTE, bulk_interrupt_transfer_req, EIO_AFTER)\
 		return Undefined();	
 
 #define BULK_INTERRUPT_FREE TRANSFER_REQUEST_FREE(bulk_interrupt_transfer_request)
-
 
 #define BULK_INTERRUPT_EXECUTE(METHOD, SOURCE)\
 		EIO_CAST(bulk_interrupt_transfer_request, bit_req)\
@@ -258,19 +256,17 @@ namespace NodeUsb {
 			bit_req->error->Set(V8STR("error_source"), V8STR(SOURCE));\
 		}\
 		bit_req->error->Set(V8STR("error_code"), Uint32::New(errcode));\
-		req->result = 0;\
-		return 0;
 
 
 	Handle<Value> Endpoint::BulkTransfer(const Arguments& args) {
 		BULK_INTERRUPT_EIO(EIO_BulkTransfer, EIO_After_BulkTransfer)
 	}
 
-	int Endpoint::EIO_BulkTransfer(eio_req *req) {
+	void Endpoint::EIO_BulkTransfer(uv_work_t *req) {
 		BULK_INTERRUPT_EXECUTE(libusb_bulk_transfer, "bulkTransfer")
 	}
 
-	int Endpoint::EIO_After_BulkTransfer(eio_req *req) {
+	void Endpoint::EIO_After_BulkTransfer(uv_work_t *req) {
 		BULK_INTERRUPT_FREE
 	}
 
@@ -278,11 +274,11 @@ namespace NodeUsb {
 		BULK_INTERRUPT_EIO(EIO_InterruptTransfer, EIO_After_InterruptTransfer)
 	}
 
-	int Endpoint::EIO_InterruptTransfer(eio_req *req) {
+	void Endpoint::EIO_InterruptTransfer(uv_work_t *req) {
 		BULK_INTERRUPT_EXECUTE(libusb_interrupt_transfer, "interruptTransfer")
 	}
 
-	int Endpoint::EIO_After_InterruptTransfer(eio_req *req) {
+	void Endpoint::EIO_After_InterruptTransfer(uv_work_t *req) {
 		BULK_INTERRUPT_FREE
 	}
 }

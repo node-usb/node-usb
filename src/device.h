@@ -4,7 +4,7 @@
 #include "bindings.h"
 
 namespace NodeUsb {
-	class Device : public EventEmitter {
+	class Device : public ObjectWrap {
 		public:
 			// called from outside to initalize V8 class template
 			static void Initalize(Handle<Object> target);
@@ -37,15 +37,15 @@ namespace NodeUsb {
 			static Handle<Value> RemoveReference(const Arguments& args);
 			static Handle<Value> Reset(const Arguments& args);
 			// Reset -> Async
-			static int EIO_After_Reset(eio_req *req);
-			static int EIO_Reset(eio_req *req);
+			static void EIO_Reset(uv_work_t *req);
+			static void EIO_After_Reset(uv_work_t *req);
 			static Handle<Value> GetConfigDescriptor(const Arguments& args);
 			static Handle<Value> GetDeviceDescriptor(const Arguments& args);
 			static Handle<Value> GetExtraData(const Arguments& args);
 			static Handle<Value> GetInterfaces(const Arguments& args);
 			static Handle<Value> ControlTransfer(const Arguments& args);
-			static int EIO_ControlTransfer(eio_req *req);
-			static int EIO_After_ControlTransfer(eio_req *req);
+			static void EIO_ControlTransfer(uv_work_t *req);
+			static void EIO_After_ControlTransfer(uv_work_t *req);
 	};
 }
 #endif

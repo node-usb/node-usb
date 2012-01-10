@@ -19,10 +19,11 @@ namespace NodeUsb {
 		context->Global()->Set(String::NewSymbol("Usb"), target);
 	}
 
-	extern "C" void init(Handle<Object> target) {
+	void init(Handle<v8::Object> target) {
 		DEBUG("Initalizing NodeUsb")
 		HandleScope scope;
 		InitalizeAll(target);
 	}
 }
 
+NODE_MODULE(usb_bindings, NodeUsb::init)

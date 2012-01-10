@@ -45,7 +45,7 @@ namespace NodeUsb {
 		DEBUG("Leave")
 	}
 
-	Device::Device(libusb_device* _device) {
+	Device::Device(libusb_device* _device) : ObjectWrap() {
 		device_container = (nodeusb_device_container*)malloc(sizeof(nodeusb_device_container));
 		device_container->device = _device;
 	}
@@ -134,19 +134,15 @@ namespace NodeUsb {
 		
 		reset_req->device = self->device_container->device;
 		
-		// Make asynchronous call
-		eio_custom(EIO_Reset, EIO_PRI_DEFAULT, EIO_After_Reset, reset_req);
-	
-		// add reference
-		ev_ref(EV_DEFAULT_UC);
-		
+		EIO_CUSTOM(EIO_Reset, reset_req, EIO_After_Reset);
+
 		return Undefined();
 	}
 
 	/**
 	 * Contains the blocking libusb_reset_device function
 	 */
-	int Device::EIO_Reset(eio_req *req) {
+	void Device::EIO_Reset(uv_work_t *req) {
 		EIO_CAST(device_request, reset_req)
 		
 		libusb_device_handle *handle;
@@ -163,21 +159,14 @@ namespace NodeUsb {
 		}
 		
 		reset_req->error->Set(V8STR("error_code"), Uint32::New(errcode));
-		
-		// needed for EIO so that the EIO_After_Reset method will be called
-		req->result = 0;
-		
-		return 0;
 	}
 
-	int Device::EIO_After_Reset(eio_req *req) {
+	void Device::EIO_After_Reset(uv_work_t *req) {
 		EIO_CAST(device_request, reset_req)
 		EIO_AFTER(reset_req)
 		
 		// release intermediate structure
 		free(reset_req);
-		
-		return 0;
 	}
 	
 
@@ -362,14 +351,13 @@ namespace NodeUsb {
 
 		EIO_DELEGATION(control_transfer_req, 5)
 
-		eio_custom(EIO_ControlTransfer, EIO_PRI_DEFAULT, EIO_After_ControlTransfer, control_transfer_req);
-		ev_ref(EV_DEFAULT_UC);
+		EIO_CUSTOM(EIO_ControlTransfer, control_transfer_req, EIO_After_ControlTransfer);
 
 		return Undefined();	
 
 	}
 
-	int Device::EIO_ControlTransfer(eio_req *req) {
+	void Device::EIO_ControlTransfer(uv_work_t *req) {
 		EIO_CAST(control_transfer_request, ct_req)
 		int errcode = 0;
 
@@ -378,12 +366,9 @@ namespace NodeUsb {
 		}
 
 		ct_req->error->Set(V8STR("error_code"), Uint32::New(errcode));
-		req->result = 0;
-
-		return 0;
 	}
 
-	int Device::EIO_After_ControlTransfer(eio_req *req) {
+	void Device::EIO_After_ControlTransfer(uv_work_t *req) {
 		TRANSFER_REQUEST_FREE(control_transfer_request)
 	}
 }

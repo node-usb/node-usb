@@ -50,6 +50,12 @@
 		HandleScope scope;\
 		TYPE *VARNAME = OBJUNWRAP<TYPE>(REF);
 		
+#define EIO_CUSTOM(FUNC, STRUCTURE, CALLBACK) \
+		uv_work_t* req = new uv_work_t();\
+		req->data = STRUCTURE;\
+		uv_queue_work(uv_default_loop(), req, FUNC, CALLBACK);\
+		uv_ref(uv_default_loop());
+
 #define	EIO_CAST(TYPE, VARNAME) struct TYPE *VARNAME = reinterpret_cast<struct TYPE *>(req->data);
 #define	EIO_NEW(TYPE, VARNAME) struct TYPE *VARNAME = (struct TYPE *) calloc(1, sizeof(struct TYPE));
 #define EIO_DELEGATION(VARNAME, CALLBACK_ARG_IDX) \
@@ -64,19 +70,19 @@
 		VARNAME->error = Persistent<Object>::New(Object::New()); \
 
 #define EIO_AFTER(VARNAME) HandleScope scope; \
-		ev_unref(EV_DEFAULT_UC); \
+		uv_unref(uv_default_loop()); \
 		if (sizeof(VARNAME->callback) > 0) { \
 			Local<Value> argv[1]; \
 			argv[0] = Local<Value>::New(scope.Close(VARNAME->error)); \
 			VARNAME->callback->Call(Context::GetCurrent()->Global(), 1, argv); \
 			VARNAME->callback.Dispose(); \
-		}
+		}\
+		delete req;
 		
 #define TRANSFER_REQUEST_FREE(STRUCT)\
 		EIO_CAST(STRUCT, transfer_req)\
 		EIO_AFTER(transfer_req)\
 		free(transfer_req);\
-		return 0;
 
 #define INIT_TRANSFER_CALL(MINIMUM_ARG_LENGTH, CALLBACK_ARG_IDX, TIMEOUT_ARG_IDX) \
 		libusb_endpoint_direction modus; \

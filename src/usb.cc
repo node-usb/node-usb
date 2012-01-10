@@ -12,9 +12,9 @@ namespace NodeUsb {
 		Local<FunctionTemplate> t = FunctionTemplate::New(Usb::New);
 
 		// Constructor
-		t->Inherit(EventEmitter::constructor_template);
 		t->InstanceTemplate()->SetInternalFieldCount(1);
 		t->SetClassName(String::NewSymbol("Usb"));
+		Device::constructor_template = Persistent<FunctionTemplate>::New(t);
 
 		Local<ObjectTemplate> instance_template = t->InstanceTemplate();
 
@@ -88,7 +88,7 @@ namespace NodeUsb {
 		DEBUG("Leave")
 	}
 
-	Usb::Usb() : EventEmitter() {
+	Usb::Usb() : ObjectWrap() {
 		is_initalized = false;
 		num_devices = 0;
 		devices = NULL;
