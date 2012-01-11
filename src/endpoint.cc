@@ -1,10 +1,12 @@
-#include "./bindings.h"
+#include "bindings.h"
 #include "endpoint.h"
+#include "device.h"
 
 namespace NodeUsb {
 	Persistent<FunctionTemplate> Endpoint::constructor_template;
 
-	Endpoint::Endpoint(nodeusb_device_container* _device_container, const libusb_endpoint_descriptor* _endpoint_descriptor, uint32_t _idx_endpoint) : ObjectWrap()  {
+	Endpoint::Endpoint(Handle<Object> _device, nodeusb_device_container* _device_container, const libusb_endpoint_descriptor* _endpoint_descriptor, uint32_t _idx_endpoint) : ObjectWrap() {
+		device = Persistent<Object>::New(_device);
 		device_container = _device_container;
 		descriptor = _endpoint_descriptor;
 		// if bit[7] of endpoint address is set => ENDPOINT_IN (device to host), else: ENDPOINT_OUT (host to device)
@@ -16,9 +18,9 @@ namespace NodeUsb {
 
 	Endpoint::~Endpoint() {
 		// TODO Close
+		device.Dispose();
 		DEBUG("Endpoint object destroyed")
 	}
-
 
 	void Endpoint::Initalize(Handle<Object> target) {
 		DEBUG("Entering...")
@@ -56,22 +58,22 @@ namespace NodeUsb {
 		HandleScope scope;
 		DEBUG("New Endpoint object created")
 
-		// need libusb_device structure as first argument
-		if (args.Length() != 4 || !args[0]->IsExternal() || !args[1]->IsUint32() || !args[2]->IsUint32()|| !args[3]->IsUint32()) {
-			THROW_BAD_ARGS("Device::New argument is invalid. [object:external:libusb_device, uint32_t:idx_interface, uint32_t:idx_alt_setting, uint32_t:idx_endpoint]!") 
+		if (args.Length() != 5 || !args[0]->IsObject() || !args[1]->IsExternal() || !args[2]->IsUint32() || !args[3]->IsUint32()|| !args[4]->IsUint32()) {
+			THROW_BAD_ARGS("Device::New argument is invalid. [object:device, object:external:libusb_device, uint32_t:idx_interface, uint32_t:idx_alt_setting, uint32_t:idx_endpoint]!")
 		}
 
 		// make local value reference to first parameter
-		Local<External> refDeviceContainer = Local<External>::Cast(args[0]);
-		uint32_t idxInterface = args[1]->Uint32Value();
-		uint32_t idxAltSetting = args[2]->Uint32Value();
-		uint32_t idxEndpoint = args[3]->Uint32Value();
+		Local<Object> device = Local<Object>::Cast(args[0]);
+		Local<External> refDeviceContainer = Local<External>::Cast(args[1]);
+		uint32_t idxInterface  = args[2]->Uint32Value();
+		uint32_t idxAltSetting = args[3]->Uint32Value();
+		uint32_t idxEndpoint   = args[4]->Uint32Value();
 
 		nodeusb_device_container *deviceContainer = static_cast<nodeusb_device_container*>(refDeviceContainer->Value());
 		const libusb_endpoint_descriptor *libusbEndpointDescriptor = &(((*deviceContainer->config_descriptor).interface[idxInterface]).altsetting[idxAltSetting]).endpoint[idxEndpoint];
 
 		// create new Endpoint object
-		Endpoint *endpoint = new Endpoint(deviceContainer, libusbEndpointDescriptor, idxEndpoint);
+		Endpoint *endpoint = new Endpoint(device, deviceContainer, libusbEndpointDescriptor, idxEndpoint);
 		// initalize handle
 
 #define LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(name) \
@@ -88,9 +90,6 @@ namespace NodeUsb {
 
 		// wrap created Endpoint object to v8
 		endpoint->Wrap(args.This());
-		
-		// increment object reference, otherwise object will be GCed by V8
-		endpoint->Ref();
 
 		return args.This();
 	}
@@ -239,24 +238,23 @@ namespace NodeUsb {
 		OPEN_DEVICE_HANDLE_NEEDED(scope)\
 		EIO_NEW(bulk_interrupt_transfer_request, bulk_interrupt_transfer_req)\
 		EIO_DELEGATION(bulk_interrupt_transfer_req, 1)\
-		bulk_interrupt_transfer_req->handle = self->device_container->handle;\
+		bulk_interrupt_transfer_req->endpoint = self;\
+		bulk_interrupt_transfer_req->endpoint->Ref();\
 		bulk_interrupt_transfer_req->timeout = timeout;\
 		bulk_interrupt_transfer_req->length = buflen;\
 		bulk_interrupt_transfer_req->data = buf;\
-		bulk_interrupt_transfer_req->endpoint = self->descriptor->bEndpointAddress;\
 		EIO_CUSTOM(EIO_TO_EXECUTE, bulk_interrupt_transfer_req, EIO_AFTER)\
 		return Undefined();	
 
-#define BULK_INTERRUPT_FREE TRANSFER_REQUEST_FREE(bulk_interrupt_transfer_request)
+#define BULK_INTERRUPT_FREE TRANSFER_REQUEST_FREE(bulk_interrupt_transfer_request, endpoint)
 
 #define BULK_INTERRUPT_EXECUTE(METHOD, SOURCE)\
 		EIO_CAST(bulk_interrupt_transfer_request, bit_req)\
-		int errcode = 0;\
-		if ((errcode = libusb_bulk_transfer(bit_req->handle, bit_req->endpoint, bit_req->data, bit_req->length, &(bit_req->transferred), bit_req->timeout)) < LIBUSB_SUCCESS) {\
-			bit_req->error->Set(V8STR("error_source"), V8STR(SOURCE));\
-		}\
-		bit_req->error->Set(V8STR("error_code"), Uint32::New(errcode));\
-
+		Endpoint * self = bit_req->endpoint;\
+		bit_req->errcode = libusb_bulk_transfer(self->device_container->handle, self->descriptor->bEndpointAddress, bit_req->data, bit_req->length, &(bit_req->transferred), bit_req->timeout);\
+		if (bit_req->errcode < LIBUSB_SUCCESS) {\
+			bit_req->errsource = SOURCE;\
+		}
 
 	Handle<Value> Endpoint::BulkTransfer(const Arguments& args) {
 		BULK_INTERRUPT_EIO(EIO_BulkTransfer, EIO_After_BulkTransfer)

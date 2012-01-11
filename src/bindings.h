@@ -1,5 +1,5 @@
-#ifndef SRC_BINDINGS_H_
-#define SRC_BINDINGS_H_
+#ifndef SRC_BINDINGS_H
+#define SRC_BINDINGS_H
 
 #include "node_usb.h"
 #include "libusb.h"
@@ -7,6 +7,7 @@
 // Taken from node-libmysqlclient
 #define OBJUNWRAP ObjectWrap::Unwrap
 #define V8STR(str) String::New(str)
+#define V8SYM(str) String::NewSymbol(str)
 
 #ifdef ENABLE_DEBUG
   #define DEBUG_HEADER fprintf(stderr, "node-usb [%s:%s() %d]: ", __FILE__, __FUNCTION__, __LINE__); 
@@ -23,19 +24,21 @@
 #define THROW_BAD_ARGS(FAIL_MSG) return ThrowException(Exception::TypeError(V8STR(FAIL_MSG)));
 #define THROW_ERROR(FAIL_MSG) return ThrowException(Exception::Error(V8STR(FAIL_MSG))));
 #define THROW_NOT_YET return ThrowException(Exception::Error(String::Concat(String::New(__FUNCTION__), String::New("not yet supported"))));
-#define CREATE_ERROR_OBJECT_AND_CLOSE_SCOPE(ERRNO) \
+#define CREATE_ERROR_OBJECT_AND_CLOSE_SCOPE(ERRNO, scope) \
 		Local<Object> error = Object::New();\
-		error->Set(V8STR("errno"), Integer::New(ERRNO));\
-		error->Set(V8STR("error"), errno_exception(ERRNO));\
+		error->Set(V8SYM("errno"), Integer::New(ERRNO));\
+		error->Set(V8SYM("error"), errno_exception(ERRNO));\
 		return scope.Close(error);\
 
 #define CHECK_USB(r, scope) \
 	if (r < LIBUSB_SUCCESS) { \
-		CREATE_ERROR_OBJECT_AND_CLOSE_SCOPE(r); \
+		CREATE_ERROR_OBJECT_AND_CLOSE_SCOPE(r, scope); \
 	}
 
 #define OPEN_DEVICE_HANDLE_NEEDED(scope) \
 	if (self->device_container->handle_status == UNINITIALIZED) {\
+		assert(self->device_container->device != NULL); \
+		assert(self->device_container->handle == NULL); \
 		if ((self->device_container->last_error = libusb_open(self->device_container->device, &(self->device_container->handle))) < 0) {\
 			self->device_container->handle_status = FAILED;\
 		} else {\
@@ -43,7 +46,7 @@
 		}\
 	}\
 	if (self->device_container->handle_status == FAILED) { \
-		CREATE_ERROR_OBJECT_AND_CLOSE_SCOPE(self->device_container->last_error) \
+		CREATE_ERROR_OBJECT_AND_CLOSE_SCOPE(self->device_container->last_error, scope) \
 	} \
 
 #define LOCAL(TYPE, VARNAME, REF) \
@@ -57,31 +60,46 @@
 		uv_ref(uv_default_loop());
 
 #define	EIO_CAST(TYPE, VARNAME) struct TYPE *VARNAME = reinterpret_cast<struct TYPE *>(req->data);
-#define	EIO_NEW(TYPE, VARNAME) struct TYPE *VARNAME = (struct TYPE *) calloc(1, sizeof(struct TYPE));
-#define EIO_DELEGATION(VARNAME, CALLBACK_ARG_IDX) \
-		Local<Function> callback; \
-		if (args[CALLBACK_ARG_IDX]->IsFunction()) { \
-			callback = Local<Function>::Cast(args[CALLBACK_ARG_IDX]); \
-		} \
+#define	EIO_NEW(TYPE, VARNAME) \
+		struct TYPE *VARNAME = (struct TYPE *) calloc(1, sizeof(struct TYPE)); \
 		if (!VARNAME) { \
 			V8::LowMemoryNotification(); \
+		}
+
+#define EIO_DELEGATION(VARNAME, CALLBACK_ARG_IDX) \
+		Local<Function> callback; \
+		if (args.Length() > (CALLBACK_ARG_IDX)) { \
+			if (!args[CALLBACK_ARG_IDX]->IsFunction()) { \
+				return ThrowException(Exception::TypeError( String::New("Argument " #CALLBACK_ARG_IDX " must be a function"))); \
+			} \
+			callback = Local<Function>::Cast(args[CALLBACK_ARG_IDX]); \
 		} \
-		VARNAME->callback = Persistent<Function>::New(callback); \
-		VARNAME->error = Persistent<Object>::New(Object::New()); \
+		VARNAME->callback = Persistent<Function>::New(callback);
 
 #define EIO_AFTER(VARNAME) HandleScope scope; \
 		uv_unref(uv_default_loop()); \
-		if (sizeof(VARNAME->callback) > 0) { \
+		if (!VARNAME->callback.IsEmpty()) { \
+			HandleScope scope; \
+			Handle<Object> error = Object::New(); \
+			if(VARNAME->errsource) { \
+				error->Set(V8SYM("error_source"), V8STR(VARNAME->errsource)); \
+			} \
+	                error->Set(V8SYM("error_code"), Uint32::New(VARNAME->errcode)); \
 			Local<Value> argv[1]; \
-			argv[0] = Local<Value>::New(scope.Close(VARNAME->error)); \
+			argv[0] = Local<Value>::New(scope.Close(error)); \
+			TryCatch try_catch; \
 			VARNAME->callback->Call(Context::GetCurrent()->Global(), 1, argv); \
+			if (try_catch.HasCaught()) { \
+				FatalException(try_catch); \
+			} \
 			VARNAME->callback.Dispose(); \
 		}\
-		delete req;
+		delete req;\
+		VARNAME->SELF->Unref();
 		
-#define TRANSFER_REQUEST_FREE(STRUCT)\
+#define TRANSFER_REQUEST_FREE(STRUCT, SELF)\
 		EIO_CAST(STRUCT, transfer_req)\
-		EIO_AFTER(transfer_req)\
+		EIO_AFTER(transfer_req, SELF)\
 		free(transfer_req);\
 
 #define INIT_TRANSFER_CALL(MINIMUM_ARG_LENGTH, CALLBACK_ARG_IDX, TIMEOUT_ARG_IDX) \
@@ -126,6 +144,8 @@
 		}
 
 namespace NodeUsb  {
+	class Device;
+
 	// status of device handle
 	enum nodeusb_device_handle_status { 
 		UNINITIALIZED, 
@@ -148,24 +168,11 @@ namespace NodeUsb  {
 		int endpoint_number;
 	};	
 
-	// intermediate EIO structure for device
-	struct device_request {
+	struct request {
 		Persistent<Function> callback;
-		Persistent<Object> error;
-		libusb_device *device;
+		int errcode;
+		const char * errsource;
 	};
-
-	// intermediate EIO structure for device handle
-	struct device_handle_request:device_request {
-		libusb_device_handle *handle;
-	};
-
-	struct nodeusb_transfer:device_handle_request {
-		unsigned char *data;
-		unsigned int timeout;
-	};
-
-
 
 	static inline Local<Value> errno_exception(int errorno) {
 		Local<Value> e  = Exception::Error(String::NewSymbol(strerror(errorno)));

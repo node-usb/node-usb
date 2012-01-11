@@ -45,43 +45,56 @@ namespace NodeUsb {
 		DEBUG("Leave")
 	}
 
-	Device::Device(libusb_device* _device) : ObjectWrap() {
+	Device::Device(Handle<Object> _usb, libusb_device* _device) : ObjectWrap()  {
+		usb = Persistent<Object>::New(_usb); // Ensure USB is around for the duration of this Device object
+
 		device_container = (nodeusb_device_container*)malloc(sizeof(nodeusb_device_container));
 		device_container->device = _device;
+		device_container->handle = NULL;
+		device_container->config_descriptor = NULL;
+		device_container->handle_status = UNINITIALIZED;
+		device_container->last_error = 0;
+
+		DEBUG_OPT("Device object %p created", device_container->device)
 	}
 
 	Device::~Device() {
+		DEBUG_OPT("Device object %p destroyed", device_container->device)
 		// free configuration descriptor
 		if (device_container) {
 			libusb_free_config_descriptor(device_container->config_descriptor);
 			free(device_container);
 		}
-
-		DEBUG("Device object destroyed")
+		usb.Dispose();
 	}
 	
 	Handle<Value> Device::New(const Arguments& args) {
 		HandleScope scope;
-		DEBUG("New Device object created")
 
 		// need libusb_device structure as first argument
-		if (args.Length() <= 0 || !args[0]->IsExternal()) {
-			THROW_BAD_ARGS("Device::New argument is invalid. Must be external!") 
+		if (args.Length() < 2) {
+			THROW_BAD_ARGS("Device::New argument is invalid. Must be external!")
 		}
 
-		Local<External> refDevice = Local<External>::Cast(args[0]);
+		if (!args[0]->IsObject()) {
+			THROW_BAD_ARGS("Device::New argument is invalid. Must be Object!")
+		}
 
-		// cast local reference to local libusb_device structure 
+		if (!args[1]->IsExternal()) {
+			THROW_BAD_ARGS("Device::New argument is invalid. Must be external!")
+		}
+
+		Local<Object> usb = Local<Object>::Cast(args[0]);
+		Local<External> refDevice = Local<External>::Cast(args[1]);
+
+		// cast local reference to local libusb_device structure
 		libusb_device *libusbDevice = static_cast<libusb_device*>(refDevice->Value());
 
 		// create new Device object
-		Device *device = new Device(libusbDevice);
+		Device *device = new Device(usb, libusbDevice);
 
 		// wrap created Device object to v8
 		device->Wrap(args.This());
-
-		// increment object reference, otherwise object will be GCed by V8
-		device->Ref();
 
 		return args.This();
 	}
@@ -132,8 +145,9 @@ namespace NodeUsb {
 		// create default delegation
 		EIO_DELEGATION(reset_req, 0)
 		
-		reset_req->device = self->device_container->device;
-		
+		reset_req->device = self;
+		reset_req->device->Ref();
+
 		EIO_CUSTOM(EIO_Reset, reset_req, EIO_After_Reset);
 
 		return Undefined();
@@ -143,36 +157,43 @@ namespace NodeUsb {
 	 * Contains the blocking libusb_reset_device function
 	 */
 	void Device::EIO_Reset(uv_work_t *req) {
+		// Inside EIO Threadpool, so don't touch V8.
+		// Be careful!
 		EIO_CAST(device_request, reset_req)
 		
+		libusb_device *device = reset_req->device->device_container->device;
 		libusb_device_handle *handle;
 
 		int errcode = 0;
 		
-		if ((errcode = libusb_open(reset_req->device, &handle)) >= LIBUSB_SUCCESS) {
+		if ((errcode = libusb_open(device, &handle)) >= LIBUSB_SUCCESS) {
 			if ((errcode = libusb_reset_device(handle)) < LIBUSB_SUCCESS) {
 				libusb_close(handle);
-				reset_req->error->Set(V8STR("error_source"), V8STR("reset"));
+				reset_req->errsource = "reset";
 			}
 		} else {
-			reset_req->error->Set(V8STR("error_source"), V8STR("open"));
+			reset_req->errsource = "open";
 		}
-		
-		reset_req->error->Set(V8STR("error_code"), Uint32::New(errcode));
-	}
 
-	void Device::EIO_After_Reset(uv_work_t *req) {
 		EIO_CAST(device_request, reset_req)
 		EIO_AFTER(reset_req)
-		
-		// release intermediate structure
-		free(reset_req);
+	}
+	
+	void Device::EIO_After_Reset(uv_work_t *req) {
+		TRANSFER_REQUEST_FREE(device_request, device)
 	}
 	
 
 // TODO: Read-Only
 #define LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(name) \
-		r->Set(V8STR(#name), Uint32::New((*self->device_container->config_descriptor).name));
+		r->Set(V8STR(#name), Uint32::New((*container->config_descriptor).name));
+
+#define LIBUSB_GET_CONFIG_DESCRIPTOR(scope) \
+		DEBUG("Get active config descriptor"); \
+		struct nodeusb_device_container *container = self->device_container; \
+		if (!container->config_descriptor) { \
+			CHECK_USB(libusb_get_active_config_descriptor(container->device, &(container->config_descriptor)), scope) \
+		}
 
 	/**
 	 * Returns configuration descriptor structure
@@ -182,13 +203,14 @@ namespace NodeUsb {
 		Local<External> refDevice = Local<External>::Cast(args[0]);
 
 		LOCAL(Device, self, args.This())
-		assert((self->device_container->device != NULL));
+
 #if defined(__APPLE__) && defined(__MACH__)
 		DEBUG("Open device handle for getConfigDescriptor (Darwin fix)")
 		OPEN_DEVICE_HANDLE_NEEDED(scope)
 #endif
-		DEBUG("Get active config descriptor");
-		CHECK_USB(libusb_get_active_config_descriptor(self->device_container->device, &(self->device_container->config_descriptor)), scope)
+
+		LIBUSB_GET_CONFIG_DESCRIPTOR(scope);
+
 		Local<Object> r = Object::New();
 		DEBUG("Converting structure");
 
@@ -207,7 +229,9 @@ namespace NodeUsb {
 	
 	Handle<Value> Device::GetExtraData(const Arguments& args) {
 		LOCAL(Device, self, args.This())
-		 
+
+		LIBUSB_GET_CONFIG_DESCRIPTOR(scope);
+
 		int m = (*self->device_container->config_descriptor).extra_length;
 		
 		Local<Array> r = Array::New(m);
@@ -228,9 +252,7 @@ namespace NodeUsb {
 		OPEN_DEVICE_HANDLE_NEEDED(scope)
 #endif
 
-		if (!self->device_container->config_descriptor) {
-			CHECK_USB(libusb_get_active_config_descriptor(self->device_container->device, &(self->device_container->config_descriptor)), scope)
-		}
+		LIBUSB_GET_CONFIG_DESCRIPTOR(scope);
 
 		Local<Array> r = Array::New();
 		int idx = 0;
@@ -244,16 +266,15 @@ namespace NodeUsb {
 			for (int idxAltSetting = 0; idxAltSetting < numAltSettings; idxAltSetting++) {
 				// passing a pointer of libusb_interface_descriptor does not work. struct is lost by V8
 				// idx of interface and alt_setting is passed so that Interface class can extract the given interface
-				Local<Value> args_new_interface[3] = {
+				Local<Value> args_new_interface[4] = {
+					args.This(),
 					External::New(self->device_container),
 					Uint32::New(idxInterface),
 					Uint32::New(idxAltSetting),
 				};
 
-
 				// create new object instance of class NodeUsb::Interface  
-				Persistent<Object> js_interface(Interface::constructor_template->GetFunction()->NewInstance(3, args_new_interface));
-				r->Set(idx++, js_interface);
+				r->Set(idx++, Interface::constructor_template->GetFunction()->NewInstance(4, args_new_interface));
 			}
 		}
 		
@@ -263,6 +284,11 @@ namespace NodeUsb {
 // TODO: Read-Only
 #define LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(name) \
 		r->Set(V8STR(#name), Uint32::New(self->device_descriptor.name));
+
+#define LIBUSB_GET_DEVICE_DESCRIPTOR(scope) \
+		DEBUG("Get device descriptor"); \
+		assert(self->device_container->device != NULL); \
+		CHECK_USB(libusb_get_device_descriptor(self->device_container->device, &(self->device_descriptor)), scope) \
 
 	/**
 	 * Returns the device descriptor of current device
@@ -277,7 +303,8 @@ namespace NodeUsb {
 		OPEN_DEVICE_HANDLE_NEEDED(scope)
 #endif
 
-		CHECK_USB(libusb_get_device_descriptor(self->device_container->device, &(self->device_descriptor)), scope)
+		LIBUSB_GET_DEVICE_DESCRIPTOR(scope);
+
 		Local<Object> r = Object::New();
 
 		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bLength)
@@ -343,29 +370,33 @@ namespace NodeUsb {
 			control_transfer_req->wIndex = (uint16_t)args[4]->Int32Value();
 		}
 
-		control_transfer_req->handle = self->device_container->handle;
+		EIO_DELEGATION(control_transfer_req, 5)
+
+		control_transfer_req->device = self;
+		control_transfer_req->device->Ref();
 		control_transfer_req->timeout = timeout;
 		control_transfer_req->wLength = buflen;
 		control_transfer_req->data = buf;
 		DEBUG_OPT("bmRequestType 0x%X, bRequest: 0x%X, wValue: 0x%X, wIndex: 0x%X, wLength: 0x%X, timeout: 0x%X", control_transfer_req->bmRequestType, control_transfer_req->bRequest, control_transfer_req->wValue, control_transfer_req->wIndex, control_transfer_req->wLength, control_transfer_req->timeout);
 
 		EIO_DELEGATION(control_transfer_req, 5)
-
 		EIO_CUSTOM(EIO_ControlTransfer, control_transfer_req, EIO_After_ControlTransfer);
 
-		return Undefined();	
-
+		return Undefined();
 	}
 
 	void Device::EIO_ControlTransfer(uv_work_t *req) {
+		// Inside EIO Threadpool, so don't touch V8.
+		// Be careful!
 		EIO_CAST(control_transfer_request, ct_req)
-		int errcode = 0;
 
-		if ((errcode = libusb_control_transfer(ct_req->handle, ct_req->bmRequestType, ct_req->bRequest, ct_req->wValue, ct_req->wIndex, ct_req->data, ct_req->wLength, ct_req->timeout)) < LIBUSB_SUCCESS) {
-			ct_req->error->Set(V8STR("error_source"), V8STR("controlTransfer"));
+		Device * self = ct_req->device;
+		libusb_device_handle * handle = self->device_container->handle;
+
+		ct_req->errcode = libusb_control_transfer(handle, ct_req->bmRequestType, ct_req->bRequest, ct_req->wValue, ct_req->wIndex, ct_req->data, ct_req->wLength, ct_req->timeout);
+		if (ct_req->errcode < LIBUSB_SUCCESS) {
+			ct_req->errsource = "controlTransfer";
 		}
-
-		ct_req->error->Set(V8STR("error_code"), Uint32::New(errcode));
 	}
 
 	void Device::EIO_After_ControlTransfer(uv_work_t *req) {

@@ -65,7 +65,7 @@ for (var i = 0; i < devices.length; i++) {
 	console.log("  bDescriptorType               " + dd.bDescriptorType);
 	// 2 bcdUSB: 2 bytes
 	var bcdUSBArr = toByteArray(dd.bcdUSB);
-	console.log("  bcdUSB                        " + bcdUSBArr[0] + "." + pad(bcdUSBArr[1], 2, "0"));
+	console.log("  bcdUSB                        " + bcdUSBArr[0] + "." + pad(bcdUSBArr[1] || 0, 2, "0"));
 	console.log("  bDeviceClass                  " + dd.bDeviceClass);
 	console.log("  bDeviceSubClass               " + dd.bDeviceSubClass);
 	console.log("  bDeviceProtocol               " + dd.bDeviceProtocol);
@@ -76,7 +76,7 @@ for (var i = 0; i < devices.length; i++) {
 	console.log("  idProduct                     " + "0x" + idProduct); // + " " + usb_ids[idVendor].products[idProduct].name);
 	// 2 bcdDevice: 2 bytes
 	var bcdDeviceArr = toByteArray(dd.bcdDevice);
-	console.log("  bcdDevice                     " + bcdDeviceArr[0] + "." + pad(bcdDeviceArr[1], 2, "0"));
+	console.log("  bcdDevice                     " + bcdDeviceArr[0] + "." + pad(bcdDeviceArr[1] || 0, 2, "0"));
 	console.log("  iManufacturer                 " + dd.iManufacturer);
 	console.log("  iProduct                      " + dd.iProduct);
 	// iSerialNumber is default of libusb-1.0

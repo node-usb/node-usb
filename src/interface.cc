@@ -1,11 +1,13 @@
 #include "bindings.h"
 #include "interface.h"
 #include "endpoint.h"
+#include "device.h"
 
 namespace NodeUsb {
 	Persistent<FunctionTemplate> Interface::constructor_template;
 
-	Interface::Interface(nodeusb_device_container* _device_container, const libusb_interface_descriptor* _interface_descriptor, uint32_t _idx_interface, uint32_t _idx_alt_setting) : ObjectWrap()  {
+	Interface::Interface(Handle<Object> _device, struct nodeusb_device_container * const _device_container, const libusb_interface_descriptor* _interface_descriptor, uint32_t _idx_interface, uint32_t _idx_alt_setting) : ObjectWrap() {
+		device = Persistent<Object>::New(_device);
 		device_container = _device_container;
 		descriptor = _interface_descriptor;
 		idx_interface = _idx_interface;
@@ -14,9 +16,9 @@ namespace NodeUsb {
 
 	Interface::~Interface() {
 		// TODO Close
+		device.Dispose();
 		DEBUG("Interface object destroyed")
 	}
-
 
 	void Interface::Initalize(Handle<Object> target) {
 		DEBUG("Entering...")
@@ -58,22 +60,22 @@ namespace NodeUsb {
 
 		// need libusb_device structure as first argument
 
-		if (args.Length() != 3 || !args[0]->IsExternal() || !args[1]->IsUint32() ||  !args[2]->IsUint32()) {
-			THROW_BAD_ARGS("Device::New argument is invalid. [object:external:libusb_device, int:idx_interface, int:idx_alt_setting]!") 
+		if (args.Length() != 4 || !args[0]->IsObject() || !args[1]->IsExternal() || !args[2]->IsUint32() ||  !args[3]->IsUint32()) {
+			THROW_BAD_ARGS("Device::New argument is invalid. [object:device, int:idx_interface, int:idx_alt_setting!") // TODO
 		}
 
 		// assign arguments as local references
-		Local<External> refDeviceContainer = Local<External>::Cast(args[0]);
-		uint32_t idxInterface = args[1]->Uint32Value();
-		uint32_t idxAltSetting = args[2]->Uint32Value();
+		Local<Object> device = Local<Object>::Cast(args[0]);
+		Local<External> refDeviceContainer = Local<External>::Cast(args[1]);
+		uint32_t idxInterface  = args[2]->Uint32Value();
+		uint32_t idxAltSetting = args[3]->Uint32Value();
 
 		nodeusb_device_container *deviceContainer = static_cast<nodeusb_device_container*>(refDeviceContainer->Value());
 		const libusb_interface_descriptor *libusbInterfaceDescriptor = &((*deviceContainer->config_descriptor).interface[idxInterface]).altsetting[idxAltSetting];
 
 		// create new Devicehandle object
-		Interface *interface = new Interface(deviceContainer, libusbInterfaceDescriptor, idxInterface, idxAltSetting);
+		Interface *interface = new Interface(device, deviceContainer, libusbInterfaceDescriptor, idxInterface, idxAltSetting);
 		// initalize handle
-
 
 		// wrap created Device object to v8
 		interface->Wrap(args.This());
@@ -90,9 +92,6 @@ namespace NodeUsb {
 		LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bInterfaceProtocol)
 		LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(iInterface)
 		LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(extra_length)
-
-		// increment object reference, otherwise object will be GCed by V8
-		interface->Ref();
 
 		return args.This();
 	}
@@ -128,6 +127,7 @@ namespace NodeUsb {
 
 	Handle<Value> Interface::IsKernelDriverActive(const Arguments& args) {
 		LOCAL(Interface, self, args.This())
+
 		OPEN_DEVICE_HANDLE_NEEDED(scope)
 
 		int isKernelDriverActive = 0;
@@ -176,7 +176,7 @@ namespace NodeUsb {
 	 */
 	Handle<Value> Interface::Release(const Arguments& args) {
 		LOCAL(Interface, self, args.This())
-		
+
 		OPEN_DEVICE_HANDLE_NEEDED(scope)
 
 		// allocation of intermediate EIO structure
@@ -185,8 +185,8 @@ namespace NodeUsb {
 		// create default delegation
 		EIO_DELEGATION(release_req, 0)
 		
-		release_req->handle = self->device_container->handle;
-		release_req->interface_number = self->descriptor->bInterfaceNumber;
+		release_req->interface = self;
+		release_req->interface->Ref();
 
 		EIO_CUSTOM(EIO_Release, release_req, EIO_After_Release);
 	
@@ -194,22 +194,22 @@ namespace NodeUsb {
 	}
 	
 	void Interface::EIO_Release(uv_work_t *req) {
+		// Inside EIO Threadpool, so don't touch V8.
+		// Be careful!
 		EIO_CAST(release_request, release_req)
 
-		int errcode = 0;
-		
-		if ((errcode = libusb_release_interface(release_req->handle, release_req->interface_number)) < LIBUSB_SUCCESS) {
-			release_req->error->Set(V8STR("error_source"), V8STR("release"));
+		Interface * self = release_req->interface;
+		libusb_device_handle * handle = self->device_container->handle;
+		int interface_number          = self->descriptor->bInterfaceNumber;
+
+		release_req->errcode = libusb_release_interface(handle, interface_number);
+		if (release_req->errcode < LIBUSB_SUCCESS) {
+			release_req->errsource = "release";
 		}
-		
-		release_req->error->Set(V8STR("error_code"), Uint32::New(errcode));
 	}
 
 	void Interface::EIO_After_Release(uv_work_t *req) {
-		EIO_CAST(release_request, release_req)
-		EIO_AFTER(release_req)
-		
-		free(release_req);
+		TRANSFER_REQUEST_FREE(release_request, interface);
 	}
 
 	/**
@@ -231,8 +231,8 @@ namespace NodeUsb {
 		// create default delegation
 		EIO_DELEGATION(alt_req, 1)
 		
-		alt_req->handle = self->device_container->handle;
-		alt_req->interface_number = self->descriptor->bInterfaceNumber;
+		alt_req->interface = self;
+		alt_req->interface->Ref();
 		alt_req->alternate_setting = args[0]->Uint32Value();
 
 		EIO_CUSTOM(EIO_AlternateSetting, alt_req, EIO_After_AlternateSetting);
@@ -241,22 +241,22 @@ namespace NodeUsb {
 	}
 	
 	void Interface::EIO_AlternateSetting(uv_work_t *req) {
+        // Inside EIO Threadpool, so don't touch V8.
+        // Be careful!
 		EIO_CAST(alternate_setting_request, alt_req)
-		
-		int errcode = 0;
-		
-		if ((errcode = libusb_set_interface_alt_setting(alt_req->handle, alt_req->interface_number, alt_req->alternate_setting)) < LIBUSB_SUCCESS) {
-			alt_req->error->Set(V8STR("error_source"), V8STR("release"));
+
+		Interface * self = alt_req->interface;
+		libusb_device_handle * handle = self->device_container->handle;
+		int interface_number          = self->descriptor->bInterfaceNumber;
+
+		alt_req->errcode = libusb_set_interface_alt_setting(handle, interface_number, alt_req->alternate_setting);
+		if (alt_req->errcode < LIBUSB_SUCCESS) {
+			alt_req->errsource = "alt_setting";
 		}
-		
-		alt_req->error->Set(V8STR("error_code"), Uint32::New(errcode));
 	}
 
 	void Interface::EIO_After_AlternateSetting(uv_work_t *req) {
-		EIO_CAST(alternate_setting_request, alt_req)
-		EIO_AFTER(alt_req)
-		
-		free(alt_req);
+		TRANSFER_REQUEST_FREE(alternate_setting_request, interface);
 	}
 
 	Handle<Value> Interface::GetEndpoints(const Arguments& args) {
@@ -267,15 +267,16 @@ namespace NodeUsb {
 		int numEndpoints = (*self->descriptor).bNumEndpoints;
 
 		for (int i = 0; i < numEndpoints; i++) {
-			Local<Value> args_new_endpoint[4] = {
+			Local<Value> args_new_endpoint[5] = {
+				Local<Object>::New(self->device),
 				External::New(self->device_container),
 				Uint32::New(self->idx_interface),
 				Uint32::New(self->idx_alt_setting),
 				Uint32::New(i)
 			};
+
 			// create new object instance of class NodeUsb::Endpoint
-			Persistent<Object> js_endpoint(Endpoint::constructor_template->GetFunction()->NewInstance(4, args_new_endpoint));
-			r->Set(i, js_endpoint);
+			r->Set(i, Endpoint::constructor_template->GetFunction()->NewInstance(5, args_new_endpoint));
 		}
 
 		return r;

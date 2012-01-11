@@ -1,7 +1,8 @@
-#ifndef SRC_USB_H_
+#ifndef SRC_USB_H
 #define SRC_USB_H
 
 #include "bindings.h"
+
 namespace NodeUsb {
 	class Usb : public ObjectWrap {
 		public:
@@ -12,7 +13,7 @@ namespace NodeUsb {
 
 		protected:
 			// members
-			bool is_initalized;
+			libusb_context *context;
 			int num_devices;
 			libusb_device **devices;
 			// internal methods

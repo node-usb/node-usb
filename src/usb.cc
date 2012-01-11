@@ -2,13 +2,14 @@
 #include "device.h"
 
 namespace NodeUsb {
+
 	/**
 	 * @param usb.isLibusbInitalized: boolean
 	 */
 	void Usb::Initalize(Handle<Object> target) {
 		DEBUG("Entering")
 		HandleScope  scope;
-		
+
 		Local<FunctionTemplate> t = FunctionTemplate::New(Usb::New);
 
 		// Constructor
@@ -89,36 +90,32 @@ namespace NodeUsb {
 	}
 
 	Usb::Usb() : ObjectWrap() {
-		is_initalized = false;
+		context = NULL;
 		num_devices = 0;
 		devices = NULL;
 	}
 
 	Usb::~Usb() {
-		if (devices != NULL) {
-			libusb_free_device_list(devices, 1);
-		}
+		if (context) {
+			if (devices != NULL) {
+				libusb_free_device_list(devices, 1);
+			}
 
-		libusb_exit(NULL);
+			libusb_exit(context);
+			context = NULL;
+		}
 		DEBUG("NodeUsb::Usb object destroyed")
-		// TODO Freeing opened USB devices?
 	}
 
 	/**
 	 * Methods not exposed to v8 - used only internal
 	 */
 	int Usb::Init() {
-		if (is_initalized) {
+		if (context) {
 			return LIBUSB_SUCCESS;
 		}
 
-		int r = libusb_init(NULL);
-
-		if (0 == r) {
-			is_initalized = true;
-		}
-
-		return r;
+		return libusb_init(&context);
 	}
 	
 	/**
@@ -128,7 +125,7 @@ namespace NodeUsb {
 	Handle<Value> Usb::IsLibusbInitalizedGetter(Local<String> property, const AccessorInfo &info) {
 		LOCAL(Usb, self, info.Holder())
 		
-		if (self->is_initalized == true) {
+		if (self->context) {
 			return scope.Close(True());
 		}
 
@@ -143,13 +140,10 @@ namespace NodeUsb {
 		HandleScope scope;
 		// create new object
 		Usb *usb = new Usb();
+
 		// wrap object to arguments
 		usb->Wrap(args.This());
 		args.This()->Set(V8STR("revision"),V8STR(NODE_USB_REVISION));
-
-		// increment object reference, otherwise object will be GCed by V8
-		usb->Ref();
-
 		return args.This();
 	}
 
@@ -175,7 +169,7 @@ namespace NodeUsb {
 			THROW_BAD_ARGS("Usb::SetDebugLevel argument is invalid. [uint:[0-3]]!") 
 		}
 		
-		libusb_set_debug(NULL, args[0]->Uint32Value());
+		libusb_set_debug(self->context, args[0]->Uint32Value());
 
 		return Undefined();
 	}
@@ -198,20 +192,20 @@ namespace NodeUsb {
 		// if no devices were covered => get device list
 		if (self->devices == NULL) {
 			DEBUG("Discover device list");
-			self->num_devices = libusb_get_device_list(NULL, &(self->devices));
+			self->num_devices = libusb_get_device_list(self->context, &(self->devices));
 			CHECK_USB(self->num_devices, scope);
 		}
 
-		// js_device contains the Device instance
-		Local<Object> js_device;
-
 		for (; i < self->num_devices; i++) {
 			// wrap libusb_device structure into a Local<Value>
-			Local<Value> arg = External::New(self->devices[i]);
+			Local<Value> argv[2] = {
+				args.This(),
+				External::New(self->devices[i])
+			};
 
-			// create new object instance of class NodeUsb::Device  
-			Persistent<Object> js_device(Device::constructor_template->GetFunction()->NewInstance(1, &arg));
-			
+			// create new object instance of class NodeUsb::Device
+			Local<Object> js_device(Device::constructor_template->GetFunction()->NewInstance(2, argv));
+
 			// push to array
 			discoveredDevices->Set(Integer::New(i), js_device);
 		}
@@ -226,11 +220,11 @@ namespace NodeUsb {
 	Handle<Value> Usb::Close(const Arguments& args) {
 		LOCAL(Usb, self, args.This())
 
-		if (false == self->is_initalized) {
+		if (!self->context) {
 			return scope.Close(False());
 		}
 
-		delete self;
+		delete self; // TODO Is this safe to do?!
 
 		return scope.Close(True());
 	}
