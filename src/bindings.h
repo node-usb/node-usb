@@ -76,7 +76,7 @@
 		} \
 		VARNAME->callback = Persistent<Function>::New(callback);
 
-#define EIO_AFTER(VARNAME) HandleScope scope; \
+#define EIO_AFTER(VARNAME, SELF) \
 		uv_unref(uv_default_loop()); \
 		if (!VARNAME->callback.IsEmpty()) { \
 			HandleScope scope; \

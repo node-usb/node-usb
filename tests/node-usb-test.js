@@ -97,9 +97,9 @@ for (var i = 0; i < devices.length; i++) {
 			}
 		}
 	}
-
 //	assert.equal(device.close(), true, "close() must be true because device is opened by prior 
 }
+
 assert.ok(instance.close());
 
 /*

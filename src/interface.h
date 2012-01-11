@@ -30,10 +30,10 @@ namespace NodeUsb {
 			// members
 			Persistent<Object> device;
 
-			struct nodeusb_device_container * device_container;
-			const struct libusb_interface_descriptor * const descriptor;
-			const uint32_t idx_interface;
-			const uint32_t idx_alt_setting;
+			struct nodeusb_device_container* device_container;
+			const struct libusb_interface_descriptor* descriptor;
+			uint32_t idx_interface;
+			uint32_t idx_alt_setting;
 
 			// V8 getter
 			static Handle<Value> IdxInterfaceGetter(Local<String> property, const AccessorInfo &info);

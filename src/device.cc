@@ -175,8 +175,7 @@ namespace NodeUsb {
 			reset_req->errsource = "open";
 		}
 
-		EIO_CAST(device_request, reset_req)
-		EIO_AFTER(reset_req)
+		EIO_AFTER(reset_req, device)
 	}
 	
 	void Device::EIO_After_Reset(uv_work_t *req) {
@@ -200,7 +199,7 @@ namespace NodeUsb {
 	 */
 	Handle<Value> Device::GetConfigDescriptor(const Arguments& args) {
 		// make local value reference to first parameter
-		Local<External> refDevice = Local<External>::Cast(args[0]);
+		//Local<External> refDevice = Local<External>::Cast(args[0]);
 
 		LOCAL(Device, self, args.This())
 
@@ -379,7 +378,6 @@ namespace NodeUsb {
 		control_transfer_req->data = buf;
 		DEBUG_OPT("bmRequestType 0x%X, bRequest: 0x%X, wValue: 0x%X, wIndex: 0x%X, wLength: 0x%X, timeout: 0x%X", control_transfer_req->bmRequestType, control_transfer_req->bRequest, control_transfer_req->wValue, control_transfer_req->wIndex, control_transfer_req->wLength, control_transfer_req->timeout);
 
-		EIO_DELEGATION(control_transfer_req, 5)
 		EIO_CUSTOM(EIO_ControlTransfer, control_transfer_req, EIO_After_ControlTransfer);
 
 		return Undefined();
@@ -400,6 +398,6 @@ namespace NodeUsb {
 	}
 
 	void Device::EIO_After_ControlTransfer(uv_work_t *req) {
-		TRANSFER_REQUEST_FREE(control_transfer_request)
+		TRANSFER_REQUEST_FREE(control_transfer_request, device)
 	}
 }

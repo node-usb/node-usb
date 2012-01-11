@@ -86,6 +86,7 @@ namespace NodeUsb {
 
 		// Export Usb class to V8/node.js environment
 		target->Set(String::NewSymbol("Usb"), t->GetFunction());
+
 		DEBUG("Leave")
 	}
 
@@ -114,7 +115,6 @@ namespace NodeUsb {
 		if (context) {
 			return LIBUSB_SUCCESS;
 		}
-
 		return libusb_init(&context);
 	}
 	
