@@ -224,8 +224,6 @@ namespace NodeUsb {
 			return scope.Close(False());
 		}
 
-		delete self; // TODO Is this safe to do?!
-
 		return scope.Close(True());
 	}
 }
