@@ -76,22 +76,25 @@
 		} \
 		VARNAME->callback = Persistent<Function>::New(callback);
 
+#define EIO_HANDLE_ERROR(VARNAME) \
+			if(VARNAME->errsource) { \
+				Handle<Object> error = Object::New(); \
+				error->Set(V8SYM("error_source"), V8STR(VARNAME->errsource)); \
+				error->Set(V8SYM("error_code"), Uint32::New(VARNAME->errcode)); \
+				Local<Value> argv[1]; \
+				argv[0] = Local<Value>::New(scope.Close(error)); \
+				TryCatch try_catch; \
+				VARNAME->callback->Call(Context::GetCurrent()->Global(), 1, argv); \
+				if (try_catch.HasCaught()) { \
+					FatalException(try_catch); \
+				} \
+			}
+
 #define EIO_AFTER(VARNAME, SELF) \
 		uv_unref(uv_default_loop()); \
 		if (!VARNAME->callback.IsEmpty()) { \
 			HandleScope scope; \
-			Handle<Object> error = Object::New(); \
-			if(VARNAME->errsource) { \
-				error->Set(V8SYM("error_source"), V8STR(VARNAME->errsource)); \
-			} \
-	                error->Set(V8SYM("error_code"), Uint32::New(VARNAME->errcode)); \
-			Local<Value> argv[1]; \
-			argv[0] = Local<Value>::New(scope.Close(error)); \
-			TryCatch try_catch; \
-			VARNAME->callback->Call(Context::GetCurrent()->Global(), 1, argv); \
-			if (try_catch.HasCaught()) { \
-				FatalException(try_catch); \
-			} \
+			EIO_HANDLE_ERROR(VARNAME) \
 			VARNAME->callback.Dispose(); \
 		}\
 		delete req;\
@@ -100,6 +103,28 @@
 #define TRANSFER_REQUEST_FREE(STRUCT, SELF)\
 		EIO_CAST(STRUCT, transfer_req)\
 		EIO_AFTER(transfer_req, SELF)\
+		free(transfer_req);
+
+#define TRANSFER_REQUEST_FREE_WITH_DATA(STRUCT, SELF)\
+		EIO_CAST(STRUCT, transfer_req)\
+		uv_unref(uv_default_loop()); \
+		if (!transfer_req->callback.IsEmpty()) { \
+			HandleScope scope; \
+			EIO_HANDLE_ERROR(transfer_req) \
+			if (!transfer_req->errsource) {\
+				Buffer *result = Buffer::New((char *)transfer_req->data, transfer_req->bytesTransferred); \
+				Local<Value> argv[1]; \
+				argv[0] = Local<Value>::New(result->handle_); \
+				TryCatch try_catch; \
+				transfer_req->callback->Call(Context::GetCurrent()->Global(), 1, argv); \
+				if (try_catch.HasCaught()) { \
+					FatalException(try_catch); \
+				} \
+			}\
+			transfer_req->callback.Dispose(); \
+		}\
+		delete req;\
+		transfer_req->SELF->Unref();\
 		free(transfer_req);\
 
 #define INIT_TRANSFER_CALL(MINIMUM_ARG_LENGTH, CALLBACK_ARG_IDX, TIMEOUT_ARG_IDX) \
@@ -222,6 +247,7 @@ namespace NodeUsb  {
 				err = "Unknown error";
 				break;
 		}
+
 		// convert err to const char* with help of c_str()
 		obj->Set(NODE_PSYMBOL("msg"), String::New(err.c_str()));
 		return e;

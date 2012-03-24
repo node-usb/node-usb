@@ -13,6 +13,7 @@ namespace NodeUsb {
 	struct nodeusb_transfer:device_request {
 		unsigned char *data;
 		unsigned int timeout;
+		uint16_t bytesTransferred;
 	};
 
 	struct control_transfer_request:nodeusb_transfer {

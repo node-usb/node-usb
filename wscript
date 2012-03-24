@@ -28,7 +28,7 @@ def build(bld):
 	obj.target = 'usb_bindings'
 	obj.source = './src/node_usb.cc ./src/usb.cc ./src/device.cc ./src/interface.cc ./src/endpoint.cc'
 	obj.includes = bld.env['CPPPATH_USB10'] 
-	obj.lib = bld.env['LIB_USB10']
+	obj.uselib = ["USB10"]
 	obj.name = "node-usb"
 	obj.defines = ['NODE_USB_REVISION="' + REVISION + '"']
 
@@ -38,5 +38,5 @@ def build(bld):
 def shutdown():
 	t = 'usb_bindings.node';
 	
-	if exists('build/default/' + t) and not exists(t):
-		symlink('build/default/' + t, t)
+	if exists('build/Release/' + t) and not exists(t):
+		symlink('build/Release/' + t, t)

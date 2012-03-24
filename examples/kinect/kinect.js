@@ -46,6 +46,7 @@ http.createServer(function(req, res) {
 	req.on('data', function(data) { incomingBody += data; });
 	req.on('end', function() {
 		var postData = qs.parse(incomingBody);
+		var bulkOutput = "<strong>no data</strong>";
 
 		switch (req.url) {
 			case '/updateLed':
@@ -78,6 +79,22 @@ console.log("Angle set to " + angle);
 				});
 
 				break;
+			case '/getCoordinates':
+				motor.controlTransfer(10 /* read 10 bytes */, 0xC0 /* bmRequestType */, 0x32 /* bRequest */, 0, 0, function(data) {
+					for (var i = 0; i < 10; i++) {
+						console.log("buffer[" + i + "]: " + data[i])
+					}
+					console.log("Accelerometer axis:")
+					var x = ((data[2] << 8) | data[3]), y = ((data[4] << 8) | data[5]), z = ((data[6] << 8) | data[7])
+					x = (x + Math.pow(2,15)) % Math.pow(2,16) - Math.pow(2,15)
+					y = (y + Math.pow(2,15)) % Math.pow(2,16) - Math.pow(2,15)
+					z = (z + Math.pow(2,15)) % Math.pow(2,16) - Math.pow(2,15)
+
+					console.log("  X:" + x)
+					console.log("  Y:" + y)
+					console.log("  Z:" + z)
+				})
+				break;
 		}
 	});
 
@@ -91,6 +108,7 @@ console.log("Angle set to " + angle);
 	html += "</select><input type='submit' value='change color' /></form>";
 	html += "<form method='post' action='updateAngle'>";
 	html += "Set angle (-31 - +31) <input type='text' name='angle' size='2' /><input type='submit' value='change angle'/></form>";
+	html += "<a href='/getCoordinates'>Retrieve coordinates from Kinect via control transfer</a>";
 	html += "</body></html>";
  
 	res.write(html);

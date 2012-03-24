@@ -1,5 +1,5 @@
 make:
-	node-waf configure clean build; node tests/node-usb-test.js
+	node-waf -v configure clean build; node tests/node-usb-test.js
 
 debug:
 	node-waf configure --debug=true clean build; node tests/node-usb-test.js

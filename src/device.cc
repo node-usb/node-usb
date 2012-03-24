@@ -391,13 +391,16 @@ namespace NodeUsb {
 		Device * self = ct_req->device;
 		libusb_device_handle * handle = self->device_container->handle;
 
-		ct_req->errcode = libusb_control_transfer(handle, ct_req->bmRequestType, ct_req->bRequest, ct_req->wValue, ct_req->wIndex, ct_req->data, ct_req->wLength, ct_req->timeout);
-		if (ct_req->errcode < LIBUSB_SUCCESS) {
+		ct_req->bytesTransferred = libusb_control_transfer(handle, ct_req->bmRequestType, ct_req->bRequest, ct_req->wValue, ct_req->wIndex, ct_req->data, ct_req->wLength, ct_req->timeout);
+
+		if (ct_req->bytesTransferred < LIBUSB_SUCCESS) {
+			ct_req->errcode = ct_req->bytesTransferred;
+			ct_req->bytesTransferred = 0;
 			ct_req->errsource = "controlTransfer";
 		}
 	}
 
 	void Device::EIO_After_ControlTransfer(uv_work_t *req) {
-		TRANSFER_REQUEST_FREE(control_transfer_request, device)
+		TRANSFER_REQUEST_FREE_WITH_DATA(control_transfer_request, device)
 	}
 }
