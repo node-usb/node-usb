@@ -193,7 +193,7 @@ namespace NodeUsb {
 
 	/**
 	 * @param function js-callback[status]
-	 * @param array byte-array
+	 * @param Buffer byte-array
 	 * @param int (optional) timeout timeout in milliseconds
 	 */
 	Handle<Value> Endpoint::Submit(const Arguments& args) {
