@@ -12,13 +12,11 @@ namespace NodeUsb {
 			static void DispatchAsynchronousUsbTransfer(libusb_transfer *_transfer);
 	};
 
-	struct endpoint_request:request {
+	struct endpoint_request:nodeusb_transfer {
 		Endpoint * endpoint;
 	};
 
 	struct bulk_interrupt_transfer_request:endpoint_request {
-		unsigned char *data;
-		unsigned int timeout;
 		int length;
 		int transferred;
 	};

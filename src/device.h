@@ -6,17 +6,11 @@
 
 namespace NodeUsb {
 	// intermediate EIO structure for device
-	struct device_request:request {
+	struct device_request:nodeusb_transfer {
 		Device * device;
 	};
 
-	struct nodeusb_transfer:device_request {
-		unsigned char *data;
-		unsigned int timeout;
-		uint16_t bytesTransferred;
-	};
-
-	struct control_transfer_request:nodeusb_transfer {
+	struct control_transfer_request:device_request {
 		uint8_t bmRequestType;
 		uint8_t bRequest;
 		uint16_t wValue;

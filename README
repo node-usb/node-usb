@@ -61,8 +61,9 @@ Device
 	.controlTransfer(mixed read|write, int _bmRequestType, int _bRequest, int _wValue, int _wIndex, function afterTransfer(data) [, int _timeout])
 		[async] delegates to libusb_control_transfer. First parameter can be either
 		  * int, then controlTransfer works in read mode (read data FROM USB device)
-		  * Array of ints, then controlTransfer works in write mode (write data TO USB device)
-		_timeout parameter is optional
+		  * Buffer object, then controlTransfer works in write mode (write data TO USB device)
+		_timeout parameter is optional.
+		afterTransfer contains a Buffer object with the data read from device.
 Interface
 	.__idxInterface : int
 		property for internal interface index
@@ -96,14 +97,15 @@ Endpoint
 		property for getting the max packet size
 	.getExtraData() : Array
 		byte array with extra data from endpoint descriptor
-	.bulkTransfer(mixed read|write, function after(data) [, int _timeout])
-	.interruptTransfer(mixed read|write, function after(data) [, int _timeout]) : undefined
-		[async] bulkTransfer and interruptTransfer are more or less equal. If an endpoint works in bulk mode, you use bulkTransfer(), if endpoint work in interrupt mode, you use interruptTransfer(). If you use the wrong method, the function call will fail.
+	.bulkTransfer(mixed read|write, function afterTransfer(data) [, int _timeout])
+	.interruptTransfer(mixed read|write, function afterTransfer(data) [, int _timeout]) : undefined
+		[async] bulkTransfer and interruptTransfer are more or less equal. If endpoint works in bulk mode, you use bulkTransfer(), if endpoint work in interrupt mode, you use interruptTransfer(). If you use the wrong method, the function call will fail.
 		First parameter can be either
 		* int, then the function will work in read mode (read _int_ bytes FROM USB device)
-		* Array, the function will work in write mode (write byte array TO USB device)
+		* Buffer object, the function will work in write mode (write buffer TO USB device)
 		The _timeout parameter is optional; if not used, an unlimited timeout is used.
 		Both functions are working in asynchronous mode, the second parameter is the callback handler after the function has been executed / data arrived.
+		afterTransfer contains a Buffer object as first parameter
 	.submitNative(mixed read|write, function after(data) [, int _timeout, int _iso_packets, int _flags]) : undefined
 		[async] bulkTransfer, controlTransfer and interruptTransfer are using the EV library for threading. submitNative() uses the libusb asynchronous interface. This is not really tested now.
 		submitNative() will be the only function to handle isochronous transfer mode and detects the endpoint type automatically.

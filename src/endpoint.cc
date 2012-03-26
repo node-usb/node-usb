@@ -246,14 +246,16 @@ namespace NodeUsb {
 		EIO_CUSTOM(EIO_TO_EXECUTE, bulk_interrupt_transfer_req, EIO_AFTER)\
 		return Undefined();	
 
-#define BULK_INTERRUPT_FREE TRANSFER_REQUEST_FREE(bulk_interrupt_transfer_request, endpoint)
-
 #define BULK_INTERRUPT_EXECUTE(METHOD, SOURCE)\
 		EIO_CAST(bulk_interrupt_transfer_request, bit_req)\
 		Endpoint * self = bit_req->endpoint;\
-		bit_req->errcode = libusb_bulk_transfer(self->device_container->handle, self->descriptor->bEndpointAddress, bit_req->data, bit_req->length, &(bit_req->transferred), bit_req->timeout);\
+		bit_req->errcode = METHOD(self->device_container->handle, self->descriptor->bEndpointAddress, bit_req->data, bit_req->length, &(bit_req->transferred), bit_req->timeout);\
 		if (bit_req->errcode < LIBUSB_SUCCESS) {\
 			bit_req->errsource = SOURCE;\
+			bit_req->bytesTransferred = 0;\
+		}\
+		else {\
+			bit_req->bytesTransferred = bit_req->transferred;\
 		}
 
 	Handle<Value> Endpoint::BulkTransfer(const Arguments& args) {
@@ -265,7 +267,7 @@ namespace NodeUsb {
 	}
 
 	void Endpoint::EIO_After_BulkTransfer(uv_work_t *req) {
-		BULK_INTERRUPT_FREE
+		TRANSFER_REQUEST_FREE_WITH_DATA(bulk_interrupt_transfer_request, endpoint)
 	}
 
 	Handle<Value> Endpoint::InterruptTransfer(const Arguments& args) {
@@ -277,6 +279,6 @@ namespace NodeUsb {
 	}
 
 	void Endpoint::EIO_After_InterruptTransfer(uv_work_t *req) {
-		BULK_INTERRUPT_FREE
+		TRANSFER_REQUEST_FREE_WITH_DATA(bulk_interrupt_transfer_request, endpoint)
 	}
 }

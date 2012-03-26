@@ -59,7 +59,7 @@ http.createServer(function(req, res) {
 					var lightId = LED_OPTIONS[light];
 				
 					// send control information
-					motor.controlTransfer(new Array("0"), 0x40, 0x06, lightId, 0x0, function(data) {
+					motor.controlTransfer(new Buffer(0), 0x40, 0x06, lightId, 0x0, function(data) {
 						console.log(" + LED toggled");
 					});
 				}
@@ -73,8 +73,8 @@ http.createServer(function(req, res) {
 
 				angle = (angle < MIN_TILT_ANGLE) ? MIN_TILT_ANGLE : ((angle > MAX_TILT_ANGLE) ? MAX_TILT_ANGLE : angle);
 				angle = angle * 2;
-console.log("Angle set to " + angle);
-				motor.controlTransfer(new Array("0"), 0x40, 0x31, angle, 0x0, function(data) {
+				console.log("Angle set to " + angle);
+				motor.controlTransfer(new Buffer(0), 0x40, 0x31, angle, 0x0, function(data) {
 					console.log(" + Angle set");
 				});
 

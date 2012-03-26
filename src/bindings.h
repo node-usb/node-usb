@@ -136,23 +136,18 @@
 		if (args.Length() < MINIMUM_ARG_LENGTH || !args[CALLBACK_ARG_IDX]->IsFunction()) { \
 			THROW_BAD_ARGS("Endpoint::Transfer missing arguments!!") \
 		} \
-\
-		if (args[0]->IsArray()) { \
+		if (Buffer::HasInstance(args[0])) { \
 			modus = LIBUSB_ENDPOINT_OUT; \
 		} else { \
 			modus = LIBUSB_ENDPOINT_IN; \
 			if (!args[0]->IsUint32()) { \
-			      THROW_BAD_ARGS("Endpoint::Transfer in READ mode expects uint32_t as first parameter") \
+			      THROW_BAD_ARGS("Endpoint::Transfer in READ mode expects uint32_t as first parameter. If you want to write something, you must provide a Buffer instance as first parameter") \
 			} \
 		} \
 		if (modus == LIBUSB_ENDPOINT_OUT) {\
-		  	Local<Array> _buffer = Local<Array>::Cast(args[0]);\
-			buflen = _buffer->Length(); \
-			buf = new unsigned char[buflen]; \
-			for (int i = 0; i < buflen; i++) { \
-				Local<Value> val = _buffer->Get(i); \
-				buf[i] = (uint8_t)val->Uint32Value();\
-			}\
+		  	Local<Object> _buffer = args[0]->ToObject();\
+			buflen = Buffer::Length(_buffer); \
+			buf = reinterpret_cast<unsigned char*>(Buffer::Data(_buffer));\
 			DEBUG("Dumping byte stream...")\
 			DUMP_BYTE_STREAM(buf, buflen);\
 		}\
@@ -198,6 +193,13 @@ namespace NodeUsb  {
 		int errcode;
 		const char * errsource;
 	};
+
+	struct nodeusb_transfer:request {
+		unsigned char *data;
+		unsigned int timeout;
+		uint16_t bytesTransferred;
+	};
+
 
 	static inline Local<Value> errno_exception(int errorno) {
 		Local<Value> e  = Exception::Error(String::NewSymbol(strerror(errorno)));
