@@ -83,15 +83,13 @@ for (var i = 0; i < devices.length; i++) {
 			if (endpoint.__endpointType == instance.LIBUSB_ENDPOINT_OUT) {
 				// wrong usage of endpoint. Endpoint is OUT, usage is IN
 				assert.throws(function() { endpoint.submitNative(100, function(_stat) {}, 0, 0); });
-				var param = new Array();
-				param.push(0x01);
+				var param = new Buffer(new Array(0x01));
 				assert.ok(endpoint.submitNative(param, function (_stat, _data) {}, 10, 10));
 
 			}
 			else {
 				// endoint is IN, usage is OUT
-				var param = new Array(1);
-				param.push(0x01);
+				var param = new Buffer(new Array(0x01));
 				assert.throws(function() { endpoint.submitNative(param, function (_stat, _data) {}, 0, 0); });
 				assert.ok(endpoint.submitNative(100, function (stat, _data) {}, 10, 10));
 			}
@@ -103,7 +101,7 @@ for (var i = 0; i < devices.length; i++) {
 assert.ok(instance.close());
 
 /*
-endpoint.write(new array(0x01, 0x01), function(status) {
+endpoint.write(new Buffer(0x01, 0x01), function(status) {
 });
 
 endpoint.read(100./^bytes$/, function(status, bytes) {
