@@ -1,35 +1,43 @@
 libusb-1.0 bindings for Node.js
-==============================
+===============================
 node-usb binds libusb-1.0 to Node.js 
 
 Tested with Node version 0.6.6/Linux.
 Brew/OSX port of libusb-1.0 has still an issue which results in a segfault. Try using the latest development branch from http://git.libusb.org
 
 Installation
-==============================
+============
 Make sure you have installed libusb-1.0-0-dev (Ubuntu: sudo apt-get install libusb-1.0-0-dev).
 
 Just run
+
 	make
+
 in current directory and wait. "Unit tests" are automatically executed by default target.
 
 You can although execute the tests by typing:
+
 	node tests/node-usb-test.js
 
 If you want to use the USB vendor ids, execute
+
 	make create-usb-ids
 
 For creating debug output you have to compile node-usb with
+
 	make debug
+
 or
+
 	node-waf clean configure --debug=true build
 
 API
-=============================
+===
 returned values can always be an error object, so make sure that no error occurs!
 The device/interface/endpoint descriptor values are always injected into the proper object. I do not list them.
 
 Usb
+---
 	.LIBUSB_* : const
 		constant properties from libusb
 	.isLibusbInitalized : boolean
@@ -43,7 +51,7 @@ Usb
 	.close() : undefined
 		closes node-usb
 
-Device
+	Device
 	.deviceAddress : int
 		property for getting device address
 	.busNumber : int
@@ -64,7 +72,10 @@ Device
 		  * Buffer object, then controlTransfer works in write mode (write data TO USB device)
 		_timeout parameter is optional.
 		afterTransfer contains a Buffer object with the data read from device.
+
 Interface
+---------
+
 	.__idxInterface : int
 		property for internal interface index
 	.__idxAltSetting : int
@@ -87,6 +98,8 @@ Interface
 		returns byte array with extra data from interface descriptor
 
 Endpoint
+--------
+
 	.__endpointType : int
 		property for getting the endpoint type (IN/OUT), check with Usb.LIBUSB_ENDPOINT_TYPE constants
 	.__transferType : int
@@ -109,23 +122,28 @@ Endpoint
 	.submitNative(mixed read|write, function after(data) [, int _timeout, int _iso_packets, int _flags]) : undefined
 		[async] bulkTransfer, controlTransfer and interruptTransfer are using the EV library for threading. submitNative() uses the libusb asynchronous interface. This is not really tested now.
 		submitNative() will be the only function to handle isochronous transfer mode and detects the endpoint type automatically.
-		First parameter can be either (I'll bet, you know it already):
+		First parameter can be either (you know it already):
 		* int, the function will be work in read mode (read _int_ bytes FROM USB device)
-		* Array, the function will work in write mode (write byte array TO USB device)
+		* Buffer object, the function will work in write mode (write byte array TO USB device)
 		The parameter _iso_packets and _flags can be used, if the endpoint is working in isochronous mode otherwise they are useless. 
+
 Examples
-=============================
+========
 A simple port of lsusb can be executed by typing
+
 	node examples/lsusb/lsusb.js
 
-If you own a Microsoft Kinect, you can manipulate the LED and motor tilt by typing
+If you own a Microsoft Kinect, you can manipulate the LED, set the angle of the device and read the axis of the accelerometer
+
 	node examples/node-usb-kinect.js
+
 Browse to localhost:8080 and see the magic.
+
 
 If you have permission issues, you have to add the proper rights to the USB device or execute the examples as root (NOT RECOMMENDED!)
 
 More information
-==============================
+=================
 Christopher Klein <schakkonator[at]googlemail[dot]com>
 http://twitter.com/schakko
 http://wap.ecw.de
