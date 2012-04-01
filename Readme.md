@@ -14,6 +14,8 @@ Just run
 	make
 
 in current directory and wait. "Unit tests" are automatically executed by default target.
+Failed unit tests do *not* mean that node-usb is not working. It depends on your USB environment that all tests pass.
+If they fail, just ignore them.
 
 You can although execute the tests by typing:
 
@@ -144,6 +146,6 @@ If you have permission issues, you have to add the proper rights to the USB devi
 
 More information
 =================
-Christopher Klein <schakkonator[at]googlemail[dot]com>
-http://twitter.com/schakko
-http://wap.ecw.de
+ * Christopher Klein <schakkonator[at]googlemail[dot]com>
+ * http://twitter.com/schakko
+ * http://wap.ecw.de
