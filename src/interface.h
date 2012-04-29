@@ -23,14 +23,14 @@ namespace NodeUsb {
 		public:
 			static void Initalize(Handle<Object> target);
 			static Persistent<FunctionTemplate> constructor_template;
-			Interface(Handle<Object>, struct nodeusb_device_container *, const libusb_interface_descriptor*, uint32_t idx_interface, uint32_t idx_alt_setting);
+			Interface(Handle<Object>, Device*, const libusb_interface_descriptor*, uint32_t idx_interface, uint32_t idx_alt_setting);
 			~Interface();
 
 		protected:
 			// members
-			Persistent<Object> device;
+			Persistent<Object> v8device;
+			Device* device;
 
-			struct nodeusb_device_container* device_container;
 			const struct libusb_interface_descriptor* descriptor;
 			uint32_t idx_interface;
 			uint32_t idx_alt_setting;

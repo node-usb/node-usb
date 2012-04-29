@@ -23,15 +23,19 @@ namespace NodeUsb {
 			// called from outside to initalize V8 class template
 			static void Initalize(Handle<Object> target);
 			static Persistent<FunctionTemplate> constructor_template;
-			Device(Handle<Object>, libusb_device*);
+			Device(libusb_device*);
 			~Device();
-
-		protected:
-			Persistent<Object> usb;
-
-			struct nodeusb_device_container *device_container;
+			
+			int openHandle();
+			void close();
+			
+			libusb_device *device;
+			libusb_device_handle *handle;
+			libusb_config_descriptor *config_descriptor;
 			struct libusb_device_descriptor device_descriptor;
-
+			
+		protected:
+		
 			// V8 getter
 			static Handle<Value> BusNumberGetter(Local<String> property, const AccessorInfo &info);
 			static Handle<Value> DeviceAddressGetter(Local<String> property, const AccessorInfo &info);
@@ -39,8 +43,6 @@ namespace NodeUsb {
 			// exposed to V8
 			static Handle<Value> New(const Arguments& args);
 			static Handle<Value> Close(const Arguments& args);
-			static Handle<Value> AddReference(const Arguments& args);
-			static Handle<Value> RemoveReference(const Arguments& args);
 			static Handle<Value> Reset(const Arguments& args);
 
 			// Reset -> Async

@@ -35,20 +35,6 @@
 		CREATE_ERROR_OBJECT_AND_CLOSE_SCOPE(r, scope); \
 	}
 
-#define OPEN_DEVICE_HANDLE_NEEDED(scope) \
-	if (self->device_container->handle_status == UNINITIALIZED) {\
-		assert(self->device_container->device != NULL); \
-		assert(self->device_container->handle == NULL); \
-		if ((self->device_container->last_error = libusb_open(self->device_container->device, &(self->device_container->handle))) < 0) {\
-			self->device_container->handle_status = FAILED;\
-		} else {\
-			self->device_container->handle_status = OPENED;\
-		}\
-	}\
-	if (self->device_container->handle_status == FAILED) { \
-		CREATE_ERROR_OBJECT_AND_CLOSE_SCOPE(self->device_container->last_error, scope) \
-	} \
-
 #define LOCAL(TYPE, VARNAME, REF) \
 		HandleScope scope;\
 		TYPE *VARNAME = OBJUNWRAP<TYPE>(REF);
@@ -165,22 +151,6 @@
 
 namespace NodeUsb  {
 	class Device;
-
-	// status of device handle
-	enum nodeusb_device_handle_status { 
-		UNINITIALIZED, 
-		FAILED, 
-		OPENED
-	};
-
-	// structure for device and device handle
-	struct nodeusb_device_container {
-		libusb_device *device;
-		libusb_device_handle *handle;
-		libusb_config_descriptor *config_descriptor;
-		nodeusb_device_handle_status handle_status;
-		int last_error;
-	};
 
 	struct nodeusb_endpoint_selection {
 		int interface_number;

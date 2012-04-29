@@ -6,17 +6,18 @@
 namespace NodeUsb {
 	Persistent<FunctionTemplate> Interface::constructor_template;
 
-	Interface::Interface(Handle<Object> _device, struct nodeusb_device_container * const _device_container, const libusb_interface_descriptor* _interface_descriptor, uint32_t _idx_interface, uint32_t _idx_alt_setting) : ObjectWrap() {
-		device = Persistent<Object>::New(_device);
-		device_container = _device_container;
-		descriptor = _interface_descriptor;
-		idx_interface = _idx_interface;
-		idx_alt_setting = _idx_alt_setting;
-	}
+	Interface::Interface(Handle<Object> _v8device, Device* _device, const libusb_interface_descriptor* _interface_descriptor, uint32_t _idx_interface, uint32_t _idx_alt_setting) :
+		ObjectWrap(),
+		v8device(Persistent<Object>::New(_v8device)),
+		device(_device),
+		descriptor(_interface_descriptor),
+		idx_interface(_idx_interface),
+		idx_alt_setting(_idx_alt_setting) {}
+
 
 	Interface::~Interface() {
 		// TODO Close
-		device.Dispose();
+		v8device.Dispose();
 		DEBUG("Interface object destroyed")
 	}
 
@@ -60,21 +61,21 @@ namespace NodeUsb {
 
 		// need libusb_device structure as first argument
 
-		if (args.Length() != 4 || !args[0]->IsObject() || !args[1]->IsExternal() || !args[2]->IsUint32() ||  !args[3]->IsUint32()) {
-			THROW_BAD_ARGS("Device::New argument is invalid. [object:device, int:idx_interface, int:idx_alt_setting!") // TODO
+		if (args.Length() != 3 || !args[0]->IsObject() || !args[1]->IsUint32() ||  !args[2]->IsUint32()) {
+			THROW_BAD_ARGS("Device::New argument is invalid. [object:device, int:idx_interface, int:idx_alt_setting!")
 		}
 
 		// assign arguments as local references
 		Local<Object> device = Local<Object>::Cast(args[0]);
-		Local<External> refDeviceContainer = Local<External>::Cast(args[1]);
-		uint32_t idxInterface  = args[2]->Uint32Value();
-		uint32_t idxAltSetting = args[3]->Uint32Value();
-
-		nodeusb_device_container *deviceContainer = static_cast<nodeusb_device_container*>(refDeviceContainer->Value());
-		const libusb_interface_descriptor *libusbInterfaceDescriptor = &((*deviceContainer->config_descriptor).interface[idxInterface]).altsetting[idxAltSetting];
+		uint32_t idxInterface  = args[1]->Uint32Value();
+		uint32_t idxAltSetting = args[2]->Uint32Value();
+		
+		Device *dev = ObjectWrap::Unwrap<Device>(device);
+		
+		const libusb_interface_descriptor *libusbInterfaceDescriptor = &(dev->config_descriptor->interface[idxInterface]).altsetting[idxAltSetting];
 
 		// create new Devicehandle object
-		Interface *interface = new Interface(device, deviceContainer, libusbInterfaceDescriptor, idxInterface, idxAltSetting);
+		Interface *interface = new Interface(device, dev, libusbInterfaceDescriptor, idxInterface, idxAltSetting);
 		// initalize handle
 
 		// wrap created Device object to v8
@@ -128,20 +129,20 @@ namespace NodeUsb {
 	Handle<Value> Interface::IsKernelDriverActive(const Arguments& args) {
 		LOCAL(Interface, self, args.This())
 
-		OPEN_DEVICE_HANDLE_NEEDED(scope)
+		CHECK_USB(self->device->openHandle(), scope);
 
 		int isKernelDriverActive = 0;
-			
-		CHECK_USB((isKernelDriverActive = libusb_kernel_driver_active(self->device_container->handle, self->descriptor->bInterfaceNumber)), scope)
+		
+		CHECK_USB((isKernelDriverActive = libusb_kernel_driver_active(self->device->handle, self->descriptor->bInterfaceNumber)), scope)
 
 		return scope.Close(Integer::New(isKernelDriverActive));
 	}	
 	
 	Handle<Value> Interface::DetachKernelDriver(const Arguments& args) {
 		LOCAL(Interface, self, args.This())
-		OPEN_DEVICE_HANDLE_NEEDED(scope)
-
-		CHECK_USB(libusb_detach_kernel_driver(self->device_container->handle, self->descriptor->bInterfaceNumber), scope)
+		CHECK_USB(self->device->openHandle(), scope);
+		
+		CHECK_USB(libusb_detach_kernel_driver(self->device->handle, self->descriptor->bInterfaceNumber), scope)
 		
 		return Undefined();
 	}
@@ -151,9 +152,9 @@ namespace NodeUsb {
 	 */
 	Handle<Value> Interface::AttachKernelDriver(const Arguments& args) {
 		LOCAL(Interface, self, args.This())
-		OPEN_DEVICE_HANDLE_NEEDED(scope)
-
-		CHECK_USB(libusb_attach_kernel_driver(self->device_container->handle, self->descriptor->bInterfaceNumber), scope)
+		CHECK_USB(self->device->openHandle(), scope);
+		
+		CHECK_USB(libusb_attach_kernel_driver(self->device->handle, self->descriptor->bInterfaceNumber), scope)
 		
 		return Undefined();
 	}
@@ -163,8 +164,9 @@ namespace NodeUsb {
 	 */
 	Handle<Value> Interface::Claim(const Arguments& args) {
 		LOCAL(Interface, self, args.This())
-		OPEN_DEVICE_HANDLE_NEEDED(scope)
-		CHECK_USB(libusb_claim_interface(self->device_container->handle, self->descriptor->bInterfaceNumber), scope)
+		CHECK_USB(self->device->openHandle(), scope);
+
+		CHECK_USB(libusb_claim_interface(self->device->handle, self->descriptor->bInterfaceNumber), scope)
 		
 		return Undefined();	
 	}
@@ -177,7 +179,7 @@ namespace NodeUsb {
 	Handle<Value> Interface::Release(const Arguments& args) {
 		LOCAL(Interface, self, args.This())
 
-		OPEN_DEVICE_HANDLE_NEEDED(scope)
+		CHECK_USB(self->device->openHandle(), scope);
 
 		// allocation of intermediate EIO structure
 		EIO_NEW(release_request, release_req)
@@ -199,7 +201,7 @@ namespace NodeUsb {
 		EIO_CAST(release_request, release_req)
 
 		Interface * self = release_req->interface;
-		libusb_device_handle * handle = self->device_container->handle;
+		libusb_device_handle * handle = self->device->handle;
 		int interface_number          = self->descriptor->bInterfaceNumber;
 
 		release_req->errcode = libusb_release_interface(handle, interface_number);
@@ -223,7 +225,7 @@ namespace NodeUsb {
 			THROW_BAD_ARGS("Interface::AlternateSetting expects [uint32:setting] as first parameter")
 		}
 		
-		OPEN_DEVICE_HANDLE_NEEDED(scope)
+		CHECK_USB(self->device->openHandle(), scope);
 
 		// allocation of intermediate EIO structure
 		EIO_NEW(alternate_setting_request, alt_req)
@@ -246,7 +248,7 @@ namespace NodeUsb {
 		EIO_CAST(alternate_setting_request, alt_req)
 
 		Interface * self = alt_req->interface;
-		libusb_device_handle * handle = self->device_container->handle;
+		libusb_device_handle * handle = self->device->handle;
 		int interface_number          = self->descriptor->bInterfaceNumber;
 
 		alt_req->errcode = libusb_set_interface_alt_setting(handle, interface_number, alt_req->alternate_setting);
@@ -267,16 +269,15 @@ namespace NodeUsb {
 		int numEndpoints = (*self->descriptor).bNumEndpoints;
 
 		for (int i = 0; i < numEndpoints; i++) {
-			Local<Value> args_new_endpoint[5] = {
-				Local<Object>::New(self->device),
-				External::New(self->device_container),
+			Local<Value> args_new_endpoint[4] = {
+				Local<Object>::New(self->v8device),
 				Uint32::New(self->idx_interface),
 				Uint32::New(self->idx_alt_setting),
 				Uint32::New(i)
 			};
 
 			// create new object instance of class NodeUsb::Endpoint
-			r->Set(i, Endpoint::constructor_template->GetFunction()->NewInstance(5, args_new_endpoint));
+			r->Set(i, Endpoint::constructor_template->GetFunction()->NewInstance(4, args_new_endpoint));
 		}
 
 		return r;
