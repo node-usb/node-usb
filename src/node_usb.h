@@ -19,7 +19,7 @@
 #include <node_version.h>
 #include <node_buffer.h>
 #include <uv.h>
-#include <uv-private/ev.h>
+//#include <uv-private/ev.h>
 
 #define NODE_USB_VERSION "0.1"
 

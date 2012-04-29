@@ -3,22 +3,17 @@
 
 #include "bindings.h"
 
+extern libusb_context *usb_context;
+
 namespace NodeUsb {
-	class Usb : public ObjectWrap {
+	class Usb {
 		public:
 			static void Initalize(Handle<Object> target);
-			static Persistent<FunctionTemplate> constructor_template;
+			
+		protected:
 			Usb();
 			~Usb();
-
-		protected:
-			// members
-			libusb_context *context;
-			int num_devices;
-			libusb_device **devices;
-			// internal methods
-			int Init();
-
+			
 			// V8 getter
 			static Handle<Value> IsLibusbInitalizedGetter(Local<String> property, const AccessorInfo &info);
 			

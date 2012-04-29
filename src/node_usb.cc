@@ -13,10 +13,6 @@ namespace NodeUsb {
 		Endpoint::Initalize(target);
 		target->Set(String::NewSymbol("version"),
 				String::New(NODE_USB_VERSION));
-		Handle<ObjectTemplate> global = ObjectTemplate::New();
-		Handle<Context> context = Context::New(NULL, global);
-		Context::Scope context_scope(context);
-		context->Global()->Set(String::NewSymbol("Usb"), target);
 	}
 
 	void init(Handle<v8::Object> target) {

@@ -3,173 +3,89 @@
 
 namespace NodeUsb {
 
-	/**
-	 * @param usb.isLibusbInitalized: boolean
-	 */
+	libusb_context* usb_context;
+
 	void Usb::Initalize(Handle<Object> target) {
 		DEBUG("Entering")
 		HandleScope  scope;
-
-		Local<FunctionTemplate> t = FunctionTemplate::New(Usb::New);
-
-		// Constructor
-		t->InstanceTemplate()->SetInternalFieldCount(1);
-		t->SetClassName(String::NewSymbol("Usb"));
-		Device::constructor_template = Persistent<FunctionTemplate>::New(t);
-
-		Local<ObjectTemplate> instance_template = t->InstanceTemplate();
+		
+		libusb_init(&usb_context);
 
 		// Constants must be passed to ObjectTemplate and *not* to FunctionTemplate
 		// libusb_class_node
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_CLASS_PER_INTERFACE);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_CLASS_AUDIO);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_CLASS_COMM);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_CLASS_HID);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_CLASS_PRINTER);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_CLASS_PTP);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_CLASS_MASS_STORAGE);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_CLASS_HUB);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_CLASS_DATA);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_PER_INTERFACE);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_AUDIO);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_COMM);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_HID);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_PRINTER);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_PTP);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_MASS_STORAGE);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_HUB);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_DATA);
 		// both does not exist?
-		// NODE_DEFINE_CONSTANT(instance_template, LIBUSB_CLASS_WIRELESS);
-		// NODE_DEFINE_CONSTANT(instance_template, LIBUSB_CLASS_APPLICATION);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_CLASS_VENDOR_SPEC);
+		// NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_WIRELESS);
+		// NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_APPLICATION);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_VENDOR_SPEC);
 		// libusb_descriptor_type
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_DT_DEVICE);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_DT_CONFIG);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_DT_STRING);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_DT_INTERFACE);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_DT_ENDPOINT);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_DT_HID);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_DT_REPORT);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_DT_PHYSICAL);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_DT_HUB);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_DT_DEVICE);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_DT_CONFIG);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_DT_STRING);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_DT_INTERFACE);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_DT_ENDPOINT);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_DT_HID);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_DT_REPORT);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_DT_PHYSICAL);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_DT_HUB);
 		// libusb_endpoint_direction
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_ENDPOINT_IN);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_ENDPOINT_OUT);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_ENDPOINT_IN);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_ENDPOINT_OUT);
 		// libusb_transfer_type
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_TRANSFER_TYPE_CONTROL);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_TRANSFER_TYPE_ISOCHRONOUS);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_TRANSFER_TYPE_BULK);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_TRANSFER_TYPE_INTERRUPT);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_TYPE_CONTROL);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_TYPE_ISOCHRONOUS);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_TYPE_BULK);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_TYPE_INTERRUPT);
 		// libusb_iso_sync_type
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_ISO_SYNC_TYPE_NONE);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_ISO_SYNC_TYPE_ASYNC);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_ISO_SYNC_TYPE_ADAPTIVE);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_ISO_SYNC_TYPE_SYNC);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_ISO_SYNC_TYPE_NONE);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_ISO_SYNC_TYPE_ASYNC);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_ISO_SYNC_TYPE_ADAPTIVE);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_ISO_SYNC_TYPE_SYNC);
 		// libusb_iso_usage_type
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_ISO_USAGE_TYPE_DATA);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_ISO_USAGE_TYPE_FEEDBACK);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_ISO_USAGE_TYPE_IMPLICIT);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_ISO_USAGE_TYPE_DATA);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_ISO_USAGE_TYPE_FEEDBACK);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_ISO_USAGE_TYPE_IMPLICIT);
 		// libusb_transfer_status
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_TRANSFER_COMPLETED);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_TRANSFER_ERROR);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_TRANSFER_TIMED_OUT);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_TRANSFER_CANCELLED);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_TRANSFER_STALL);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_TRANSFER_NO_DEVICE);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_TRANSFER_OVERFLOW);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_COMPLETED);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_ERROR);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_TIMED_OUT);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_CANCELLED);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_STALL);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_NO_DEVICE);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_OVERFLOW);
 		// libusb_transfer_flags
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_TRANSFER_SHORT_NOT_OK);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_TRANSFER_FREE_BUFFER);
-		NODE_DEFINE_CONSTANT(instance_template, LIBUSB_TRANSFER_FREE_TRANSFER);
-
-		// Properties
-		// TODO: should get_device_list be a property?
-		instance_template->SetAccessor(V8STR("isLibusbInitalized"), Usb::IsLibusbInitalizedGetter);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_SHORT_NOT_OK);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_FREE_BUFFER);
+		NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_FREE_TRANSFER);
 
 		// Bindings to nodejs
-		NODE_SET_PROTOTYPE_METHOD(t, "refresh", Usb::Refresh);
-		NODE_SET_PROTOTYPE_METHOD(t, "setDebugLevel", Usb::SetDebugLevel);
-		NODE_SET_PROTOTYPE_METHOD(t, "getDevices", Usb::GetDeviceList);
-		NODE_SET_PROTOTYPE_METHOD(t, "close", Usb::Close);
-
-		// Export Usb class to V8/node.js environment
-		target->Set(String::NewSymbol("Usb"), t->GetFunction());
+		NODE_SET_METHOD(target, "setDebugLevel", Usb::SetDebugLevel);
+		NODE_SET_METHOD(target, "_getDevices", Usb::GetDeviceList);
 
 		DEBUG("Leave")
 	}
 
-	Usb::Usb() : ObjectWrap() {
-		context = NULL;
-		num_devices = 0;
-		devices = NULL;
-	}
-
-	Usb::~Usb() {
-		if (context) {
-			if (devices != NULL) {
-				libusb_free_device_list(devices, 1);
-			}
-
-			libusb_exit(context);
-			context = NULL;
-		}
-		DEBUG("NodeUsb::Usb object destroyed")
-	}
-
-	/**
-	 * Methods not exposed to v8 - used only internal
-	 */
-	int Usb::Init() {
-		if (context) {
-			return LIBUSB_SUCCESS;
-		}
-		return libusb_init(&context);
-	}
-	
-	/**
-	 * Returns libusb initalization status 
-	 * @return boolean
-	 */
-	Handle<Value> Usb::IsLibusbInitalizedGetter(Local<String> property, const AccessorInfo &info) {
-		LOCAL(Usb, self, info.Holder())
-		
-		if (self->context) {
-			return scope.Close(True());
-		}
-
-		return scope.Close(False());
-	}
-
-
-	/**
-	 * Creates a new Usb object
-	 */
-	Handle<Value> Usb::New(const Arguments& args) {
-		HandleScope scope;
-		// create new object
-		Usb *usb = new Usb();
-
-		// wrap object to arguments
-		usb->Wrap(args.This());
-		args.This()->Set(V8STR("revision"),V8STR(NODE_USB_REVISION));
-		return args.This();
-	}
-
-	/**
-	 * Refresh libusb environment
-	 */
-	Handle<Value> Usb::Refresh(const Arguments& args) {
-		LOCAL(Usb, self, args.This())
-
-		CHECK_USB(self->Init(), scope);
-		return scope.Close(True());
-	}
 
 	/**
 	 * Set debug level
 	 */
 	Handle<Value> Usb::SetDebugLevel(const Arguments& args) {
-		LOCAL(Usb, self, args.This())
-		CHECK_USB(self->Init(), scope);
+		HandleScope scope;
 
 		// need libusb_device structure as first argument
 		if (args.Length() != 1 || !args[0]->IsUint32() || !(((uint32_t)args[0]->Uint32Value() >= 0) && ((uint32_t)args[0]->Uint32Value() < 4))) {
 			THROW_BAD_ARGS("Usb::SetDebugLevel argument is invalid. [uint:[0-3]]!") 
 		}
 		
-		libusb_set_debug(self->context, args[0]->Uint32Value());
+		libusb_set_debug(usb_context, args[0]->Uint32Value());
 
 		return Undefined();
 	}
@@ -179,28 +95,20 @@ namespace NodeUsb {
 	 * @return array[Device]
 	 */
 	Handle<Value> Usb::GetDeviceList(const Arguments& args) {
-		LOCAL(Usb, self, args.This())
-
-		CHECK_USB(self->Init(), scope);
-
+		HandleScope scope;
+		
 		// dynamic array (sic!) which contains the devices discovered later
 		Local<Array> discoveredDevices = Array::New();
 
-		// TODO Google codeguide for ssize_t?
-		ssize_t i = 0;
+		libusb_device **devices;
+		int num_devices = libusb_get_device_list(usb_context, &devices);
+		CHECK_USB(num_devices, scope);
 
-		// if no devices were covered => get device list
-		if (self->devices == NULL) {
-			DEBUG("Discover device list");
-			self->num_devices = libusb_get_device_list(self->context, &(self->devices));
-			CHECK_USB(self->num_devices, scope);
-		}
-
-		for (; i < self->num_devices; i++) {
+		for (int i=0; i < num_devices; i++) {
 			// wrap libusb_device structure into a Local<Value>
 			Local<Value> argv[2] = {
 				args.This(),
-				External::New(self->devices[i])
+				External::New(devices[i])
 			};
 
 			// create new object instance of class NodeUsb::Device
@@ -209,21 +117,9 @@ namespace NodeUsb {
 			// push to array
 			discoveredDevices->Set(Integer::New(i), js_device);
 		}
+		
+		libusb_free_device_list(devices, false);
 
 		return scope.Close(discoveredDevices);
-	}
-
-	/**
-	 * Close current libusb context
-	 * @return boolean
-	 */
-	Handle<Value> Usb::Close(const Arguments& args) {
-		LOCAL(Usb, self, args.This())
-
-		if (!self->context) {
-			return scope.Close(False());
-		}
-
-		return scope.Close(True());
 	}
 }
