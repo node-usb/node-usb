@@ -12,8 +12,6 @@ exports.getDevices = function() {
 		
 		for (var i = 0, m = devices.length; i < m; i++) {
 			var device = devices[i];
-			var dd = device.getConfigDescriptor();
-			device.length_extra = dd.extra_length;
 		}
 	}
 
@@ -26,7 +24,7 @@ exports.find_by_vid_and_pid = function(vid, pid) {
 	var devices = this.get_devices();
 
 	for (var i = 0, m = devices.length; i < m; i++) {
-		var deviceDesc = devices[i].getDeviceDescriptor();
+		var deviceDesc = devices[i].deviceDescriptor;
 
 		if ((deviceDesc.idVendor == vid) && (deviceDesc.idProduct == pid)) {
 			r.push(devices[i]);

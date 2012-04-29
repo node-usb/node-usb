@@ -32,7 +32,6 @@ namespace NodeUsb {
 
 		// Bindings to nodejs
 		NODE_SET_PROTOTYPE_METHOD(t, "reset", Device::Reset);
-		NODE_SET_PROTOTYPE_METHOD(t, "getDeviceDescriptor", Device::GetDeviceDescriptor);
 		NODE_SET_PROTOTYPE_METHOD(t, "getConfigDescriptor", Device::GetConfigDescriptor);
 		NODE_SET_PROTOTYPE_METHOD(t, "getInterfaces", Device::GetInterfaces);
 		NODE_SET_PROTOTYPE_METHOD(t, "getExtraData", Device::GetExtraData);
@@ -92,6 +91,35 @@ namespace NodeUsb {
 
 		// wrap created Device object to v8
 		device->Wrap(args.This());
+
+		DEBUG("Get device descriptor");		
+		// TODO: Read-Only
+		#define LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(NAME) \
+			dd->Set(V8SYM(#NAME), Uint32::New(device->device_descriptor.NAME));
+
+		assert(device->device != NULL);
+		CHECK_USB(libusb_get_device_descriptor(device->device, &device->device_descriptor), scope);
+
+		Local<Object> dd = Object::New();
+
+		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bLength)
+		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bDescriptorType)
+		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bcdUSB)
+		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bDeviceClass)
+		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bDeviceSubClass)
+		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bDeviceProtocol)
+		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bMaxPacketSize0)
+		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(idVendor)
+		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(idProduct)
+		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bcdDevice)
+		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(iManufacturer)
+		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(iProduct)
+		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(iSerialNumber)
+		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bNumConfigurations)
+		
+		args.This()->Set(V8SYM("device_descriptor"), dd);
+		
+		
 
 		return args.This();
 	}
@@ -180,20 +208,11 @@ namespace NodeUsb {
 	 * Returns configuration descriptor structure
 	 */
 	Handle<Value> Device::GetConfigDescriptor(const Arguments& args) {
-		// make local value reference to first parameter
-		//Local<External> refDevice = Local<External>::Cast(args[0]);
-
 		LOCAL(Device, self, args.This())
 
-#if defined(__APPLE__) && defined(__MACH__)
-		DEBUG("Open device handle for getConfigDescriptor (Darwin fix)")
-		CHECK_USB(self->device->openHandle(), scope);
-#endif
-
 		LIBUSB_GET_CONFIG_DESCRIPTOR(scope);
-
+		
 		Local<Object> r = Object::New();
-		DEBUG("Converting structure");
 
 		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(bLength)
 		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(bDescriptorType)
@@ -261,46 +280,7 @@ namespace NodeUsb {
 		return scope.Close(r);
 	}
 
-// TODO: Read-Only
-#define LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(name) \
-		r->Set(V8STR(#name), Uint32::New(self->device_descriptor.name));
 
-	/**
-	 * Returns the device descriptor of current device
-	 * @return object
-	 */
-	Handle<Value> Device::GetDeviceDescriptor(const Arguments& args) {
-		DEBUG("Entering")
-		LOCAL(Device, self, args.This())
-
-#if defined(__APPLE__) && defined(__MACH__)
-		DEBUG("Open device handle for getDeviceDescriptor (Darwin fix)")
-		CHECK_USB(self->device->openHandle(), scope);
-#endif
-
-		DEBUG("Get device descriptor");
-		assert(self->device != NULL);
-		CHECK_USB(libusb_get_device_descriptor(self->device, &(self->device_descriptor)), scope);
-
-		Local<Object> r = Object::New();
-
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bLength)
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bDescriptorType)
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bcdUSB)
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bDeviceClass)
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bDeviceSubClass)
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bDeviceProtocol)
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bMaxPacketSize0)
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(idVendor)
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(idProduct)
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bcdDevice)
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(iManufacturer)
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(iProduct)
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(iSerialNumber)
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bNumConfigurations)
-
-		return scope.Close(r);
-	}
 
 	/**
 	 * Sends control transfer commands to device

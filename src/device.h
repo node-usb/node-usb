@@ -49,7 +49,6 @@ namespace NodeUsb {
 			static void EIO_Reset(uv_work_t *req);
 			static void EIO_After_Reset(uv_work_t *req);
 			static Handle<Value> GetConfigDescriptor(const Arguments& args);
-			static Handle<Value> GetDeviceDescriptor(const Arguments& args);
 			static Handle<Value> GetExtraData(const Arguments& args);
 			static Handle<Value> GetInterfaces(const Arguments& args);
 			static Handle<Value> ControlTransfer(const Arguments& args);
