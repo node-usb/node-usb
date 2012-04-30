@@ -68,6 +68,7 @@ Transfer* Transfer::newTransfer(libusb_transfer_type type,
 }
 
 void Transfer::submit(){
+	uv_ref(uv_default_loop());
 	libusb_submit_transfer(transfer);
 }
 
@@ -105,6 +106,8 @@ void Transfer::handleCompletion(Transfer* t){
 	if (try_catch.HasCaught()) {
 		FatalException(try_catch);
 	}
+	
+	uv_unref(uv_default_loop());
 	delete t;
 }
 
