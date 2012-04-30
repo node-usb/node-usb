@@ -35,7 +35,8 @@ Transfer* Transfer::newControlTransfer(Handle<Object> device,
 	
 	uint8_t *buffer = (uint8_t*) malloc(LIBUSB_CONTROL_SETUP_SIZE+wLength);
 	libusb_fill_control_setup(buffer, bmRequestType, bRequest, wValue, wIndex, wLength);
-	memcpy(buffer+LIBUSB_CONTROL_SETUP_SIZE, data, wLength);
+	if (data) memcpy(buffer+LIBUSB_CONTROL_SETUP_SIZE, data, wLength);
+	t->direction = data?LIBUSB_ENDPOINT_OUT:LIBUSB_ENDPOINT_IN;
 	libusb_fill_control_transfer(t->transfer, t->device->handle, buffer, usbThreadCb, (void*) t, timeout);
 	
 	return t;
@@ -51,6 +52,7 @@ Transfer* Transfer::newTransfer(libusb_transfer_type type,
 	Transfer *t = new Transfer(device, callback);
 	uint8_t *buffer = (uint8_t*) malloc(length);
 	if (data) memcpy(buffer, data, length);
+	t->direction = data?LIBUSB_ENDPOINT_OUT:LIBUSB_ENDPOINT_IN;
 	
 	if (type == LIBUSB_TRANSFER_TYPE_BULK){
 		libusb_fill_bulk_transfer(t->transfer, t->device->handle, endpoint,
@@ -81,10 +83,10 @@ Local<v8::Value> makeBuffer(const uint8_t* buf, unsigned length){
 
 void Transfer::handleCompletion(Transfer* t){
 	HandleScope scope;
-	Local<Value> cbvalue;
-	Local<Value> cberror;
+	Local<Value> cbvalue = Local<Value>::New(Undefined());
+	Local<Value> cberror = Local<Value>::New(Undefined());
 	if (t->transfer->status == LIBUSB_TRANSFER_COMPLETED){		
-		if (t->direction == IN){
+		if (t->direction == LIBUSB_ENDPOINT_IN){
 			uint8_t* buffer = t->transfer->buffer;
 			unsigned length = t->transfer->actual_length;
 			if (t->transfer->type == LIBUSB_TRANSFER_TYPE_CONTROL){
@@ -93,7 +95,7 @@ void Transfer::handleCompletion(Transfer* t){
 			cbvalue = makeBuffer(buffer, length);
 		}
 	}else{
-		
+		cberror = Local<Value>::New(Number::New(t->transfer->status));
 		//TODO: pass exception
 	}
 	

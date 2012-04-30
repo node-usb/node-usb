@@ -76,6 +76,7 @@ namespace NodeUsb {
 		NODE_SET_METHOD(target, "_getDevices", Usb::GetDeviceList);
 		
 		usb_thread = std::thread(USBThreadFn);
+		usb_thread.detach();
 
 		DEBUG("Leave")
 	}

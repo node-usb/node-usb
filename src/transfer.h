@@ -43,7 +43,7 @@ namespace NodeUsb {
 		Persistent<Object> v8device;
 		Persistent<Function> v8callback;
 		Device* device;
-		enum {IN, OUT} direction;
+		uint32_t direction;
 		
 		static void handleCompletion(Transfer *transfer);
 	};

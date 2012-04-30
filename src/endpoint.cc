@@ -156,7 +156,7 @@ namespace NodeUsb {
 		INT_ARG(timeout, args[1]);
 		
 		if (modus != self->endpoint_type) {
-			THROW_BAD_ARGS("Transfer is used in the wrong (IN/OUT) direction for this endpoint");
+			THROW_BAD_ARGS("Transfer is used in the wrong direction (IN/OUT) for this endpoint");
 		}
 		
 		NodeUsb::Transfer* t = Transfer::newTransfer(

@@ -21,7 +21,6 @@ exports.getDevices = function() {
 //  method for finding devices by vendor and product id
 exports.find_by_vid_and_pid = function(vid, pid) {
 	var r = new Array();
-	var devices = this.get_devices();
 
 	for (var i = 0, m = devices.length; i < m; i++) {
 		var deviceDesc = devices[i].deviceDescriptor;

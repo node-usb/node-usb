@@ -118,7 +118,7 @@ namespace NodeUsb {
 		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(iSerialNumber)
 		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bNumConfigurations)
 		
-		args.This()->Set(V8SYM("device_descriptor"), dd);
+		args.This()->Set(V8SYM("deviceDescriptor"), dd);
 		
 		
 
@@ -313,6 +313,16 @@ namespace NodeUsb {
 		INT_ARG(wIndex, args[3]);
 		BUF_LEN_ARG(args[4]);
 		INT_ARG(timeout, args[5]);
+		
+		if ((bmRequestType & 0x80) != modus){
+			if ((bmRequestType & 0x80) == LIBUSB_ENDPOINT_IN){
+				THROW_BAD_ARGS("Expected size number for IN transfer (based on bmRequestType)");
+			}else{
+				THROW_BAD_ARGS("Expected buffer for OUT transfer (based on bmRequestType)");			
+			}	
+		}
+		
+		DEBUG_OPT("Submitting control transfer %x %x %x %x %x (%i: %p) %i", modus, bmRequestType, bRequest, wValue, wIndex, length, buf, timeout);
 		
 		Transfer* transfer = Transfer::newControlTransfer(
 			args.This(),
