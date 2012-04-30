@@ -25,10 +25,8 @@
 #define THROW_ERROR(FAIL_MSG) return ThrowException(Exception::Error(V8STR(FAIL_MSG))));
 #define THROW_NOT_YET return ThrowException(Exception::Error(String::Concat(String::New(__FUNCTION__), String::New("not yet supported"))));
 #define CREATE_ERROR_OBJECT_AND_CLOSE_SCOPE(ERRNO, scope) \
-		Local<Object> error = Object::New();\
-		error->Set(V8SYM("errno"), Integer::New(ERRNO));\
-		error->Set(V8SYM("error"), errno_exception(ERRNO));\
-		return scope.Close(error);\
+		ThrowException(errno_exception(ERRNO)); \
+		return scope.Close(Undefined());
 
 #define CHECK_USB(r, scope) \
 	if (r < LIBUSB_SUCCESS) { \
@@ -142,11 +140,8 @@ namespace NodeUsb  {
 
 
 	static inline Local<Value> errno_exception(int errorno) {
-		Local<Value> e  = Exception::Error(String::NewSymbol(strerror(errorno)));
-		Local<Object> obj = e->ToObject();
-		std::string err = "";
-
-		obj->Set(NODE_PSYMBOL("errno"), Integer::New(errorno));
+		const char* err = "";
+		
 		// taken from pyusb
 		switch (errorno) {
 			case LIBUSB_ERROR_IO:
@@ -189,9 +184,11 @@ namespace NodeUsb  {
 				err = "Unknown error";
 				break;
 		}
+		
+		Local<Value> e  = Exception::Error(String::NewSymbol(err));
+		Local<Object> obj = e->ToObject();
+		obj->Set(NODE_PSYMBOL("errno"), Integer::New(errorno));
 
-		// convert err to const char* with help of c_str()
-		obj->Set(NODE_PSYMBOL("msg"), String::New(err.c_str()));
 		return e;
 	}
 }
