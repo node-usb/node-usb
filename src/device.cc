@@ -1,6 +1,7 @@
 #include "bindings.h"
 #include "device.h"
 #include "interface.h"
+#include "transfer.h"
 #include <assert.h>
 
 namespace NodeUsb {
@@ -279,9 +280,7 @@ namespace NodeUsb {
 		
 		return scope.Close(r);
 	}
-
-
-
+	
 	/**
 	 * Sends control transfer commands to device
 	 * @param Array|int data to send OR bytes to retrieve
@@ -294,71 +293,41 @@ namespace NodeUsb {
 	 */
 	Handle<Value> Device::ControlTransfer(const Arguments& args) {
 		LOCAL(Device, self, args.This())
-		INIT_TRANSFER_CALL(6, 5, 7)
 		
 		CHECK_USB(self->openHandle(), scope);
-		EIO_NEW(control_transfer_request, control_transfer_req)
-
-		// 2. param: bmRequestType
-		if (!args[1]->IsInt32()) {
-			THROW_BAD_ARGS("Device::ControlTransfer expects int as bmRequestType parameter")
-		} else {
-			control_transfer_req->bmRequestType = (uint8_t)args[1]->Int32Value();
+		
+		uint8_t bmRequestType, bRequest;
+		uint16_t wValue, wIndex;
+		unsigned length, timeout;
+		unsigned char *buf;
+		
+		//args: bmRequestType, bRequest, wValue, wIndex, array/size, timeout, callback
+		
+		if (args.Length() < 7 || !args[6]->IsFunction()) {
+			THROW_BAD_ARGS("Transfer missing arguments!")
 		}
-
-		// 3. param: bRequest
-		if (!args[2]->IsInt32()) {
-			THROW_BAD_ARGS("Device::ControlTransfer expects int as bRequest parameter")
-		} else {
-			control_transfer_req->bRequest = (uint8_t)args[2]->Int32Value();
-		}
-
-		// 4. param: wValue
-		if (!args[3]->IsInt32()) {
-			THROW_BAD_ARGS("Device::ControlTransfer expects int as wValue parameter")
-		} else {
-			control_transfer_req->wValue = (uint16_t)args[3]->Int32Value();
-		}
-
-		// 5. param: wIndex
-		if (!args[4]->IsInt32()) {
-			THROW_BAD_ARGS("Device::ControlTransfer expects int as wIndex parameter")
-		} else {
-			control_transfer_req->wIndex = (uint16_t)args[4]->Int32Value();
-		}
-
-		EIO_DELEGATION(control_transfer_req, 5)
-
-		control_transfer_req->device = self;
-		control_transfer_req->device->Ref();
-		control_transfer_req->timeout = timeout;
-		control_transfer_req->wLength = buflen;
-		control_transfer_req->data = buf;
-		DEBUG_OPT("bmRequestType 0x%X, bRequest: 0x%X, wValue: 0x%X, wIndex: 0x%X, wLength: 0x%X, timeout: 0x%X", control_transfer_req->bmRequestType, control_transfer_req->bRequest, control_transfer_req->wValue, control_transfer_req->wIndex, control_transfer_req->wLength, control_transfer_req->timeout);
-
-		EIO_CUSTOM(EIO_ControlTransfer, control_transfer_req, EIO_After_ControlTransfer);
+		
+		INT_ARG(bmRequestType, args[0]);
+		INT_ARG(bRequest, args[1]);
+		INT_ARG(wValue, args[2]);
+		INT_ARG(wIndex, args[3]);
+		BUF_LEN_ARG(args[4]);
+		INT_ARG(timeout, args[5]);
+		
+		Transfer* transfer = Transfer::newControlTransfer(
+			args.This(),
+			bmRequestType,
+		    bRequest,
+			wValue,
+			wIndex,
+			buf,
+			length,
+			timeout,
+			Handle<Function>::Cast(args[6]));
+		
+		transfer->submit();
 
 		return Undefined();
 	}
 
-	void Device::EIO_ControlTransfer(uv_work_t *req) {
-		// Inside EIO Threadpool, so don't touch V8.
-		// Be careful!
-		EIO_CAST(control_transfer_request, ct_req)
-
-		Device * self = ct_req->device;
-		libusb_device_handle * handle = self->handle;
-
-		ct_req->bytesTransferred = libusb_control_transfer(handle, ct_req->bmRequestType, ct_req->bRequest, ct_req->wValue, ct_req->wIndex, ct_req->data, ct_req->wLength, ct_req->timeout);
-
-		if (ct_req->bytesTransferred < LIBUSB_SUCCESS) {
-			ct_req->errcode = ct_req->bytesTransferred;
-			ct_req->bytesTransferred = 0;
-			ct_req->errsource = "controlTransfer";
-		}
-	}
-
-	void Device::EIO_After_ControlTransfer(uv_work_t *req) {
-		TRANSFER_REQUEST_FREE_WITH_DATA(control_transfer_request, device)
-	}
 }

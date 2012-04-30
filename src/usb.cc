@@ -1,9 +1,14 @@
 #include "usb.h"
 #include "device.h"
+#include <thread>
 
 namespace NodeUsb {
-
 	libusb_context* usb_context;
+	std::thread usb_thread;
+	
+	void USBThreadFn(){
+		while(1) libusb_handle_events(usb_context);
+	}
 
 	void Usb::Initalize(Handle<Object> target) {
 		DEBUG("Entering")
@@ -69,6 +74,8 @@ namespace NodeUsb {
 		// Bindings to nodejs
 		NODE_SET_METHOD(target, "setDebugLevel", Usb::SetDebugLevel);
 		NODE_SET_METHOD(target, "_getDevices", Usb::GetDeviceList);
+		
+		usb_thread = std::thread(USBThreadFn);
 
 		DEBUG("Leave")
 	}

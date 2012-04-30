@@ -85,69 +85,39 @@
 		}\
 		delete req;\
 		VARNAME->SELF->Unref();
-		
+
 #define TRANSFER_REQUEST_FREE(STRUCT, SELF)\
-		EIO_CAST(STRUCT, transfer_req)\
-		EIO_AFTER(transfer_req, SELF)\
-		free(transfer_req);
+	EIO_CAST(STRUCT, transfer_req)\
+	EIO_AFTER(transfer_req, SELF)\
+	free(transfer_req);
 
-#define TRANSFER_REQUEST_FREE_WITH_DATA(STRUCT, SELF)\
-		EIO_CAST(STRUCT, transfer_req)\
-		uv_unref(uv_default_loop()); \
-		if (!transfer_req->callback.IsEmpty()) { \
-			HandleScope scope; \
-			EIO_HANDLE_ERROR(transfer_req) \
-			if (!transfer_req->errsource) {\
-				Buffer *result = Buffer::New((char *)transfer_req->data, transfer_req->bytesTransferred); \
-				Local<Value> argv[1]; \
-				argv[0] = Local<Value>::New(result->handle_); \
-				TryCatch try_catch; \
-				transfer_req->callback->Call(Context::GetCurrent()->Global(), 1, argv); \
-				if (try_catch.HasCaught()) { \
-					FatalException(try_catch); \
-				} \
-			}\
-			transfer_req->callback.Dispose(); \
-		}\
-		delete req;\
-		transfer_req->SELF->Unref();\
-		free(transfer_req);\
-
-#define INIT_TRANSFER_CALL(MINIMUM_ARG_LENGTH, CALLBACK_ARG_IDX, TIMEOUT_ARG_IDX) \
-		libusb_endpoint_direction modus; \
-		uint32_t timeout = 0; \
-		int32_t buflen = 0; \
-		unsigned char *buf; \
-\
-		if (args.Length() < MINIMUM_ARG_LENGTH || !args[CALLBACK_ARG_IDX]->IsFunction()) { \
-			THROW_BAD_ARGS("Endpoint::Transfer missing arguments!!") \
+		
+#define INT_ARG(VAR, ARG) \
+	if (!(ARG)->IsInt32()) { \
+		THROW_BAD_ARGS("Expected int as " #VAR " parameter") \
+	} else { \
+		VAR = ((ARG)->Int32Value()); \
+	} 
+	
+#define BUF_LEN_ARG(ARG) \
+	libusb_endpoint_direction modus; \
+	if (Buffer::HasInstance(ARG)) { \
+		modus = LIBUSB_ENDPOINT_OUT; \
+	} else { \
+		modus = LIBUSB_ENDPOINT_IN; \
+		if (!ARG->IsUint32()) { \
+		      THROW_BAD_ARGS("IN transfer requires number of bytes. OUT transfer requires buffer.") \
 		} \
-		if (Buffer::HasInstance(args[0])) { \
-			modus = LIBUSB_ENDPOINT_OUT; \
-		} else { \
-			modus = LIBUSB_ENDPOINT_IN; \
-			if (!args[0]->IsUint32()) { \
-			      THROW_BAD_ARGS("Endpoint::Transfer in READ mode expects uint32_t as first parameter. If you want to write something, you must provide a Buffer instance as first parameter") \
-			} \
-		} \
-		if (modus == LIBUSB_ENDPOINT_OUT) {\
-		  	Local<Object> _buffer = args[0]->ToObject();\
-			buflen = Buffer::Length(_buffer); \
-			buf = reinterpret_cast<unsigned char*>(Buffer::Data(_buffer));\
-			DEBUG("Dumping byte stream...")\
-			DUMP_BYTE_STREAM(buf, buflen);\
-		}\
-		else {\
-			buflen = args[0]->Uint32Value();\
-			buf = new unsigned char[buflen];\
-		}\
-		if (args.Length() >= (TIMEOUT_ARG_IDX + 1)) {\
-			if (!args[TIMEOUT_ARG_IDX]->IsUint32()) {\
-				THROW_BAD_ARGS("Endpoint::Transfer expects unsigned int as timeout parameter")\
-			} else {\
-				timeout = args[TIMEOUT_ARG_IDX]->Uint32Value();\
-			}\
-		}
+	} \
+	\
+	if (modus == LIBUSB_ENDPOINT_OUT) { \
+	  	Local<Object> _buffer = ARG->ToObject(); \
+		length = Buffer::Length(_buffer); \
+		buf = reinterpret_cast<unsigned char*>(Buffer::Data(_buffer)); \
+	}else{ \
+		length = ARG->Uint32Value(); \
+		buf = 0; \
+	}
 
 namespace NodeUsb  {
 	class Device;

@@ -1,6 +1,7 @@
 #include "bindings.h"
 #include "endpoint.h"
 #include "device.h"
+#include "transfer.h"
 
 namespace NodeUsb {
 	Persistent<FunctionTemplate> Endpoint::constructor_template;
@@ -12,7 +13,7 @@ namespace NodeUsb {
 		// if bit[7] of endpoint address is set => ENDPOINT_IN (device to host), else: ENDPOINT_OUT (host to device)
 		endpoint_type = (descriptor->bEndpointAddress & (1 << 7)) ? (LIBUSB_ENDPOINT_IN) : (LIBUSB_ENDPOINT_OUT);
 		// bit[0] and bit[1] of bmAttributes masks transfer_type; 3 = 0000 0011
-		transfer_type = (3 & descriptor->bmAttributes);
+		transfer_type = (libusb_transfer_type)(3 & descriptor->bmAttributes);
 		idx_endpoint = _idx_endpoint;
 	}
 
@@ -45,9 +46,7 @@ namespace NodeUsb {
 
 		// methods exposed to node.js
 		NODE_SET_PROTOTYPE_METHOD(t, "getExtraData", Endpoint::GetExtraData);
-		NODE_SET_PROTOTYPE_METHOD(t, "submitNative", Endpoint::Submit);
-		NODE_SET_PROTOTYPE_METHOD(t, "bulkTransfer", Endpoint::BulkTransfer);
-		NODE_SET_PROTOTYPE_METHOD(t, "interruptTransfer", Endpoint::InterruptTransfer);
+		NODE_SET_PROTOTYPE_METHOD(t, "transfer", Endpoint::Transfer);
 
 		// Make it visible in JavaScript
 		target->Set(String::NewSymbol("Endpoint"), t->GetFunction());	
@@ -139,145 +138,39 @@ namespace NodeUsb {
 		return scope.Close(r);
 	}
 
-	void Callback::DispatchAsynchronousUsbTransfer(libusb_transfer *_transfer) {
-		const int num_args = 2;
-		Local<Value> argv[num_args];
-
-		// first argument is byte buffer
-		Local<Array> bytes = Array::New();
-		for (int i = 0; i < _transfer->actual_length; i++) {
-			bytes->Set(i, Uint32::New(_transfer->buffer[i]));
-		}
-		argv[0] = bytes;
-
-		// second argument of callback is transfer status
-		argv[1] = Integer::New(_transfer->status);
-
-		// user_data is our callback handler and has to be casted
-		Persistent<Function>* callback = ((Persistent<Function>*)(_transfer->user_data));
-		// call callback
-		(*callback)->Call(Context::GetCurrent()->Global(), num_args, argv);
-		// free callback
-		(*callback).Dispose();
-	}
-
-#define TRANSFER_ARGUMENTS_LEFT _transfer, device->handle 
-#define TRANSFER_ARGUMENTS_MIDDLE _buffer, _buflen
-#define TRANSFER_ARGUMENTS_RIGHT Callback::DispatchAsynchronousUsbTransfer, &(_callback), _timeout
-#define TRANSFER_ARGUMENTS_DEFAULT TRANSFER_ARGUMENTS_LEFT, descriptor->bEndpointAddress, TRANSFER_ARGUMENTS_MIDDLE, TRANSFER_ARGUMENTS_RIGHT
-	int Endpoint::FillTransferStructure(libusb_transfer *_transfer, unsigned char *_buffer, int32_t _buflen, Persistent<Function> _callback, uint32_t _timeout, unsigned int num_iso_packets) {
-		int err = 0;
-
-		switch (transfer_type) {
-			case LIBUSB_TRANSFER_TYPE_BULK:
-				libusb_fill_bulk_transfer(TRANSFER_ARGUMENTS_DEFAULT);
-				break;
-			case LIBUSB_TRANSFER_TYPE_INTERRUPT:
-				libusb_fill_interrupt_transfer(TRANSFER_ARGUMENTS_DEFAULT);
-				break;
-			case LIBUSB_TRANSFER_TYPE_ISOCHRONOUS:
-				libusb_fill_iso_transfer(TRANSFER_ARGUMENTS_LEFT, descriptor->bEndpointAddress, TRANSFER_ARGUMENTS_MIDDLE, num_iso_packets, TRANSFER_ARGUMENTS_RIGHT);
-				break;
-			default:
-				err = -1;
-		}
-
-		return err;
-	}
-
-#define CHECK_MODUS_EQUALS_ENDPOINT_TYPE \
-		if (modus != self->endpoint_type) {\
-			THROW_BAD_ARGS("Endpoint::Transfer is used as a wrong endpoint type. Change your parameters") \
-		}\
-
-	/**
-	 * @param function js-callback[status]
-	 * @param Buffer byte-array
-	 * @param int (optional) timeout timeout in milliseconds
-	 */
-	Handle<Value> Endpoint::Submit(const Arguments& args) {
+	Handle<Value> Endpoint::Transfer(const Arguments& args){
 		LOCAL(Endpoint, self, args.This())
-		uint32_t iso_packets = 0;
-		uint8_t flags = 0;
 		
-		INIT_TRANSFER_CALL(2, 1, 2)
-		CHECK_MODUS_EQUALS_ENDPOINT_TYPE
+		CHECK_USB(self->device->openHandle(), scope);
 
-		if (args.Length() >= 4) {
-			if (!args[3]->IsUint32()) {
-				THROW_BAD_ARGS("Endpoint::Submit expects unsigned char as flags parameter")
-			} else {
-				flags = (uint8_t)args[3]->Uint32Value();
-			}
-		}
-
-		Local<Function> callback = Local<Function>::Cast(args[1]);
-
-		// TODO Isochronous transfer mode 
-		if (self->transfer_type == LIBUSB_TRANSFER_TYPE_ISOCHRONOUS) {
+		unsigned length, timeout;
+		unsigned char *buf;
+		
+		//args: buffer/size, timeout, callback
+		
+		if (args.Length() < 3 || !args[2]->IsFunction()) {
+			THROW_BAD_ARGS("Transfer missing arguments!")
 		}
 		
-		libusb_transfer* transfer = libusb_alloc_transfer(iso_packets);
+		BUF_LEN_ARG(args[0]);
+		INT_ARG(timeout, args[1]);
 		
-
-		if (self->FillTransferStructure(transfer, buf, buflen, Persistent<Function>::New(callback), timeout, iso_packets) < 0) {
-			THROW_BAD_ARGS("Could not fill USB packet structure on device!")
+		if (modus != self->endpoint_type) {
+			THROW_BAD_ARGS("Transfer is used in the wrong (IN/OUT) direction for this endpoint");
 		}
-
-		transfer->flags = flags;
-		libusb_submit_transfer(transfer);
 		
-		return scope.Close(True());
-	}
+		NodeUsb::Transfer* t = Transfer::newTransfer(
+			self->transfer_type,
+			args.This(),
+			self->descriptor->bEndpointAddress,
+			buf,
+			length,
+			timeout,
+			Handle<Function>::Cast(args[2])
+		);
+		
+		t->submit();
 
-#define BULK_INTERRUPT_EIO(EIO_TO_EXECUTE, EIO_AFTER)\
-		LOCAL(Endpoint, self, args.This())\
-		INIT_TRANSFER_CALL(2, 1, 2)\
-		CHECK_MODUS_EQUALS_ENDPOINT_TYPE\
-		CHECK_USB(self->device->openHandle(), scope);\
-		EIO_NEW(bulk_interrupt_transfer_request, bulk_interrupt_transfer_req)\
-		EIO_DELEGATION(bulk_interrupt_transfer_req, 1)\
-		bulk_interrupt_transfer_req->endpoint = self;\
-		bulk_interrupt_transfer_req->endpoint->Ref();\
-		bulk_interrupt_transfer_req->timeout = timeout;\
-		bulk_interrupt_transfer_req->length = buflen;\
-		bulk_interrupt_transfer_req->data = buf;\
-		EIO_CUSTOM(EIO_TO_EXECUTE, bulk_interrupt_transfer_req, EIO_AFTER)\
-		return Undefined();	
-
-#define BULK_INTERRUPT_EXECUTE(METHOD, SOURCE)\
-		EIO_CAST(bulk_interrupt_transfer_request, bit_req)\
-		Endpoint * self = bit_req->endpoint;\
-		bit_req->errcode = METHOD(self->device->handle, self->descriptor->bEndpointAddress, bit_req->data, bit_req->length, &(bit_req->transferred), bit_req->timeout);\
-		if (bit_req->errcode < LIBUSB_SUCCESS) {\
-			bit_req->errsource = SOURCE;\
-			bit_req->bytesTransferred = 0;\
-		}\
-		else {\
-			bit_req->bytesTransferred = bit_req->transferred;\
-		}
-
-	Handle<Value> Endpoint::BulkTransfer(const Arguments& args) {
-		BULK_INTERRUPT_EIO(EIO_BulkTransfer, EIO_After_BulkTransfer)
-	}
-
-	void Endpoint::EIO_BulkTransfer(uv_work_t *req) {
-		BULK_INTERRUPT_EXECUTE(libusb_bulk_transfer, "bulkTransfer")
-	}
-
-	void Endpoint::EIO_After_BulkTransfer(uv_work_t *req) {
-		TRANSFER_REQUEST_FREE_WITH_DATA(bulk_interrupt_transfer_request, endpoint)
-	}
-
-	Handle<Value> Endpoint::InterruptTransfer(const Arguments& args) {
-		BULK_INTERRUPT_EIO(EIO_InterruptTransfer, EIO_After_InterruptTransfer)
-	}
-
-	void Endpoint::EIO_InterruptTransfer(uv_work_t *req) {
-		BULK_INTERRUPT_EXECUTE(libusb_interrupt_transfer, "interruptTransfer")
-	}
-
-	void Endpoint::EIO_After_InterruptTransfer(uv_work_t *req) {
-		TRANSFER_REQUEST_FREE_WITH_DATA(bulk_interrupt_transfer_request, endpoint)
+		return Undefined();
 	}
 }

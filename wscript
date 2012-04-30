@@ -21,13 +21,13 @@ def configure(conf):
 
 	conf.check_cfg(package='libusb-1.0', uselib_store='USB10', mandatory=1, args='--cflags --libs')
 	conf.env.append_unique('CPPFLAGS', ["-D_FILE_OFFSET_BITS=64", "-D_LARGEFILE_SOURCE"])
-	conf.env.append_unique('CXXFLAGS', ["-Wall"])
+	conf.env.append_unique('CXXFLAGS', ["-Wall", "-std=gnu++0x"])
 	conf.env.append_value('CPPFLAGS_NODE', ['-DEV_MULTIPLICITY=1'])
 
 def build(bld):
 	obj = bld.new_task_gen('cxx', 'shlib', 'node_addon')
 	obj.target = 'usb_bindings'
-	obj.source = './src/node_usb.cc ./src/usb.cc ./src/device.cc ./src/interface.cc ./src/endpoint.cc'
+	obj.source = './src/node_usb.cc ./src/usb.cc ./src/device.cc ./src/interface.cc ./src/endpoint.cc ./src/transfer.cc'
 	obj.includes = bld.env['CPPPATH_USB10'] 
 	obj.uselib = ["USB10"]
 	obj.name = "node-usb"

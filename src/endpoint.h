@@ -35,7 +35,7 @@ namespace NodeUsb {
 			const struct libusb_endpoint_descriptor *descriptor;
 
 			int32_t endpoint_type;
-			uint32_t transfer_type;
+			libusb_transfer_type transfer_type;
 			uint32_t idx_endpoint;
 
 			int FillTransferStructure(libusb_transfer *_transfer, unsigned char *_buffer, int32_t _buflen, Persistent<Function> _callback, uint32_t _timeout, unsigned int num_iso_packets = 0);
@@ -49,13 +49,7 @@ namespace NodeUsb {
 			static Handle<Value> New(const Arguments& args);
 			static Handle<Value> Submit(const Arguments& args);
 			static Handle<Value> GetExtraData(const Arguments& args);
-			static Handle<Value> BulkTransfer(const Arguments& args);
-			static void EIO_BulkTransfer(uv_work_t *req);
-			static void EIO_After_BulkTransfer(uv_work_t *req);
-			static Handle<Value> InterruptTransfer(const Arguments& args);
-			static void EIO_InterruptTransfer(uv_work_t *req);
-			static void EIO_After_InterruptTransfer(uv_work_t *req);
-
+			static Handle<Value> Transfer(const Arguments& args);
 	};
 	
 }

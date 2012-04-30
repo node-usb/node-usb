@@ -10,14 +10,6 @@ namespace NodeUsb {
 		Device * device;
 	};
 
-	struct control_transfer_request:device_request {
-		uint8_t bmRequestType;
-		uint8_t bRequest;
-		uint16_t wValue;
-		uint16_t wIndex;
-		uint16_t wLength;
-	};
-
 	class Device : public ObjectWrap {
 		public:
 			// called from outside to initalize V8 class template
