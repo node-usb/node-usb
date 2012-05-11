@@ -30,6 +30,7 @@ namespace NodeUsb {
 		// Properties
 		instance_template->SetAccessor(V8STR("deviceAddress"), Device::DeviceAddressGetter);
 		instance_template->SetAccessor(V8STR("busNumber"), Device::BusNumberGetter);
+		instance_template->SetAccessor(V8SYM("timeout"), Device::TimeoutGetter, Device::TimeoutSetter);
 
 		// Bindings to nodejs
 		NODE_SET_PROTOTYPE_METHOD(t, "reset", Device::Reset);
@@ -44,7 +45,7 @@ namespace NodeUsb {
 	}
 
 	Device::Device(libusb_device* _device) : 
-		ObjectWrap(), device(_device), handle(NULL), config_descriptor(NULL) {
+		ObjectWrap(), device(_device), handle(NULL), config_descriptor(NULL), timeout(1000) {
 		DEBUG_OPT("Device object %p created", device)
 	}
 
@@ -120,8 +121,6 @@ namespace NodeUsb {
 		
 		args.This()->Set(V8SYM("deviceDescriptor"), dd);
 		
-		
-
 		return args.This();
 	}
 	
@@ -143,6 +142,21 @@ namespace NodeUsb {
 		uint8_t address = libusb_get_device_address(self->device);
 
 		return scope.Close(Integer::New(address));
+	}
+	
+	Handle<Value> Device::TimeoutGetter(Local<String> property, const AccessorInfo &info){
+		LOCAL(Device, self, info.Holder())
+		return scope.Close(Integer::New(self->timeout));
+	}
+	
+	void Device::TimeoutSetter(Local<String> property, Local<Value> value, const AccessorInfo &info){
+		LOCAL(Device, self, info.Holder())
+		
+		if (value->IsNumber()){
+			self->timeout = value->Int32Value();
+		}else{
+			ThrowException(Exception::TypeError(V8STR("Timeout must be number")));
+		}
 	}
 
 	/**
@@ -298,12 +312,12 @@ namespace NodeUsb {
 		
 		uint8_t bmRequestType, bRequest;
 		uint16_t wValue, wIndex;
-		unsigned length, timeout;
+		unsigned length;
 		unsigned char *buf;
 		
-		//args: bmRequestType, bRequest, wValue, wIndex, array/size, timeout, callback
+		//args: bmRequestType, bRequest, wValue, wIndex, array/size, callback
 		
-		if (args.Length() < 7 || !args[6]->IsFunction()) {
+		if (args.Length() < 6 || !args[5]->IsFunction()) {
 			THROW_BAD_ARGS("Transfer missing arguments!")
 		}
 		
@@ -312,7 +326,6 @@ namespace NodeUsb {
 		INT_ARG(wValue, args[2]);
 		INT_ARG(wIndex, args[3]);
 		BUF_LEN_ARG(args[4]);
-		INT_ARG(timeout, args[5]);
 		
 		if ((bmRequestType & 0x80) != modus){
 			if ((bmRequestType & 0x80) == LIBUSB_ENDPOINT_IN){
@@ -322,7 +335,7 @@ namespace NodeUsb {
 			}	
 		}
 		
-		DEBUG_OPT("Submitting control transfer %x %x %x %x %x (%i: %p) %i", modus, bmRequestType, bRequest, wValue, wIndex, length, buf, timeout);
+		DEBUG_OPT("Submitting control transfer %x %x %x %x %x (%i: %p)", modus, bmRequestType, bRequest, wValue, wIndex, length, buf);
 		
 		Transfer* transfer = Transfer::newControlTransfer(
 			args.This(),
@@ -332,8 +345,8 @@ namespace NodeUsb {
 			wIndex,
 			buf,
 			length,
-			timeout,
-			Handle<Function>::Cast(args[6]));
+			self->timeout,
+			Handle<Function>::Cast(args[5]));
 		
 		transfer->submit();
 

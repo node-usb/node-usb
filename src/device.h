@@ -25,12 +25,15 @@ namespace NodeUsb {
 			libusb_device_handle *handle;
 			libusb_config_descriptor *config_descriptor;
 			struct libusb_device_descriptor device_descriptor;
+			unsigned timeout;
 			
 		protected:
 		
 			// V8 getter
 			static Handle<Value> BusNumberGetter(Local<String> property, const AccessorInfo &info);
 			static Handle<Value> DeviceAddressGetter(Local<String> property, const AccessorInfo &info);
+			static Handle<Value> TimeoutGetter(Local<String> property, const AccessorInfo &info);
+			static void TimeoutSetter(Local<String> property, Local<Value> value, const AccessorInfo &info);
 
 			// exposed to V8
 			static Handle<Value> New(const Arguments& args);

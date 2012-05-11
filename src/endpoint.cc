@@ -143,17 +143,16 @@ namespace NodeUsb {
 		
 		CHECK_USB(self->device->openHandle(), scope);
 
-		unsigned length, timeout;
+		unsigned length;
 		unsigned char *buf;
 		
-		//args: buffer/size, timeout, callback
+		//args: buffer/size, callback
 		
-		if (args.Length() < 3 || !args[2]->IsFunction()) {
+		if (args.Length() < 2 || !args[1]->IsFunction()) {
 			THROW_BAD_ARGS("Transfer missing arguments!")
 		}
 		
 		BUF_LEN_ARG(args[0]);
-		INT_ARG(timeout, args[1]);
 		
 		if (modus != self->endpoint_type) {
 			THROW_BAD_ARGS("Transfer is used in the wrong direction (IN/OUT) for this endpoint");
@@ -165,8 +164,8 @@ namespace NodeUsb {
 			self->descriptor->bEndpointAddress,
 			buf,
 			length,
-			timeout,
-			Handle<Function>::Cast(args[2])
+			self->device->timeout,
+			Handle<Function>::Cast(args[1])
 		);
 		
 		t->submit();
