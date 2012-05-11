@@ -158,9 +158,11 @@ namespace NodeUsb {
 			THROW_BAD_ARGS("Transfer is used in the wrong direction (IN/OUT) for this endpoint");
 		}
 		
+		DEBUG_OPT("Submitting transfer %x (%i: %p)", modus, length, buf);
+		
 		NodeUsb::Transfer* t = Transfer::newTransfer(
 			self->transfer_type,
-			args.This(),
+			self->v8device,
 			self->descriptor->bEndpointAddress,
 			buf,
 			length,
