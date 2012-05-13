@@ -123,7 +123,7 @@ namespace NodeUsb  {
 	class Transfer;
 	class Stream;
 	
-	void doTransferCallback(Handle<Function> v8callback, libusb_transfer_status status, uint8_t* buffer, unsigned length);
+	void doTransferCallback(Handle<Function> v8callback, Handle<Object> v8this, libusb_transfer_status status, uint8_t* buffer, unsigned length);
 
 	struct nodeusb_endpoint_selection {
 		int interface_number;

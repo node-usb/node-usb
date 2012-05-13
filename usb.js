@@ -1,14 +1,15 @@
 /**
  * Expose complete node-usb binding to node.js
  */
-var exports = module.exports = require("./usb_bindings");
+var usb = exports = module.exports = require("./usb_bindings");
+var events = require('events');
 
 var devices = undefined;
 
 // singleton
 exports.getDevices = function() {
 	if (devices == undefined) {
-		devices = this._getDevices();
+		devices = usb._getDevices();
 		
 		for (var i = 0, m = devices.length; i < m; i++) {
 			var device = devices[i];
@@ -31,4 +32,23 @@ exports.find_by_vid_and_pid = function(vid, pid) {
 	}
 	
 	return r;
+}
+
+function inherits(target, source) {
+  for (var k in source.prototype)
+    target.prototype[k] = source.prototype[k];
+}
+
+inherits(usb.Endpoint, events.EventEmitter);
+
+usb.Endpoint.prototype.__stream_data_cb = function stream_data_cb(data, error){
+	if (!error){
+		this.emit("data", data)
+	}else{
+		this.emit("error", error)
+	}
+}
+
+usb.Endpoint.prototype.__stream_stop_cb = function stream_stop_cb(data, error){
+	this.emit("end")
 }

@@ -10,7 +10,7 @@ Local<v8::Value> makeBuffer(const uint8_t* buf, unsigned length){
 	return scope.Close(actualBuffer);
 }
 
-void NodeUsb::doTransferCallback(Handle<Function> v8callback, libusb_transfer_status status, uint8_t* buffer, unsigned length){
+void NodeUsb::doTransferCallback(Handle<Function> v8callback, Handle<Object> v8this, libusb_transfer_status status, uint8_t* buffer, unsigned length){
 	HandleScope scope;
 	Local<Value> cbvalue = Local<Value>::New(Undefined());
 	Local<Value> cberror = Local<Value>::New(Undefined());
@@ -25,7 +25,7 @@ void NodeUsb::doTransferCallback(Handle<Function> v8callback, libusb_transfer_st
 	
 	Local<Value> argv[2] = {cbvalue, cberror};
 	TryCatch try_catch;
-	v8callback->Call(Context::GetCurrent()->Global(), 2, argv);
+	v8callback->Call(v8this, 2, argv);
 	if (try_catch.HasCaught()) {
 		FatalException(try_catch);
 	}

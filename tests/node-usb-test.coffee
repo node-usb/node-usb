@@ -123,15 +123,19 @@ test "Write to OUT endpoint", ->
 test "Stream from IN endpoint", ->
 	pkts = 0
 	
-	inEndpoint.__stream_data_cb = (d, e) ->
-		console.log("Stream callback", d, e)
+	inEndpoint.on 'data', (d) ->
+		console.log("Stream callback", d)
 		pkts++
 		
 		if pkts == 10
 			inEndpoint.stopStream()
 			console.log("Stopping stream")
 			
-	inEndpoint.__stream_stop_cb = () ->
+	inEndpoint.on 'error', (e) ->
+		console.log("Stream error", e)
+		assert.equal(e, 3)
+			
+	inEndpoint.on 'end', ->
 		console.log("Stream stopped")
 		next()
 	

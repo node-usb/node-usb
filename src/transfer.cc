@@ -80,7 +80,7 @@ void Transfer::handleCompletion(Transfer* t){
 		}
 	}
 	
-	doTransferCallback(t->v8callback, t->transfer->status, buffer, length);
+	doTransferCallback(t->v8callback, Context::GetCurrent()->Global(), t->transfer->status, buffer, length);
 	
 	uv_unref(uv_default_loop());
 	delete t;

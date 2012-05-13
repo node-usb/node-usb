@@ -90,7 +90,7 @@ extern "C" void LIBUSB_CALL usbThreadStreamCb(libusb_transfer *t){
 }
 		
 void Stream::handleCompletion(CompletionData c){
-	doTransferCallback(c.stream->v8callback, c.status, c.data, c.length);
+	doTransferCallback(c.stream->v8callback, c.stream->v8endpoint, c.status, c.data, c.length);
 	free(c.data);
 
 	if (c.dead){
