@@ -16,7 +16,7 @@ namespace NodeUsb {
 	};
 
 	struct alternate_setting_request:release_request {
-		int alternate_setting;
+		
 	};
 
 	class Interface : public ObjectWrap {
@@ -38,6 +38,7 @@ namespace NodeUsb {
 			// V8 getter
 			static Handle<Value> IdxInterfaceGetter(Local<String> property, const AccessorInfo &info);
 			static Handle<Value> IdxAltSettingGetter(Local<String> property, const AccessorInfo &info);
+			static Handle<Value> ExtraDataGetter(Local<String> property, const AccessorInfo &info);
 
 			// exposed to V8
 			static Handle<Value> New(const Arguments& args);
@@ -45,7 +46,6 @@ namespace NodeUsb {
 			static Handle<Value> DetachKernelDriver(const Arguments& args);
 			static Handle<Value> AttachKernelDriver(const Arguments& args);
 			static Handle<Value> Claim(const Arguments& args);
-			static Handle<Value> GetExtraData(const Arguments& args);
 			static Handle<Value> GetEndpoints(const Arguments& args);
 
 			static Handle<Value> Release(const Arguments& args);

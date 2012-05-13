@@ -37,8 +37,9 @@ namespace NodeUsb {
 		// no constants at the moment
 	
 		// Properties
-		instance_template->SetAccessor(V8STR("__idxInterface"), Interface::IdxInterfaceGetter);
-		instance_template->SetAccessor(V8STR("__idxAltSetting"), Interface::IdxAltSettingGetter);
+		instance_template->SetAccessor(V8STR("interface"), Interface::IdxInterfaceGetter);
+		instance_template->SetAccessor(V8STR("altSetting"), Interface::IdxAltSettingGetter);
+		instance_template->SetAccessor(V8STR("extraData"), Interface::ExtraDataGetter);
 
 		// methods exposed to node.js
 		NODE_SET_PROTOTYPE_METHOD(t, "getEndpoints", Interface::GetEndpoints); 
@@ -48,7 +49,6 @@ namespace NodeUsb {
 		NODE_SET_PROTOTYPE_METHOD(t, "release", Interface::Release); 
 		NODE_SET_PROTOTYPE_METHOD(t, "setAlternateSetting", Interface::AlternateSetting); 
 		NODE_SET_PROTOTYPE_METHOD(t, "isKernelDriverActive", Interface::IsKernelDriverActive);
-		NODE_SET_PROTOTYPE_METHOD(t, "getExtraData", Interface::GetExtraData);
 
 		// Make it visible in JavaScript
 		target->Set(String::NewSymbol("Interface"), t->GetFunction());	
@@ -82,7 +82,7 @@ namespace NodeUsb {
 		interface->Wrap(args.This());
 
 #define LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(name) \
-		args.This()->Set(V8STR(#name), Uint32::New(interface->descriptor->name));
+		args.This()->Set(V8STR(#name), Uint32::New(interface->descriptor->name), CONST_PROP);
 		LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bLength)
 		LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bDescriptorType)
 		LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(bInterfaceNumber)
@@ -110,20 +110,10 @@ namespace NodeUsb {
 		return scope.Close(Uint32::New(self->idx_alt_setting));
 	}
 
-	Handle<Value> Interface::GetExtraData(const Arguments& args) {
-		LOCAL(Interface, self, args.This())
+	Handle<Value> Interface::ExtraDataGetter(Local<String> property, const AccessorInfo &info){
+		LOCAL(Interface, self, info.Holder())
 		 
-		int m = (*self->descriptor).extra_length;
-		
-		Local<Array> r = Array::New(m);
-		
-		for (int i = 0; i < m; i++) {
-		  uint32_t c = (*self->descriptor).extra[i];
-		  
-		  r->Set(i, Uint32::New(c));
-		}
-		
-		return scope.Close(r);
+		return scope.Close(makeBuffer(self->descriptor->extra, self->descriptor->extra_length));
 	}
 
 	Handle<Value> Interface::IsKernelDriverActive(const Arguments& args) {
@@ -135,7 +125,7 @@ namespace NodeUsb {
 		
 		CHECK_USB((isKernelDriverActive = libusb_kernel_driver_active(self->device->handle, self->descriptor->bInterfaceNumber)), scope)
 
-		return scope.Close(Integer::New(isKernelDriverActive));
+		return scope.Close(Boolean::New(isKernelDriverActive));
 	}	
 	
 	Handle<Value> Interface::DetachKernelDriver(const Arguments& args) {
@@ -221,10 +211,6 @@ namespace NodeUsb {
 	Handle<Value> Interface::AlternateSetting(const Arguments& args) {
 		LOCAL(Interface, self, args.This())
 		
-		if (args.Length() != 2 || args[0]->IsUint32()) {
-			THROW_BAD_ARGS("Interface::AlternateSetting expects [uint32:setting] as first parameter")
-		}
-		
 		CHECK_USB(self->device->openHandle(), scope);
 
 		// allocation of intermediate EIO structure
@@ -235,7 +221,6 @@ namespace NodeUsb {
 		
 		alt_req->interface = self;
 		alt_req->interface->Ref();
-		alt_req->alternate_setting = args[0]->Uint32Value();
 
 		EIO_CUSTOM(EIO_AlternateSetting, alt_req, EIO_After_AlternateSetting);
 	
@@ -250,8 +235,9 @@ namespace NodeUsb {
 		Interface * self = alt_req->interface;
 		libusb_device_handle * handle = self->device->handle;
 		int interface_number          = self->descriptor->bInterfaceNumber;
+		int alt_setting               = self->descriptor->bAlternateSetting;
 
-		alt_req->errcode = libusb_set_interface_alt_setting(handle, interface_number, alt_req->alternate_setting);
+		alt_req->errcode = libusb_set_interface_alt_setting(handle, interface_number, alt_setting);
 		if (alt_req->errcode < LIBUSB_SUCCESS) {
 			alt_req->errsource = "alt_setting";
 		}
