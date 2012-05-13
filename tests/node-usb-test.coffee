@@ -18,10 +18,10 @@ test "setDebugLevel must succeed with good args", ->
 
 devices = null
 
-test "getDevices works", ->
-	devices = usb.getDevices()
-	assert.notEqual(devices, undefined, "getDevices() must not be undefined")
-	assert.ok((devices.length > 0), "getDevices() must be larger than 0 (assume that at least one host controller is available)")
+test "Device list works", ->
+	assert.notEqual(usb.devices, undefined, "devices must not be undefined")
+	assert.ok((usb.devices.length > 0), "getDevices() must be larger than 0 (assume that at least one host controller is available)")
+	assert.equal(usb.devices[1000000], undefined)
 
 assert_extra_length = (obj) ->
 	r = obj.getExtraData()
@@ -139,7 +139,7 @@ test "Stream from IN endpoint", ->
 		console.log("Stream stopped")
 		next()
 	
-	inEndpoint.startStream 64, 30
+	inEndpoint.startStream 64, 4
 
 	wait()
 			

@@ -5,6 +5,7 @@
 namespace NodeUsb {
 	libusb_context* usb_context;
 	std::thread usb_thread;
+	std::vector< Persistent<Object> > Usb::deviceList;
 	
 	void USBThreadFn(){
 		while(1) libusb_handle_events(usb_context);
@@ -73,10 +74,14 @@ namespace NodeUsb {
 
 		// Bindings to nodejs
 		NODE_SET_METHOD(target, "setDebugLevel", Usb::SetDebugLevel);
-		NODE_SET_METHOD(target, "_getDevices", Usb::GetDeviceList);
 		
 		usb_thread = std::thread(USBThreadFn);
 		usb_thread.detach();
+		
+		Local<ObjectTemplate> devlist_tpl = ObjectTemplate::New();
+		devlist_tpl->SetAccessor(V8STR("length"), DeviceListLength);
+		devlist_tpl->SetIndexedPropertyHandler(DeviceListGet);
+		target->Set(V8STR("devices"), devlist_tpl->NewInstance());
 
 		DEBUG("Leave")
 	}
@@ -98,36 +103,36 @@ namespace NodeUsb {
 		return Undefined();
 	}
 	
-	/**
-	 * Returns the devices discovered by libusb
-	 * @return array[Device]
-	 */
-	Handle<Value> Usb::GetDeviceList(const Arguments& args) {
+	void Usb::LoadDevices() {
 		HandleScope scope;
 		
-		// dynamic array (sic!) which contains the devices discovered later
-		Local<Array> discoveredDevices = Array::New();
-
 		libusb_device **devices;
 		int num_devices = libusb_get_device_list(usb_context, &devices);
-		CHECK_USB(num_devices, scope);
 
 		for (int i=0; i < num_devices; i++) {
 			// wrap libusb_device structure into a Local<Value>
-			Local<Value> argv[2] = {
-				args.This(),
+			Local<Value> argv[1] = {
 				External::New(devices[i])
 			};
 
 			// create new object instance of class NodeUsb::Device
-			Local<Object> js_device(Device::constructor_template->GetFunction()->NewInstance(2, argv));
+			Local<Object> js_device(Device::constructor_template->GetFunction()->NewInstance(1, argv));
 
-			// push to array
-			discoveredDevices->Set(Integer::New(i), js_device);
+			deviceList.push_back(Persistent<Object>::New(js_device));
 		}
 		
 		libusb_free_device_list(devices, false);
-
-		return scope.Close(discoveredDevices);
+	}
+	
+	Handle<Value> Usb::DeviceListLength(Local<String> property, const AccessorInfo &info){
+		return Number::New(deviceList.size());
+	}
+	
+	Handle<Value> Usb::DeviceListGet(unsigned i, const AccessorInfo &info){
+		if (i < deviceList.size()){
+			return deviceList[i];
+		}else{
+			return Undefined();
+		}		
 	}
 }

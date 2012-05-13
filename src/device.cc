@@ -41,6 +41,9 @@ namespace NodeUsb {
 
 		// Make it visible in JavaScript
 		target->Set(String::NewSymbol("Device"), t->GetFunction());	
+		
+		Usb::LoadDevices();
+		
 		DEBUG("Leave")
 	}
 
@@ -71,19 +74,11 @@ namespace NodeUsb {
 		HandleScope scope;
 
 		// need libusb_device structure as first argument
-		if (args.Length() < 2) {
+		if (args.Length() < 1 || !args[0]->IsExternal()) {
 			THROW_BAD_ARGS("Device::New argument is invalid. Must be external!")
 		}
 
-		if (!args[0]->IsObject()) {
-			THROW_BAD_ARGS("Device::New argument is invalid. Must be Object!")
-		}
-
-		if (!args[1]->IsExternal()) {
-			THROW_BAD_ARGS("Device::New argument is invalid. Must be external!")
-		}
-
-		Local<External> refDevice = Local<External>::Cast(args[1]);
+		Local<External> refDevice = Local<External>::Cast(args[0]);
 
 		// cast local reference to local libusb_device structure
 		libusb_device *libusbDevice = static_cast<libusb_device*>(refDevice->Value());
