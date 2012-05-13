@@ -31,12 +31,11 @@ namespace NodeUsb {
 		instance_template->SetAccessor(V8STR("deviceAddress"), Device::DeviceAddressGetter);
 		instance_template->SetAccessor(V8STR("busNumber"), Device::BusNumberGetter);
 		instance_template->SetAccessor(V8SYM("timeout"), Device::TimeoutGetter, Device::TimeoutSetter);
+		instance_template->SetAccessor(V8STR("configDescriptor"), Device::ConfigDescriptorGetter);
 
 		// Bindings to nodejs
 		NODE_SET_PROTOTYPE_METHOD(t, "reset", Device::Reset);
-		NODE_SET_PROTOTYPE_METHOD(t, "getConfigDescriptor", Device::GetConfigDescriptor);
 		NODE_SET_PROTOTYPE_METHOD(t, "getInterfaces", Device::GetInterfaces);
-		NODE_SET_PROTOTYPE_METHOD(t, "getExtraData", Device::GetExtraData);
 		NODE_SET_PROTOTYPE_METHOD(t, "controlTransfer", Device::ControlTransfer);
 
 		// Make it visible in JavaScript
@@ -56,6 +55,7 @@ namespace NodeUsb {
 		DEBUG_OPT("Device object %p destroyed", device)
 		// free configuration descriptor
 		close();
+		v8ConfigDescriptor.Dispose();
 		libusb_free_config_descriptor(config_descriptor);
 		libusb_unref_device(device);
 	}
@@ -89,10 +89,8 @@ namespace NodeUsb {
 		// wrap created Device object to v8
 		device->Wrap(args.This());
 
-		DEBUG("Get device descriptor");		
-		// TODO: Read-Only
 		#define LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(NAME) \
-			dd->Set(V8SYM(#NAME), Uint32::New(device->device_descriptor.NAME));
+			dd->Set(V8SYM(#NAME), Uint32::New(device->device_descriptor.NAME), CONST_PROP);
 
 		assert(device->device != NULL);
 		CHECK_USB(libusb_get_device_descriptor(device->device, &device->device_descriptor), scope);
@@ -114,7 +112,7 @@ namespace NodeUsb {
 		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(iSerialNumber)
 		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bNumConfigurations)
 		
-		args.This()->Set(V8SYM("deviceDescriptor"), dd);
+		args.This()->Set(V8SYM("deviceDescriptor"), dd, CONST_PROP);
 		
 		return args.This();
 	}
@@ -206,7 +204,7 @@ namespace NodeUsb {
 
 // TODO: Read-Only
 #define LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(NAME) \
-		r->Set(V8STR(#NAME), Uint32::New(self->config_descriptor->NAME));
+		r->Set(V8STR(#NAME), Uint32::New(self->config_descriptor->NAME), CONST_PROP);
 
 #define LIBUSB_GET_CONFIG_DESCRIPTOR(scope) \
 		DEBUG("Get active config descriptor"); \
@@ -217,50 +215,32 @@ namespace NodeUsb {
 	/**
 	 * Returns configuration descriptor structure
 	 */
-	Handle<Value> Device::GetConfigDescriptor(const Arguments& args) {
-		LOCAL(Device, self, args.This())
+	Handle<Value> Device::ConfigDescriptorGetter(Local<String> property, const AccessorInfo &info) {
+		LOCAL(Device, self, info.Holder())
 
 		LIBUSB_GET_CONFIG_DESCRIPTOR(scope);
 		
-		Local<Object> r = Object::New();
+		if (self->v8ConfigDescriptor.IsEmpty()){
+			Local<Object> r = Object::New();
 
-		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(bLength)
-		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(bDescriptorType)
-		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(wTotalLength)
-		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(bNumInterfaces)
-		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(bConfigurationValue)
-		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(iConfiguration)
-		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(bmAttributes)
-		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(MaxPower)
-		LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(extra_length)
-
-		return scope.Close(r);
-	}
-	
-	Handle<Value> Device::GetExtraData(const Arguments& args) {
-		LOCAL(Device, self, args.This())
-
-		LIBUSB_GET_CONFIG_DESCRIPTOR(scope);
-
-		int m = (*self->config_descriptor).extra_length;
-		
-		Local<Array> r = Array::New(m);
-		
-		for (int i = 0; i < m; i++) {
-		  uint32_t c = (*self->config_descriptor).extra[i];
-		  
-		  r->Set(i, Uint32::New(c));
+			LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(bLength)
+			LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(bDescriptorType)
+			LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(wTotalLength)
+			LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(bNumInterfaces)
+			LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(bConfigurationValue)
+			LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(iConfiguration)
+			LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(bmAttributes)
+			LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(MaxPower)
+			r->Set(V8STR("extra"), makeBuffer(self->config_descriptor->extra, self->config_descriptor->extra_length), CONST_PROP);
+			
+			self->v8ConfigDescriptor = Persistent<Object>::New(r);
 		}
-		
-		return scope.Close(r);
+
+		return scope.Close(self->v8ConfigDescriptor);
 	}
 	
 	Handle<Value> Device::GetInterfaces(const Arguments& args) {
 		LOCAL(Device, self, args.This())
-#if defined(__APPLE__) && defined(__MACH__)
-		DEBUG("Open device handle for GetInterfacse (Darwin fix)")
-		CHECK_USB(self->device->openHandle(), scope);
-#endif
 
 		LIBUSB_GET_CONFIG_DESCRIPTOR(scope);
 

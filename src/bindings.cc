@@ -1,6 +1,8 @@
 #include "bindings.h"
 
-Local<v8::Value> makeBuffer(const uint8_t* buf, unsigned length){
+using namespace NodeUsb;
+
+Local<v8::Value> NodeUsb::makeBuffer(const uint8_t* buf, unsigned length){
 	HandleScope scope;
 	Buffer *slowBuffer = Buffer::New((char *)buf, length);
 	Local<Object> globalObj = v8::Context::GetCurrent()->Global();

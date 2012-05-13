@@ -123,7 +123,11 @@ namespace NodeUsb  {
 	class Transfer;
 	class Stream;
 	
+	const PropertyAttribute CONST_PROP = static_cast<v8::PropertyAttribute>(ReadOnly|DontDelete);
+	
 	void doTransferCallback(Handle<Function> v8callback, Handle<Object> v8this, libusb_transfer_status status, uint8_t* buffer, unsigned length);
+	
+	Local<v8::Value> makeBuffer(const uint8_t* buf, unsigned length);
 
 	struct nodeusb_endpoint_selection {
 		int interface_number;

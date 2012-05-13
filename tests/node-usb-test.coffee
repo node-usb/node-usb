@@ -23,11 +23,6 @@ test "Device list works", ->
 	assert.ok((usb.devices.length > 0), "getDevices() must be larger than 0 (assume that at least one host controller is available)")
 	assert.equal(usb.devices[1000000], undefined)
 
-assert_extra_length = (obj) ->
-	r = obj.getExtraData()
-	assert.ok((r.length == obj.extra_length), "getExtraLength() (length is: " + r.length + ") + must be equal to .extra_length (is: " + obj.extra_length + ")")
-
-
 arr = null
 device = null
 
@@ -44,8 +39,9 @@ test "Device properties are sane" , ->
 test "deviceDescriptor must return an object", ->
 	assert.ok(((deviceDesc = device.deviceDescriptor) != undefined))
 	
-test "getConfigDescriptor() must return an object", ->
-	assert.ok(((deviceConfigDesc = device.getConfigDescriptor()) != undefined))
+test "configDescriptor must return an object", ->
+	assert.ok(((deviceConfigDesc = device.configDescriptor) != undefined))
+	assert.ok(device.configDescriptor.extra.length == 0)
 
 test "Invalid timeout is an error", ->
 	assert.throws(-> device.timeout = 'foo')
