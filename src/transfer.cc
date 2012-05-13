@@ -54,15 +54,12 @@ Transfer* Transfer::newTransfer(libusb_transfer_type type,
 	if (data) memcpy(buffer, data, length);
 	t->direction = data?LIBUSB_ENDPOINT_OUT:LIBUSB_ENDPOINT_IN;
 	
-	if (type == LIBUSB_TRANSFER_TYPE_BULK){
-		libusb_fill_bulk_transfer(t->transfer, t->device->handle, endpoint,
-			                      buffer, length,
-			                      usbThreadCb, (void*) t, timeout);
-	}else{
-		libusb_fill_interrupt_transfer(t->transfer, t->device->handle, endpoint,
-			                           buffer, length,
-			                           usbThreadCb, (void*) t, timeout);
-	}
+
+	libusb_fill_interrupt_transfer(t->transfer, t->device->handle, endpoint,
+			                       buffer, length,
+			                       usbThreadCb, (void*) t, timeout);
+	
+	t->transfer->type = type;
 	
 	return t;
 }
@@ -72,40 +69,18 @@ void Transfer::submit(){
 	libusb_submit_transfer(transfer);
 }
 
-Local<v8::Value> makeBuffer(const uint8_t* buf, unsigned length){
-	HandleScope scope;
-	Buffer *slowBuffer = Buffer::New((char *)buf, length);
-	Local<Object> globalObj = v8::Context::GetCurrent()->Global();
-	Local<Function> bufferConstructor = v8::Local<v8::Function>::Cast(globalObj->Get(v8::String::New("Buffer")));
-	Handle<Value> constructorArgs[3] = { slowBuffer->handle_, v8::Integer::New(length), v8::Integer::New(0) };
-	Local<Object> actualBuffer = bufferConstructor->NewInstance(3, constructorArgs);
-	return scope.Close(actualBuffer);
-}
-
 void Transfer::handleCompletion(Transfer* t){
-	HandleScope scope;
-	Local<Value> cbvalue = Local<Value>::New(Undefined());
-	Local<Value> cberror = Local<Value>::New(Undefined());
-	if (t->transfer->status == LIBUSB_TRANSFER_COMPLETED){		
-		if (t->direction == LIBUSB_ENDPOINT_IN){
-			uint8_t* buffer = t->transfer->buffer;
-			unsigned length = t->transfer->actual_length;
-			if (t->transfer->type == LIBUSB_TRANSFER_TYPE_CONTROL){
-				buffer += LIBUSB_CONTROL_SETUP_SIZE;
-			}
-			cbvalue = makeBuffer(buffer, length);
+	uint8_t* buffer = 0;
+	unsigned length = t->transfer->actual_length;
+	
+	if (t->direction == LIBUSB_ENDPOINT_IN){
+		buffer = t->transfer->buffer;
+		if (t->transfer->type == LIBUSB_TRANSFER_TYPE_CONTROL){
+			buffer += LIBUSB_CONTROL_SETUP_SIZE;
 		}
-	}else{
-		cberror = Local<Value>::New(Number::New(t->transfer->status));
-		//TODO: pass exception
 	}
 	
-	Local<Value> argv[2] = {cbvalue, cberror};
-	TryCatch try_catch;
-	t->v8callback->Call(Context::GetCurrent()->Global(), 2, argv);
-	if (try_catch.HasCaught()) {
-		FatalException(try_catch);
-	}
+	doTransferCallback(t->v8callback, t->transfer->status, buffer, length);
 	
 	uv_unref(uv_default_loop());
 	delete t;
@@ -113,7 +88,6 @@ void Transfer::handleCompletion(Transfer* t){
 
 extern "C" void LIBUSB_CALL usbThreadCb(libusb_transfer *transfer){
 	Transfer* t = static_cast<Transfer*>(transfer->user_data);
-	if (t){
-		Transfer::completionQueue.post(t);
-	}
+	assert(t != NULL);
+	Transfer::completionQueue.post(t);
 }

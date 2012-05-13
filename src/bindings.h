@@ -119,6 +119,8 @@
 
 namespace NodeUsb  {
 	class Device;
+	
+	void doTransferCallback(Handle<Function> v8callback, libusb_transfer_status status, uint8_t* buffer, unsigned length);
 
 	struct nodeusb_endpoint_selection {
 		int interface_number;
