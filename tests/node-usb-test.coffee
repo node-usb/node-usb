@@ -119,6 +119,26 @@ test "Write to OUT endpoint", ->
 		console.log("BulkTransferIn", d, e)
 		next()
 	wait()
+	
+test "Stream from IN endpoint", ->
+	pkts = 0
+	
+	inEndpoint.__stream_data_cb = (d, e) ->
+		console.log("Stream callback", d, e)
+		pkts++
+		
+		if pkts == 10
+			inEndpoint.stopStream()
+			console.log("Stopping stream")
+			
+	inEndpoint.__stream_stop_cb = () ->
+		console.log("Stream stopped")
+		next()
+	
+	inEndpoint.startStream 64, 30
+
+	wait()
+			
 
 test "Complete!", ->
 

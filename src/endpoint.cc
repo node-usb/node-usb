@@ -2,6 +2,7 @@
 #include "endpoint.h"
 #include "device.h"
 #include "transfer.h"
+#include "stream.h"
 
 namespace NodeUsb {
 	Persistent<FunctionTemplate> Endpoint::constructor_template;
@@ -15,9 +16,11 @@ namespace NodeUsb {
 		// bit[0] and bit[1] of bmAttributes masks transfer_type; 3 = 0000 0011
 		transfer_type = (libusb_transfer_type)(3 & descriptor->bmAttributes);
 		idx_endpoint = _idx_endpoint;
+		stream = NULL;
 	}
 
 	Endpoint::~Endpoint() {
+		delete stream;
 		// TODO Close
 		v8device.Dispose();
 		DEBUG("Endpoint object destroyed")
@@ -46,7 +49,10 @@ namespace NodeUsb {
 
 		// methods exposed to node.js
 		NODE_SET_PROTOTYPE_METHOD(t, "getExtraData", Endpoint::GetExtraData);
-		NODE_SET_PROTOTYPE_METHOD(t, "transfer", Endpoint::Transfer);
+		NODE_SET_PROTOTYPE_METHOD(t, "transfer", Endpoint::StartTransfer);
+		NODE_SET_PROTOTYPE_METHOD(t, "startStream", Endpoint::StartStream);
+		NODE_SET_PROTOTYPE_METHOD(t, "stopStream", Endpoint::StopStream);
+		
 
 		// Make it visible in JavaScript
 		target->Set(String::NewSymbol("Endpoint"), t->GetFunction());	
@@ -138,7 +144,7 @@ namespace NodeUsb {
 		return scope.Close(r);
 	}
 
-	Handle<Value> Endpoint::Transfer(const Arguments& args){
+	Handle<Value> Endpoint::StartTransfer(const Arguments& args){
 		LOCAL(Endpoint, self, args.This())
 		
 		CHECK_USB(self->device->openHandle(), scope);
@@ -174,4 +180,57 @@ namespace NodeUsb {
 
 		return Undefined();
 	}
+	
+	
+	Handle<Value> Endpoint::StartStream(const Arguments& args){
+		LOCAL(Endpoint, self, args.This())
+		
+		if (!self->endpoint_type == LIBUSB_ENDPOINT_IN){
+			THROW_BAD_ARGS("Streams are only supported for IN endpoints");
+		}
+		
+		CHECK_USB(self->device->openHandle(), scope);
+		
+		unsigned transfer_size, n_transfers;
+		
+		//args: transfer_size, n_transfers
+		if (args.Length() < 2) {
+			THROW_BAD_ARGS("Missing arguments!")
+		}
+		
+		INT_ARG(transfer_size, args[0]);
+		INT_ARG(n_transfers, args[1]);
+		
+		if (!self->stream){
+			Handle<Value> streamCb = args.This()->Get(V8SYM("__stream_data_cb"));
+			Handle<Value> streamStopCb = args.This()->Get(V8SYM("__stream_stop_cb"));
+			
+			if (!streamCb->IsFunction() || !streamStopCb->IsFunction()){
+				THROW_BAD_ARGS("Stream prototype functions not defined");
+			}
+		
+			self->stream = new Stream(args.This(),
+			                          Handle<Function>::Cast(streamCb),
+			                          Handle<Function>::Cast(streamStopCb));
+		}
+		
+		if (self->stream->state != Stream::STREAM_IDLE){
+			THROW_BAD_ARGS("Stream cannot be started");
+		}
+				
+		self->stream->start(n_transfers, transfer_size);
+		
+		return Undefined();
+	}
+	
+	Handle<Value> Endpoint::StopStream(const Arguments& args){
+		LOCAL(Endpoint, self, args.This())
+		
+		if (self->stream && self->stream->state == Stream::STREAM_ACTIVE){
+			self->stream->stop();
+		}
+		
+		return Undefined();
+	}
+
 }

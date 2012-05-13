@@ -14,7 +14,7 @@ void NodeUsb::doTransferCallback(Handle<Function> v8callback, libusb_transfer_st
 	HandleScope scope;
 	Local<Value> cbvalue = Local<Value>::New(Undefined());
 	Local<Value> cberror = Local<Value>::New(Undefined());
-	if (buffer){		
+	if (buffer && !status){		
 		cbvalue = makeBuffer(buffer, length);
 	}
 	

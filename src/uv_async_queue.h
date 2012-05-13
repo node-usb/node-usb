@@ -1,3 +1,6 @@
+#ifndef SRC_UV_ASYNC_QUEUE_H
+#define SRC_UV_ASYNC_QUEUE_H
+
 #include <uv.h>
 #include <functional>
 #include <queue>
@@ -48,3 +51,5 @@ class UVQueue{
 			}
 		}
 };
+
+#endif

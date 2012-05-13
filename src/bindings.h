@@ -119,6 +119,9 @@
 
 namespace NodeUsb  {
 	class Device;
+	class Endpoint;
+	class Transfer;
+	class Stream;
 	
 	void doTransferCallback(Handle<Function> v8callback, libusb_transfer_status status, uint8_t* buffer, unsigned length);
 
