@@ -47,10 +47,11 @@ namespace NodeUsb {
 			static Handle<Value> TransferTypeGetter(Local<String> property, const AccessorInfo &info);
 			static Handle<Value> MaxPacketSizeGetter(Local<String> property, const AccessorInfo &info);
 			static Handle<Value> MaxIsoPacketSizeGetter(Local<String> property, const AccessorInfo &info);
+			static Handle<Value> ExtraDataGetter(Local<String> property, const AccessorInfo &info);
+			
 			// exposed to V8
 			static Handle<Value> New(const Arguments& args);
 			static Handle<Value> Submit(const Arguments& args);
-			static Handle<Value> GetExtraData(const Arguments& args);
 			static Handle<Value> StartTransfer(const Arguments& args);
 			static Handle<Value> StartStream(const Arguments& args);
 			static Handle<Value> StopStream(const Arguments& args);

@@ -90,7 +90,7 @@ test "Get in endpoint", ->
 	endpoints = interface.getEndpoints()
 	inEndpoint = endpoints[0]
 	assert.notEqual(inEndpoint, undefined, "Endpoint must be defined")
-	assert.equal(inEndpoint.__endpointType, usb.LIBUSB_ENDPOINT_IN)
+	assert.equal(inEndpoint.direction, usb.LIBUSB_ENDPOINT_IN)
 
 test "Attempt to write to IN endpoint", ->
 	assert.throws -> inEndpoint.transfer(b)
@@ -105,7 +105,7 @@ test "Read from IN endpoint", ->
 test "Get out endpoint", -> 
 	outEndpoint = endpoints[1]
 	assert.notEqual(outEndpoint, undefined, "Endpoint must be defined")
-	assert.equal(outEndpoint.__endpointType, usb.LIBUSB_ENDPOINT_OUT)
+	assert.equal(outEndpoint.direction, usb.LIBUSB_ENDPOINT_OUT)
 	
 test "Attempt to read from OUT endpoint", ->
 	assert.throws -> outEndpoint.transfer(64)

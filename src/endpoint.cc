@@ -42,13 +42,13 @@ namespace NodeUsb {
 		// no constants at the moment
 	
 		// Properties
-		instance_template->SetAccessor(V8STR("__endpointType"), Endpoint::EndpointTypeGetter);
-		instance_template->SetAccessor(V8STR("__transferType"), Endpoint::TransferTypeGetter);
+		instance_template->SetAccessor(V8STR("direction"), Endpoint::EndpointTypeGetter);
+		instance_template->SetAccessor(V8STR("transferType"), Endpoint::TransferTypeGetter);
 		instance_template->SetAccessor(V8STR("__maxIsoPacketSize"), Endpoint::MaxIsoPacketSizeGetter);
 		instance_template->SetAccessor(V8STR("__maxPacketSize"), Endpoint::MaxPacketSizeGetter);
+		instance_template->SetAccessor(V8STR("extraData"), Endpoint::ExtraDataGetter);
 
 		// methods exposed to node.js
-		NODE_SET_PROTOTYPE_METHOD(t, "getExtraData", Endpoint::GetExtraData);
 		NODE_SET_PROTOTYPE_METHOD(t, "transfer", Endpoint::StartTransfer);
 		NODE_SET_PROTOTYPE_METHOD(t, "startStream", Endpoint::StartStream);
 		NODE_SET_PROTOTYPE_METHOD(t, "stopStream", Endpoint::StopStream);
@@ -128,20 +128,10 @@ namespace NodeUsb {
 		return scope.Close(Integer::New(r));
 	}
 
-	Handle<Value> Endpoint::GetExtraData(const Arguments& args) {
-		LOCAL(Endpoint, self, args.This())
+	Handle<Value> Endpoint::ExtraDataGetter(Local<String> property, const AccessorInfo &info){
+		LOCAL(Endpoint, self, info.Holder())
 		 
-		int m = (*self->descriptor).extra_length;
-		
-		Local<Array> r = Array::New(m);
-		
-		for (int i = 0; i < m; i++) {
-		  uint32_t c = (*self->descriptor).extra[i];
-		  
-		  r->Set(i, Uint32::New(c));
-		}
-		
-		return scope.Close(r);
+		return scope.Close(makeBuffer(self->descriptor->extra, self->descriptor->extra_length));
 	}
 
 	Handle<Value> Endpoint::StartTransfer(const Arguments& args){
