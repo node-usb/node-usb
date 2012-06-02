@@ -22,6 +22,22 @@ exports.find_by_vid_and_pid = function(vid, pid) {
 	return r;
 }
 
+usb.Device.prototype.interface = function interface(interface, altSetting){
+	altSetting = altSetting || 0;
+	var interfaces = this.interfaces;
+	for (var i=0; i<interfaces.length; i++){
+		if (interfaces[i].interface == interface && interfaces[i].altSetting == altSetting)
+			return interfaces[i];
+	}
+}
+
+usb.Interface.prototype.endpoint = function endpoint(addr){
+	var endpoints = this.endpoints;
+	for (var i=0; i<endpoints.length; i++){
+		if (endpoints[i].bEndpointAddress == addr) return endpoints[i];
+	}
+}
+
 function inherits(target, source) {
   for (var k in source.prototype)
     target.prototype[k] = source.prototype[k];

@@ -77,6 +77,7 @@ interface = null
 test "Get interface", ->
 	interface = device.interfaces[0]
 	assert.notEqual(interface, undefined, "Interface must be defined")
+	assert.equal(interface, device.interface(0))
 
 test "Claim interface", ->
 	interface.claim()
@@ -87,6 +88,7 @@ outEndpoint = null
 test "Get in endpoint", ->
 	inEndpoint = interface.endpoints[0]
 	assert.notEqual(inEndpoint, undefined, "Endpoint must be defined")
+	assert.equal(inEndpoint, interface.endpoint(0x81))
 	assert.equal(inEndpoint.direction, usb.LIBUSB_ENDPOINT_IN)
 
 test "Attempt to write to IN endpoint", ->
@@ -102,6 +104,7 @@ test "Read from IN endpoint", ->
 test "Get out endpoint", -> 
 	outEndpoint = interface.endpoints[1]
 	assert.notEqual(outEndpoint, undefined, "Endpoint must be defined")
+	assert.equal(outEndpoint, interface.endpoint(0x02))
 	assert.equal(outEndpoint.direction, usb.LIBUSB_ENDPOINT_OUT)
 	
 test "Attempt to read from OUT endpoint", ->
@@ -109,7 +112,7 @@ test "Attempt to read from OUT endpoint", ->
 	
 test "Write to OUT endpoint", ->
 	outEndpoint.transfer b, (d, e) ->
-		console.log("BulkTransferIn", d, e)
+		console.log("BulkTransferOut", d, e)
 		next()
 	wait()
 	

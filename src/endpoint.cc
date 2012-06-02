@@ -44,8 +44,8 @@ namespace NodeUsb {
 		// Properties
 		instance_template->SetAccessor(V8STR("direction"), Endpoint::EndpointTypeGetter);
 		instance_template->SetAccessor(V8STR("transferType"), Endpoint::TransferTypeGetter);
-		instance_template->SetAccessor(V8STR("__maxIsoPacketSize"), Endpoint::MaxIsoPacketSizeGetter);
-		instance_template->SetAccessor(V8STR("__maxPacketSize"), Endpoint::MaxPacketSizeGetter);
+		instance_template->SetAccessor(V8STR("maxIsoPacketSize"), Endpoint::MaxIsoPacketSizeGetter);
+		instance_template->SetAccessor(V8STR("maxPacketSize"), Endpoint::MaxPacketSizeGetter);
 		instance_template->SetAccessor(V8STR("extraData"), Endpoint::ExtraDataGetter);
 
 		// methods exposed to node.js
@@ -81,7 +81,7 @@ namespace NodeUsb {
 		// initalize handle
 
 #define LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(name) \
-		args.This()->Set(V8STR(#name), Uint32::New(endpoint->descriptor->name));
+		args.This()->Set(V8STR(#name), Uint32::New(endpoint->descriptor->name), CONST_PROP);
 		LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bLength)
 		LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bDescriptorType)
 		LIBUSB_ENDPOINT_DESCRIPTOR_STRUCT_TO_V8(bEndpointAddress)
