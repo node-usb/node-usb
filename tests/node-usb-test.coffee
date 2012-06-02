@@ -75,20 +75,17 @@ test "Control transfer in", ->
 
 interface = null
 test "Get interface", ->
-	interfaces = device.getInterfaces()
-	interface = interfaces[0]
+	interface = device.interfaces[0]
 	assert.notEqual(interface, undefined, "Interface must be defined")
 
 test "Claim interface", ->
 	interface.claim()
 
-endpoints = null
 inEndpoint = null
 outEndpoint = null
 
 test "Get in endpoint", ->
-	endpoints = interface.getEndpoints()
-	inEndpoint = endpoints[0]
+	inEndpoint = interface.endpoints[0]
 	assert.notEqual(inEndpoint, undefined, "Endpoint must be defined")
 	assert.equal(inEndpoint.direction, usb.LIBUSB_ENDPOINT_IN)
 
@@ -103,7 +100,7 @@ test "Read from IN endpoint", ->
 	wait()
 	
 test "Get out endpoint", -> 
-	outEndpoint = endpoints[1]
+	outEndpoint = interface.endpoints[1]
 	assert.notEqual(outEndpoint, undefined, "Endpoint must be defined")
 	assert.equal(outEndpoint.direction, usb.LIBUSB_ENDPOINT_OUT)
 	

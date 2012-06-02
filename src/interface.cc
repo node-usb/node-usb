@@ -18,6 +18,7 @@ namespace NodeUsb {
 	Interface::~Interface() {
 		// TODO Close
 		v8device.Dispose();
+		v8Endpoints.Dispose();
 		DEBUG("Interface object destroyed")
 	}
 
@@ -40,9 +41,9 @@ namespace NodeUsb {
 		instance_template->SetAccessor(V8STR("interface"), Interface::IdxInterfaceGetter);
 		instance_template->SetAccessor(V8STR("altSetting"), Interface::IdxAltSettingGetter);
 		instance_template->SetAccessor(V8STR("extraData"), Interface::ExtraDataGetter);
+		instance_template->SetAccessor(V8STR("endpoints"), Interface::EndpointsGetter);
 
 		// methods exposed to node.js
-		NODE_SET_PROTOTYPE_METHOD(t, "getEndpoints", Interface::GetEndpoints); 
 		NODE_SET_PROTOTYPE_METHOD(t, "detachKernelDriver", Interface::DetachKernelDriver); 
 		NODE_SET_PROTOTYPE_METHOD(t, "attachKernelDriver", Interface::AttachKernelDriver); 
 		NODE_SET_PROTOTYPE_METHOD(t, "claim", Interface::Claim); 
@@ -247,25 +248,30 @@ namespace NodeUsb {
 		TRANSFER_REQUEST_FREE(alternate_setting_request, interface);
 	}
 
-	Handle<Value> Interface::GetEndpoints(const Arguments& args) {
-		LOCAL(Interface, self, args.This())
-		Local<Array> r = Array::New();
+	Handle<Value> Interface::EndpointsGetter(Local<String> property, const AccessorInfo &info) {
+		LOCAL(Interface, self, info.Holder())
 
-		// interate endpoints
-		int numEndpoints = (*self->descriptor).bNumEndpoints;
+		if (self->v8Endpoints.IsEmpty()){
+			self->v8Endpoints = Persistent<Array>::New(Array::New());
 
-		for (int i = 0; i < numEndpoints; i++) {
-			Local<Value> args_new_endpoint[4] = {
-				Local<Object>::New(self->v8device),
-				Uint32::New(self->idx_interface),
-				Uint32::New(self->idx_alt_setting),
-				Uint32::New(i)
-			};
+			// interate endpoints
+			int numEndpoints = (*self->descriptor).bNumEndpoints;
 
-			// create new object instance of class NodeUsb::Endpoint
-			r->Set(i, Endpoint::constructor_template->GetFunction()->NewInstance(4, args_new_endpoint));
+			for (int i = 0; i < numEndpoints; i++) {
+				Local<Value> args_new_endpoint[4] = {
+					Local<Object>::New(self->v8device),
+					Uint32::New(self->idx_interface),
+					Uint32::New(self->idx_alt_setting),
+					Uint32::New(i)
+				};
+
+				// create new object instance of class NodeUsb::Endpoint
+				self->v8Endpoints->Set(i,
+					Endpoint::constructor_template->GetFunction()->NewInstance(4, args_new_endpoint)
+				);
+			}
 		}
 
-		return r;
+		return scope.Close(self->v8Endpoints);;
 	}
 }

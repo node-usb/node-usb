@@ -28,8 +28,8 @@ namespace NodeUsb {
 			unsigned timeout;
 			
 		protected:
-		
 			Persistent<Object> v8ConfigDescriptor;
+			Persistent<Array>  v8Interfaces;
 		
 			// V8 getter
 			static Handle<Value> BusNumberGetter(Local<String> property, const AccessorInfo &info);
@@ -37,6 +37,7 @@ namespace NodeUsb {
 			static Handle<Value> TimeoutGetter(Local<String> property, const AccessorInfo &info);
 			static void TimeoutSetter(Local<String> property, Local<Value> value, const AccessorInfo &info);
 			static Handle<Value> ConfigDescriptorGetter(Local<String> property, const AccessorInfo &info);
+			static Handle<Value> InterfacesGetter(Local<String> property, const AccessorInfo &info);
 
 			// exposed to V8
 			static Handle<Value> New(const Arguments& args);
@@ -46,7 +47,6 @@ namespace NodeUsb {
 			// Reset -> Async
 			static void EIO_Reset(uv_work_t *req);
 			static void EIO_After_Reset(uv_work_t *req);
-			static Handle<Value> GetInterfaces(const Arguments& args);
 			static Handle<Value> ControlTransfer(const Arguments& args);
 			static void EIO_ControlTransfer(uv_work_t *req);
 			static void EIO_After_ControlTransfer(uv_work_t *req);

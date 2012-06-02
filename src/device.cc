@@ -32,10 +32,10 @@ namespace NodeUsb {
 		instance_template->SetAccessor(V8STR("busNumber"), Device::BusNumberGetter);
 		instance_template->SetAccessor(V8SYM("timeout"), Device::TimeoutGetter, Device::TimeoutSetter);
 		instance_template->SetAccessor(V8STR("configDescriptor"), Device::ConfigDescriptorGetter);
+		instance_template->SetAccessor(V8STR("interfaces"), Device::InterfacesGetter);
 
 		// Bindings to nodejs
 		NODE_SET_PROTOTYPE_METHOD(t, "reset", Device::Reset);
-		NODE_SET_PROTOTYPE_METHOD(t, "getInterfaces", Device::GetInterfaces);
 		NODE_SET_PROTOTYPE_METHOD(t, "controlTransfer", Device::ControlTransfer);
 
 		// Make it visible in JavaScript
@@ -56,6 +56,7 @@ namespace NodeUsb {
 		// free configuration descriptor
 		close();
 		v8ConfigDescriptor.Dispose();
+		v8Interfaces.Dispose();
 		libusb_free_config_descriptor(config_descriptor);
 		libusb_unref_device(device);
 	}
@@ -239,35 +240,36 @@ namespace NodeUsb {
 		return scope.Close(self->v8ConfigDescriptor);
 	}
 	
-	Handle<Value> Device::GetInterfaces(const Arguments& args) {
-		LOCAL(Device, self, args.This())
+	Handle<Value> Device::InterfacesGetter(Local<String> property, const AccessorInfo &info) {
+		LOCAL(Device, self, info.Holder())
 
-		LIBUSB_GET_CONFIG_DESCRIPTOR(scope);
+		if (self->v8Interfaces.IsEmpty()){
+			LIBUSB_GET_CONFIG_DESCRIPTOR(scope);
 
-		Local<Array> r = Array::New();
-		int idx = 0;
+			self->v8Interfaces = Persistent<Array>::New(Array::New());
+			int idx = 0;
 
-		// iterate interfaces
-		int numInterfaces = (*self->config_descriptor).bNumInterfaces;
+			// iterate interfaces
+			int numInterfaces = (*self->config_descriptor).bNumInterfaces;
 
-		for (int idxInterface = 0; idxInterface < numInterfaces; idxInterface++) {
-			int numAltSettings = ((*self->config_descriptor).interface[idxInterface]).num_altsetting;
+			for (int idxInterface = 0; idxInterface < numInterfaces; idxInterface++) {
+				int numAltSettings = ((*self->config_descriptor).interface[idxInterface]).num_altsetting;
 
-			for (int idxAltSetting = 0; idxAltSetting < numAltSettings; idxAltSetting++) {
-				// passing a pointer of libusb_interface_descriptor does not work. struct is lost by V8
-				// idx of interface and alt_setting is passed so that Interface class can extract the given interface
-				Local<Value> args_new_interface[3] = {
-					args.This(),
-					Uint32::New(idxInterface),
-					Uint32::New(idxAltSetting),
-				};
+				for (int idxAltSetting = 0; idxAltSetting < numAltSettings; idxAltSetting++) {
+					Local<Value> args_new_interface[3] = {
+						info.Holder(),
+						Uint32::New(idxInterface),
+						Uint32::New(idxAltSetting),
+					};
 
-				// create new object instance of class NodeUsb::Interface  
-				r->Set(idx++, Interface::constructor_template->GetFunction()->NewInstance(3, args_new_interface));
+					self->v8Interfaces->Set(idx++,
+						Interface::constructor_template->GetFunction()->NewInstance(3, args_new_interface)
+					);
+				}
 			}
 		}
 		
-		return scope.Close(r);
+		return scope.Close(self->v8Interfaces);
 	}
 	
 	/**

@@ -35,10 +35,13 @@ namespace NodeUsb {
 			uint32_t idx_interface;
 			uint32_t idx_alt_setting;
 
+			Persistent<Array>  v8Endpoints;
+
 			// V8 getter
 			static Handle<Value> IdxInterfaceGetter(Local<String> property, const AccessorInfo &info);
 			static Handle<Value> IdxAltSettingGetter(Local<String> property, const AccessorInfo &info);
 			static Handle<Value> ExtraDataGetter(Local<String> property, const AccessorInfo &info);
+			static Handle<Value> EndpointsGetter(Local<String> property, const AccessorInfo &info);
 
 			// exposed to V8
 			static Handle<Value> New(const Arguments& args);
@@ -46,7 +49,6 @@ namespace NodeUsb {
 			static Handle<Value> DetachKernelDriver(const Arguments& args);
 			static Handle<Value> AttachKernelDriver(const Arguments& args);
 			static Handle<Value> Claim(const Arguments& args);
-			static Handle<Value> GetEndpoints(const Arguments& args);
 
 			static Handle<Value> Release(const Arguments& args);
 			static void EIO_Release(uv_work_t *req);
