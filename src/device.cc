@@ -74,6 +74,8 @@ namespace NodeUsb {
 	Handle<Value> Device::New(const Arguments& args) {
 		HandleScope scope;
 
+		if (!AllowConstructor::Check()) THROW_ERROR("Illegal constructor")
+
 		// need libusb_device structure as first argument
 		if (args.Length() < 1 || !args[0]->IsExternal()) {
 			THROW_BAD_ARGS("Device::New argument is invalid. Must be external!")
@@ -245,12 +247,13 @@ namespace NodeUsb {
 
 		if (self->v8Interfaces.IsEmpty()){
 			LIBUSB_GET_CONFIG_DESCRIPTOR(scope);
+			AllowConstructor allow;
 
 			self->v8Interfaces = Persistent<Array>::New(Array::New());
 			int idx = 0;
 
 			// iterate interfaces
-			int numInterfaces = (*self->config_descriptor).bNumInterfaces;
+			int numInterfaces = self->config_descriptor->bNumInterfaces;
 
 			for (int idxInterface = 0; idxInterface < numInterfaces; idxInterface++) {
 				int numAltSettings = ((*self->config_descriptor).interface[idxInterface]).num_altsetting;

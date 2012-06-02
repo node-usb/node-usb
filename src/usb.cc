@@ -105,6 +105,7 @@ namespace NodeUsb {
 	
 	void Usb::LoadDevices() {
 		HandleScope scope;
+		AllowConstructor allow;
 		
 		libusb_device **devices;
 		int num_devices = libusb_get_device_list(usb_context, &devices);

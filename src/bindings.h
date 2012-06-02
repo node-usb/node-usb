@@ -22,7 +22,7 @@
 #endif
 
 #define THROW_BAD_ARGS(FAIL_MSG) return ThrowException(Exception::TypeError(V8STR(FAIL_MSG)));
-#define THROW_ERROR(FAIL_MSG) return ThrowException(Exception::Error(V8STR(FAIL_MSG))));
+#define THROW_ERROR(FAIL_MSG) return ThrowException(Exception::Error(V8STR(FAIL_MSG)));
 #define THROW_NOT_YET return ThrowException(Exception::Error(String::Concat(String::New(__FUNCTION__), String::New("not yet supported"))));
 #define CREATE_ERROR_OBJECT_AND_CLOSE_SCOPE(ERRNO, scope) \
 		ThrowException(errno_exception(ERRNO)); \
@@ -128,6 +128,28 @@ namespace NodeUsb  {
 	void doTransferCallback(Handle<Function> v8callback, Handle<Object> v8this, libusb_transfer_status status, uint8_t* buffer, unsigned length);
 	
 	Local<v8::Value> makeBuffer(const uint8_t* buf, unsigned length);
+
+	class AllowConstructor {
+	public:
+		inline AllowConstructor()
+		{
+			m_previous = m_current;
+			m_current = true;
+		}
+
+		inline ~AllowConstructor()
+		{
+			m_current = m_previous;
+		}
+
+		static inline bool Check(){
+			return m_current;
+		}
+
+		static bool m_current;
+	private:
+		bool m_previous;
+	};
 
 	struct nodeusb_endpoint_selection {
 		int interface_number;

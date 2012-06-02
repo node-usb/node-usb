@@ -61,9 +61,17 @@ namespace NodeUsb {
 
 	Handle<Value> Endpoint::New(const Arguments& args) {
 		HandleScope scope;
+
+		if (!AllowConstructor::Check()) THROW_ERROR("Illegal constructor");
+		
 		DEBUG("New Endpoint object created")
 
-		if (args.Length() != 4 || !args[0]->IsObject() || !args[1]->IsUint32() || !args[2]->IsUint32()|| !args[3]->IsUint32()) {
+		if (!args.IsConstructCall()
+		   || args.Length() != 4
+		   || !args[0]->IsObject()
+		   || !args[1]->IsUint32()
+		   || !args[2]->IsUint32()
+		   || !args[3]->IsUint32()) {
 			THROW_BAD_ARGS("Device::New argument is invalid. [object:device, uint32_t:idx_interface, uint32_t:idx_alt_setting, uint32_t:idx_endpoint]!")
 		}
 
@@ -73,9 +81,22 @@ namespace NodeUsb {
 		uint32_t idxInterface  = args[1]->Uint32Value();
 		uint32_t idxAltSetting = args[2]->Uint32Value();
 		uint32_t idxEndpoint   = args[3]->Uint32Value();
-		
-		const libusb_endpoint_descriptor *libusbEndpointDescriptor = &((dev->config_descriptor->interface[idxInterface]).altsetting[idxAltSetting]).endpoint[idxEndpoint];
 
+		const libusb_interface* interface;
+		if (idxInterface < dev->config_descriptor->bNumInterfaces){
+			interface = &dev->config_descriptor->interface[idxInterface];
+		}else THROW_BAD_ARGS("Invalid interface");
+
+		const libusb_interface_descriptor* interface_alt;
+		if ((int) idxAltSetting < interface->num_altsetting){
+			interface_alt = &interface->altsetting[idxAltSetting];
+		}else THROW_BAD_ARGS("Invalid altsetting");
+		
+		const libusb_endpoint_descriptor *libusbEndpointDescriptor;
+		if (idxEndpoint < interface_alt->bNumEndpoints){
+			libusbEndpointDescriptor = &interface_alt->endpoint[idxEndpoint];
+		}else THROW_BAD_ARGS("Invalid endpoint");
+		
 		// create new Endpoint object
 		Endpoint *endpoint = new Endpoint(device, dev, libusbEndpointDescriptor, idxEndpoint);
 		// initalize handle

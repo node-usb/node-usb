@@ -2,6 +2,8 @@
 
 using namespace NodeUsb;
 
+bool AllowConstructor::m_current;
+
 Local<v8::Value> NodeUsb::makeBuffer(const uint8_t* buf, unsigned length){
 	HandleScope scope;
 	Buffer *slowBuffer = Buffer::New((char *)buf, length);

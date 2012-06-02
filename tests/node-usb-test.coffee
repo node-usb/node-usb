@@ -138,6 +138,14 @@ test "Stream from IN endpoint", ->
 	inEndpoint.startStream 64, 4
 
 	wait()
+
+test "Do stupid things to the library and make sure it doesn't crash", ->
+	assert.throws -> new usb.Device()
+	assert.throws -> usb.Device()
+	assert.throws -> new usb.Endpoint(device, 100, 100, 100)
+	assert.throws -> new usb.Interface(device, 100, 100, 100)
+	assert.throws -> new usb.Endpoint(inEndpoint, 0, 0, 0)
+	
 			
 
 test "Complete!", ->
