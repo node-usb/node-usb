@@ -1,6 +1,0 @@
-* Move to asynchronous calls
-* read/write streams
-* check for undefined LIBUSB_CLASS_* enums (WIRELESS/APPLICATION)
-* finish create_usb_ids.js
-* add endpoint and interface descriptor detection
-* ...

@@ -135,7 +135,7 @@ test "Stream from IN endpoint", ->
 		console.log("Stream stopped")
 		next()
 	
-	inEndpoint.startStream 64, 4
+	inEndpoint.startStream 4, 64
 
 	wait()
 
@@ -159,7 +159,7 @@ test "Stream to OUT endpoint", ->
 		console.log("Stream stopped")
 		next()
 
-	outEndpoint.startStream 64, 4
+	outEndpoint.startStream 4, 64
 
 	wait()
 

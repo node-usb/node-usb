@@ -45,7 +45,9 @@ function inherits(target, source) {
 
 inherits(usb.OutEndpoint, events.EventEmitter);
 
-usb.OutEndpoint.prototype.startStream = function startStream(transfer_size, n_transfers){
+usb.OutEndpoint.prototype.startStream = function startStream(n_transfers, transfer_size){
+	n_transfers = n_transfers || 3;
+	transfer_size = transfer_size || this.maxPacketSize;
 	this._streamTransfers = n_transfers;
 	this._pendingTransfers = 0;
 	for (var i=0; i<n_transfers; i++) this.emit('drain');

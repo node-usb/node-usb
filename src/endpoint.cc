@@ -206,20 +206,22 @@ namespace NodeUsb {
 		LOCAL(Endpoint, self, args.This())
 		
 		if (self->endpoint_type != LIBUSB_ENDPOINT_IN){
-			THROW_BAD_ARGS("Streams are only supported for IN endpoints");
+			THROW_BAD_ARGS("This implementation is only for IN endpoints.");
 		}
 		
 		CHECK_USB(self->device->openHandle(), scope);
 		
-		unsigned transfer_size, n_transfers;
+		unsigned transfer_size = libusb_get_max_packet_size(self->device->device, self->descriptor->bEndpointAddress);
+		unsigned n_transfers = 3;
 		
-		//args: transfer_size, n_transfers
-		if (args.Length() < 2) {
-			THROW_BAD_ARGS("Missing arguments!")
+		//args: n_transfers, transfer_size
+		if (args.Length() >= 1) {
+			INT_ARG(n_transfers, args[0]);
 		}
-		
-		INT_ARG(transfer_size, args[0]);
-		INT_ARG(n_transfers, args[1]);
+
+		if (args.Length() >= 2) { 
+			INT_ARG(transfer_size, args[1]);
+		}
 		
 		if (!self->stream){
 			Handle<Value> streamCb = args.This()->Get(V8SYM("__stream_data_cb"));
