@@ -23,6 +23,7 @@ namespace NodeUsb {
 		
 		static Transfer* newTransfer(libusb_transfer_type type,
 		                             Handle<Object> device,
+		                             Handle<Object> v8endpoint,
 		                             uint8_t endpoint,
 		                             unsigned char *data,
 		                             int length,
@@ -37,10 +38,11 @@ namespace NodeUsb {
 		static UVQueue<Transfer*> completionQueue;
 		
 		protected:
-		Transfer(Handle<Object> _device, Handle<Function> _callback);
+		Transfer(Handle<Object> _device, Handle<Object> _v8this, Handle<Function> _callback);
 		
 		libusb_transfer* transfer;
 		Persistent<Object> v8device;
+		Persistent<Object> v8this;
 		Persistent<Function> v8callback;
 		Device* device;
 		uint32_t direction;

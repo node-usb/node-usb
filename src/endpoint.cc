@@ -188,6 +188,7 @@ namespace NodeUsb {
 		NodeUsb::Transfer* t = Transfer::newTransfer(
 			self->transfer_type,
 			self->v8device,
+			args.This(),
 			self->descriptor->bEndpointAddress,
 			buf,
 			length,

@@ -6,14 +6,16 @@ using namespace NodeUsb;
 
 UVQueue<Transfer*> Transfer::completionQueue(Transfer::handleCompletion);
 
-Transfer::Transfer(Handle<Object> _device, Handle<Function> _callback):
+Transfer::Transfer(Handle<Object> _device, Handle<Object> _v8this, Handle<Function> _callback):
 	v8device(Persistent<Object>::New(_device)),
+	v8this(Persistent<Object>::New(_v8this)),
 	v8callback(Persistent<Function>::New(_callback)),
 	device(ObjectWrap::Unwrap<Device>(_device)){
 	transfer = libusb_alloc_transfer(0);
 }
 
 Transfer::~Transfer(){
+	v8this.Dispose();
 	v8device.Dispose();
 	v8callback.Dispose();
 	free(transfer->buffer);
@@ -31,7 +33,7 @@ Transfer* Transfer::newControlTransfer(Handle<Object> device,
                                          uint16_t wLength,
                                          unsigned timeout,
                                          Handle<Function> callback){
-	Transfer *t = new Transfer(device, callback);
+	Transfer *t = new Transfer(device, device, callback);
 	
 	uint8_t *buffer = (uint8_t*) malloc(LIBUSB_CONTROL_SETUP_SIZE+wLength);
 	libusb_fill_control_setup(buffer, bmRequestType, bRequest, wValue, wIndex, wLength);
@@ -44,12 +46,13 @@ Transfer* Transfer::newControlTransfer(Handle<Object> device,
 
 Transfer* Transfer::newTransfer(libusb_transfer_type type,
                                 Handle<Object> device,
+                                Handle<Object> v8endpoint,
                                 uint8_t endpoint,
                                 unsigned char *data,
                                 int length,
                                 unsigned int timeout,
                                 Handle<Function> callback){
-	Transfer *t = new Transfer(device, callback);
+	Transfer *t = new Transfer(device, v8endpoint, callback);
 	uint8_t *buffer = (uint8_t*) malloc(length);
 	if (data) memcpy(buffer, data, length);
 	t->direction = data?LIBUSB_ENDPOINT_OUT:LIBUSB_ENDPOINT_IN;
@@ -80,7 +83,7 @@ void Transfer::handleCompletion(Transfer* t){
 		}
 	}
 	
-	doTransferCallback(t->v8callback, Context::GetCurrent()->Global(), t->transfer->status, buffer, length);
+	doTransferCallback(t->v8callback, t->v8this, t->transfer->status, buffer, length);
 	
 	uv_unref(uv_default_loop());
 	delete t;
