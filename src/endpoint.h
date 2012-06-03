@@ -24,7 +24,9 @@ namespace NodeUsb {
 	class Endpoint : public ObjectWrap {
 		public:
 			static void Initalize(Handle<Object> target);
-			static Persistent<FunctionTemplate> constructor_template;
+			static Persistent<FunctionTemplate> constructor_template_in;
+			static Persistent<FunctionTemplate> constructor_template_out;
+			
 			Endpoint(Handle<Object>, Device*, const libusb_endpoint_descriptor*, uint32_t);
 			~Endpoint();
 
@@ -40,6 +42,7 @@ namespace NodeUsb {
 			
 			Stream* stream;
 
+			static void initTemplate(Local<FunctionTemplate> t);
 			int FillTransferStructure(libusb_transfer *_transfer, unsigned char *_buffer, int32_t _buflen, Persistent<Function> _callback, uint32_t _timeout, unsigned int num_iso_packets = 0);
 
 			// v8 getter

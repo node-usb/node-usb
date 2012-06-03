@@ -269,7 +269,7 @@ namespace NodeUsb {
 			self->v8Endpoints = Persistent<Array>::New(Array::New());
 
 			// interate endpoints
-			int numEndpoints = (*self->descriptor).bNumEndpoints;
+			int numEndpoints = self->descriptor->bNumEndpoints;
 
 			for (int i = 0; i < numEndpoints; i++) {
 				Local<Value> args_new_endpoint[4] = {
@@ -279,9 +279,14 @@ namespace NodeUsb {
 					Uint32::New(i)
 				};
 
+				const libusb_endpoint_descriptor* d = &self->descriptor->endpoint[i];
+				bool in = (d->bEndpointAddress & (1 << 7));
+				
+				Handle<FunctionTemplate> ft = in?Endpoint::constructor_template_in:Endpoint::constructor_template_out;
+
 				// create new object instance of class NodeUsb::Endpoint
 				self->v8Endpoints->Set(i,
-					Endpoint::constructor_template->GetFunction()->NewInstance(4, args_new_endpoint)
+					ft->GetFunction()->NewInstance(4, args_new_endpoint)
 				);
 			}
 		}

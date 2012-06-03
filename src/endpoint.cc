@@ -5,7 +5,8 @@
 #include "stream.h"
 
 namespace NodeUsb {
-	Persistent<FunctionTemplate> Endpoint::constructor_template;
+	Persistent<FunctionTemplate> Endpoint::constructor_template_in;
+	Persistent<FunctionTemplate> Endpoint::constructor_template_out;
 
 	Endpoint::Endpoint(Handle<Object> _v8device, Device* _device, const libusb_endpoint_descriptor* _endpoint_descriptor, uint32_t _idx_endpoint) : ObjectWrap() {
 		v8device = Persistent<Object>::New(_v8device);
@@ -26,36 +27,43 @@ namespace NodeUsb {
 		DEBUG("Endpoint object destroyed")
 	}
 
-	void Endpoint::Initalize(Handle<Object> target) {
-		DEBUG("Entering...")
-		HandleScope  scope;
-		Local<FunctionTemplate> t = FunctionTemplate::New(Endpoint::New);
-
-		// Constructor
-		t->InstanceTemplate()->SetInternalFieldCount(1);
-		t->SetClassName(String::NewSymbol("Endpoint"));
-		Endpoint::constructor_template = Persistent<FunctionTemplate>::New(t);
-
+	void Endpoint::initTemplate(Local<FunctionTemplate> t){
 		Local<ObjectTemplate> instance_template = t->InstanceTemplate();
+		instance_template->SetInternalFieldCount(1);
 
-		// Constants
-		// no constants at the moment
-	
-		// Properties
+		// Getters
 		instance_template->SetAccessor(V8STR("direction"), Endpoint::EndpointTypeGetter);
 		instance_template->SetAccessor(V8STR("transferType"), Endpoint::TransferTypeGetter);
 		instance_template->SetAccessor(V8STR("maxIsoPacketSize"), Endpoint::MaxIsoPacketSizeGetter);
 		instance_template->SetAccessor(V8STR("maxPacketSize"), Endpoint::MaxPacketSizeGetter);
 		instance_template->SetAccessor(V8STR("extraData"), Endpoint::ExtraDataGetter);
+	}
+		
+	void Endpoint::Initalize(Handle<Object> target) {
+		DEBUG("Entering...")
+		HandleScope  scope;
+		Local<FunctionTemplate> t_in = FunctionTemplate::New(Endpoint::New);
+		Local<FunctionTemplate> t_out = FunctionTemplate::New(Endpoint::New);
+
+		initTemplate(t_in);
+		initTemplate(t_out);
+		
+		// Constructor	
+		t_in->SetClassName(String::NewSymbol("InEndpoint"));
+		t_out->SetClassName(String::NewSymbol("OutEndpoint"));
+		
+		Endpoint::constructor_template_in = Persistent<FunctionTemplate>::New(t_in);
+		Endpoint::constructor_template_out = Persistent<FunctionTemplate>::New(t_out);
 
 		// methods exposed to node.js
-		NODE_SET_PROTOTYPE_METHOD(t, "transfer", Endpoint::StartTransfer);
-		NODE_SET_PROTOTYPE_METHOD(t, "startStream", Endpoint::StartStream);
-		NODE_SET_PROTOTYPE_METHOD(t, "stopStream", Endpoint::StopStream);
+		NODE_SET_PROTOTYPE_METHOD(t_out, "transfer", Endpoint::StartTransfer);
+		NODE_SET_PROTOTYPE_METHOD(t_in, "transfer", Endpoint::StartTransfer);
+		NODE_SET_PROTOTYPE_METHOD(t_in, "startStream", Endpoint::StartStream);
+		NODE_SET_PROTOTYPE_METHOD(t_in, "stopStream", Endpoint::StopStream);
 		
-
 		// Make it visible in JavaScript
-		target->Set(String::NewSymbol("Endpoint"), t->GetFunction());	
+		target->Set(String::NewSymbol("InEndpoint"), t_in->GetFunction());
+		target->Set(String::NewSymbol("OutEndpoint"), t_out->GetFunction());	
 		DEBUG("Leave")
 	}
 
@@ -196,7 +204,7 @@ namespace NodeUsb {
 	Handle<Value> Endpoint::StartStream(const Arguments& args){
 		LOCAL(Endpoint, self, args.This())
 		
-		if (!self->endpoint_type == LIBUSB_ENDPOINT_IN){
+		if (self->endpoint_type != LIBUSB_ENDPOINT_IN){
 			THROW_BAD_ARGS("Streams are only supported for IN endpoints");
 		}
 		

@@ -43,9 +43,12 @@ function inherits(target, source) {
     target.prototype[k] = source.prototype[k];
 }
 
-inherits(usb.Endpoint, events.EventEmitter);
+inherits(usb.OutEndpoint, events.EventEmitter);
 
-usb.Endpoint.prototype.__stream_data_cb = function stream_data_cb(data, error){
+
+inherits(usb.InEndpoint, events.EventEmitter);
+
+usb.InEndpoint.prototype.__stream_data_cb = function stream_data_cb(data, error){
 	if (!error){
 		this.emit("data", data)
 	}else{
@@ -53,6 +56,6 @@ usb.Endpoint.prototype.__stream_data_cb = function stream_data_cb(data, error){
 	}
 }
 
-usb.Endpoint.prototype.__stream_stop_cb = function stream_stop_cb(data, error){
+usb.InEndpoint.prototype.__stream_stop_cb = function stream_stop_cb(data, error){
 	this.emit("end")
 }
