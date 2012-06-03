@@ -1,5 +1,5 @@
 // usage without warranty!
-var usb_driver = require("../../usb.js"),
+var usb = require("../../usb.js"),
 	assert = require('assert'),
 	http = require('http'),
 	qs = require('querystring');
@@ -21,7 +21,6 @@ LED_OPTIONS['BLINK_RED_YELLOW'] = 6;
 var MAX_TILT_ANGLE = 31, MIN_TILT_ANGLE = -31;
 
 // Search for motor device
-var usb = usb_driver.create()
 
 var motorDevices = usb.find_by_vid_and_pid(VID_MICROSOFT, PID_NUI_MOTOR);
 assert.ok((motorDevices.length >= 1));
@@ -30,12 +29,11 @@ console.log("Total motor devices found: " + motorDevices.length);
 var motor = motorDevices[0];
 
 // get interfaces of motor
-var motorInterfaces = motor.getInterfaces();
-assert.ok((motorInterfaces.length >= 1));
-console.log("Motor contains interfaces: " + motorInterfaces.length);
+assert.ok((motor.interfaces.length >= 1));
+console.log("Motor contains interfaces: " + motor.interfaces.length);
  
 // claim first interface
-var motorInterface = motorInterfaces[0];
+var motorInterface = motor.interfaces[0];
 console.log("Claiming motor interface for further actions");
 motorInterface.claim();
 
@@ -59,7 +57,7 @@ http.createServer(function(req, res) {
 					var lightId = LED_OPTIONS[light];
 				
 					// send control information
-					motor.controlTransfer(new Buffer(0), 0x40, 0x06, lightId, 0x0, function(data) {
+					motor.controlTransfer(0x40, 0x06, lightId, 0x0, new Buffer(0), function(data) {
 						console.log(" + LED toggled");
 					});
 				}
@@ -80,7 +78,7 @@ http.createServer(function(req, res) {
 
 				break;
 			case '/getCoordinates':
-				motor.controlTransfer(10 /* read 10 bytes */, 0xC0 /* bmRequestType */, 0x32 /* bRequest */, 0, 0, function(data) {
+				motor.controlTransfer(0xC0 /* bmRequestType */, 0x32 /* bRequest */, 0, 0, 10 /* read 10 bytes */, function(data) {
 					for (var i = 0; i < 10; i++) {
 						console.log("buffer[" + i + "]: " + data[i])
 					}
