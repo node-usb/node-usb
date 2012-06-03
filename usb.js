@@ -45,6 +45,33 @@ function inherits(target, source) {
 
 inherits(usb.OutEndpoint, events.EventEmitter);
 
+usb.OutEndpoint.prototype.startStream = function startStream(transfer_size, n_transfers){
+	this._streamTransfers = n_transfers;
+	this._pendingTransfers = 0;
+	for (var i=0; i<n_transfers; i++) this.emit('drain');
+}
+
+function out_ep_callback(d, err){
+	//console.log("out_ep_callback", d, err, this._pendingTransfers, this._streamTransfers)
+	if (err) this.emit('error', err);
+	this._pendingTransfers--;
+	if (this._pendingTransfers < this._streamTransfers){
+		this.emit('drain');
+	}
+	if (this._pendingTransfers <= 0 && this._streamTransfers == 0){
+		this.emit('end');
+	}
+}
+
+usb.OutEndpoint.prototype.write = function write(data){
+	this.transfer(data, out_ep_callback);
+	this._pendingTransfers++;
+}
+
+usb.OutEndpoint.prototype.stopStream = function stopStream(){
+	this._streamTransfers = 0;
+	if (this._pendingTransfers == 0) this.emit('end');
+}
 
 inherits(usb.InEndpoint, events.EventEmitter);
 

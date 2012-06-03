@@ -139,6 +139,30 @@ test "Stream from IN endpoint", ->
 
 	wait()
 
+test "Stream to OUT endpoint", ->
+	pkts = 0
+
+	outEndpoint.on 'drain', ->
+		console.log("Stream callback")
+		pkts++
+
+		outEndpoint.write(new Buffer(64));
+
+		if pkts == 10
+			outEndpoint.stopStream()
+			console.log("Stopping stream")
+
+	outEndpoint.on 'error', (e) ->
+		console.log("Stream error", e)
+
+	outEndpoint.on 'end', ->
+		console.log("Stream stopped")
+		next()
+
+	outEndpoint.startStream 64, 4
+
+	wait()
+
 test "Do stupid things to the library and make sure it doesn't crash", ->
 	assert.throws -> new usb.Device()
 	assert.throws -> usb.Device()
