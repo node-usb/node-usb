@@ -6,7 +6,6 @@
 #include "device.h"
 #include "uv_async_queue.h"
 #include <vector>
-#include <atomic>
 
 namespace NodeUsb {
 	
@@ -30,7 +29,7 @@ namespace NodeUsb {
 		void stop();
 		
 		enum StreamStatus {STREAM_IDLE, STREAM_ACTIVE, STREAM_CANCELLING, STREAM_ABORTED};
-		std::atomic_uchar state;
+		volatile uint8_t state;
 		unsigned activeTransfers;
 		
 		protected:

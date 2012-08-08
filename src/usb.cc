@@ -1,14 +1,16 @@
 #include "usb.h"
 #include "device.h"
-#include <thread>
+#include <uv.h>
+#include <pthread.h>
 
 namespace NodeUsb {
 	libusb_context* usb_context;
-	std::thread usb_thread;
+	pthread_t usb_thread_id;
 	std::vector< Persistent<Object> > Usb::deviceList;
 	
-	void USBThreadFn(){
+	void* USBThreadFn(void* v){
 		while(1) libusb_handle_events(usb_context);
+		return NULL;
 	}
 
 	void Usb::Initalize(Handle<Object> target) {
@@ -75,8 +77,8 @@ namespace NodeUsb {
 		// Bindings to nodejs
 		NODE_SET_METHOD(target, "setDebugLevel", Usb::SetDebugLevel);
 		
-		usb_thread = std::thread(USBThreadFn);
-		usb_thread.detach();
+		pthread_create(&usb_thread_id, NULL, USBThreadFn, NULL);
+		pthread_detach(usb_thread_id);
 		
 		Local<ObjectTemplate> devlist_tpl = ObjectTemplate::New();
 		devlist_tpl->SetAccessor(V8STR("length"), DeviceListLength);
