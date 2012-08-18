@@ -41,7 +41,6 @@
 		uv_work_t* req = new uv_work_t();\
 		req->data = STRUCTURE;\
 		uv_queue_work(uv_default_loop(), req, FUNC, CALLBACK);\
-		uv_ref(uv_default_loop());
 
 #define	EIO_CAST(TYPE, VARNAME) struct TYPE *VARNAME = reinterpret_cast<struct TYPE *>(req->data);
 #define	EIO_NEW(TYPE, VARNAME) \
@@ -75,7 +74,6 @@
 			}
 
 #define EIO_AFTER(VARNAME, SELF) \
-		uv_unref(uv_default_loop()); \
 		if (!VARNAME->callback.IsEmpty()) { \
 			HandleScope scope; \
 			EIO_HANDLE_ERROR(VARNAME) \

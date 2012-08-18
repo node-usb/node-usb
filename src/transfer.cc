@@ -68,7 +68,7 @@ Transfer* Transfer::newTransfer(libusb_transfer_type type,
 }
 
 void Transfer::submit(){
-	uv_ref(uv_default_loop());
+	completionQueue.ref();
 	libusb_submit_transfer(transfer);
 }
 
@@ -85,7 +85,7 @@ void Transfer::handleCompletion(Transfer* t){
 	
 	doTransferCallback(t->v8callback, t->v8this, t->transfer->status, buffer, length);
 	
-	uv_unref(uv_default_loop());
+	completionQueue.unref();
 	delete t;
 }
 

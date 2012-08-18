@@ -2,6 +2,7 @@
 #define SRC_UV_ASYNC_QUEUE_H
 
 #include <uv.h>
+#include <node_version.h>
 #include <functional>
 #include <queue>
 #include <thread>
@@ -13,7 +14,7 @@ class UVQueue{
 		UVQueue(std::function<void(T&)> cb, bool _keep_alive=false): callback(cb), keep_alive(_keep_alive) {
 			uv_async_init(uv_default_loop(), &async, UVQueue::internal_callback);
 			async.data = this;
-			if (!keep_alive) uv_unref(uv_default_loop());
+			if (!keep_alive) unref();
 		}
 		
 		void post(T value){
@@ -24,8 +25,24 @@ class UVQueue{
 		}
 		
 		~UVQueue(){
-			if (!keep_alive) uv_ref(uv_default_loop());
+			if (!keep_alive) ref();
 			uv_close((uv_handle_t*)&async, NULL); //TODO: maybe we can't delete UVQueue until callback?
+		}
+
+		void ref(){
+			#if NODE_VERSION_AT_LEAST(0, 7, 9)
+			uv_ref((uv_handle_t*)&async);
+			#else
+			uv_ref(uv_default_loop());
+			#endif
+		}
+
+		void unref(){
+			#if NODE_VERSION_AT_LEAST(0, 7, 9)
+			uv_unref((uv_handle_t*)&async);
+			#else
+			uv_unref(uv_default_loop());
+			#endif
 		}
 		
 	private:
