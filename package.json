@@ -1,9 +1,39 @@
-{ "name" : "node-usb"
-, "version" : "0.0.1"
-, "description" : "experimental libusb bindings"
-, "author": "Christopher Klein"
-, "main": "./usb_bindings"
-, "scripts": { "install": "node-waf configure build" }
-}
+{
+    "name": "usb",
+    "description": "Library to access USB devices",
+    "keywords": ["usb", "hardware"],
+    "author": {
+        "name": "Nonolith Labs",
+        "url": "http://www.nonolithlabs.com"
+    },
+    "contributors": [ 
+        {
+            "name": "Kevin Mehall",
+            "email": "km@kevinmehall.net",
+            "url": "http://kevinmehall.net"
 
+        },
+        {"name": "Christopher Klein"} 
+    ],
+    "version": "0.1.0",
+    "engines" : {
+        "node" : ">=0.6.x  <0.8.9999"
+    },
+    "main": "./usb",
+    "repository": {
+        "type": "git",
+        "url":"https://github.com/nonolith/node-usb.git"
+    },
+    "scripts": {
+        "preinstall": "node-gyp rebuild",
+        "test" : "coffee tests/node-usb-test.coffee"
+    },
+    "dependencies":{
+        "bindings": "1.0.x"
+    },
+    "devDependencies": {
+        "coffee-script": "~1.4.0"
+    },
+    "license": "MIT"
+}
 
