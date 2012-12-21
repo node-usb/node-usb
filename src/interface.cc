@@ -68,10 +68,9 @@ namespace NodeUsb {
 		    || !args[0]->IsObject()
 		    || !args[1]->IsUint32()
 		    || !args[2]->IsUint32()) {
-			THROW_BAD_ARGS("Device::New argument is invalid. [object:device, int:idx_interface, int:idx_alt_setting!")
+			THROW_BAD_ARGS("Interface::New argument is invalid. [object:device, int:idx_interface, int:idx_alt_setting]!")
 		}
 
-		// assign arguments as local references
 		Local<Object> device = Local<Object>::Cast(args[0]);
 		uint32_t idxInterface  = args[1]->Uint32Value();
 		uint32_t idxAltSetting = args[2]->Uint32Value();
@@ -86,13 +85,11 @@ namespace NodeUsb {
 		const libusb_interface_descriptor* libusbInterfaceDescriptor;
 		if ((int) idxAltSetting < l_interface->num_altsetting){
 			libusbInterfaceDescriptor = &l_interface->altsetting[idxAltSetting];
-		}else THROW_BAD_ARGS("Invalid altsetting");
+		}else THROW_BAD_ARGS("Invalid alternate setting");
 		
-		// create new Devicehandle object
 		Interface *interface = new Interface(device, dev, libusbInterfaceDescriptor, idxInterface, idxAltSetting);
-		// initalize handle
 
-		// wrap created Device object to v8
+		// Wrap created Device object to v8
 		interface->Wrap(args.This());
 
 #define LIBUSB_INTERFACE_DESCRIPTOR_STRUCT_TO_V8(name) \
@@ -201,7 +198,6 @@ namespace NodeUsb {
 	
 	void Interface::EIO_Release(uv_work_t *req) {
 		// Inside EIO Threadpool, so don't touch V8.
-		// Be careful!
 		EIO_CAST(release_request, release_req)
 
 		Interface * self = release_req->interface;
