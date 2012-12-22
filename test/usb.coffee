@@ -123,6 +123,12 @@ describe 'Device', ->
 				assert.ok(e == undefined, e)
 				done()
 
+		it 'should signal errors', (done) ->
+			inEndpoint.transfer 1, (d, e) ->
+				assert.equal e, usb.LIBUSB_TRANSFER_OVERFLOW
+				assert.equal d, undefined
+				done()
+
 		it 'should be a readableStream', (done) ->
 			pkts = 0
 	
