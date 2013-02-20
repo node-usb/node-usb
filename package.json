@@ -21,7 +21,7 @@
   ],
   "version": "0.1.1",
   "engines": {
-    "node": ">=0.6.x  <0.8.9999"
+    "node": ">=0.6.x  <0.10.9999"
   },
   "main": "./usb",
   "repository": {

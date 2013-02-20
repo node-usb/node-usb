@@ -40,7 +40,7 @@
 #define EIO_CUSTOM(FUNC, STRUCTURE, CALLBACK) \
 		uv_work_t* req = new uv_work_t();\
 		req->data = STRUCTURE;\
-		uv_queue_work(uv_default_loop(), req, FUNC, CALLBACK);\
+		uv_queue_work(uv_default_loop(), req, FUNC, (uv_after_work_cb) CALLBACK);\
 
 #define	EIO_CAST(TYPE, VARNAME) struct TYPE *VARNAME = reinterpret_cast<struct TYPE *>(req->data);
 #define	EIO_NEW(TYPE, VARNAME) \
