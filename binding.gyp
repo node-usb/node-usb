@@ -16,13 +16,11 @@
         '-O3',
         '-Wall',
         '-Werror',
-        '-msse2',
       ],
       'cflags_cc': [
         '-O3',
         '-Wall',
         '-Werror',
-        '-msse2',
         '-std=gnu++0x'
       ],      
       'defines': [
