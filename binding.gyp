@@ -10,12 +10,11 @@
         './src/interface.cc',
         './src/endpoint.cc',
         './src/transfer.cc',
-        './src/stream.cc',  
       ],
       'cflags': [
         '-O3',
         '-Wall',
-        '-Werror',
+        '-Werror',  
       ],
       'cflags_cc': [
         '-O3',

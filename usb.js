@@ -77,14 +77,34 @@ usb.OutEndpoint.prototype.stopStream = function stopStream(){
 
 inherits(usb.InEndpoint, events.EventEmitter);
 
-usb.InEndpoint.prototype.__stream_data_cb = function stream_data_cb(data, error){
-	if (!error){
-		this.emit("data", data)
-	}else{
-		this.emit("error", error)
+usb.InEndpoint.prototype.startStream = function(n_transfers, transferSize){
+	var self = this
+	n_transfers = n_transfers || 3;
+	transferSize = transferSize || this.maxPacketSize;
+	
+	function transferDone(data, error){
+		if (!error){
+			self.emit("data", data)
+
+			if (data.length == transferSize){
+				startTransfer()
+			}else{
+				self.emit("end")
+			}
+		}else{
+			self.emit("error", error)
+		}
+	}
+
+	function startTransfer(){
+		self.transfer(transferSize, transferDone)
+	}
+
+	for (var i=0; i<n_transfers; i++){
+		startTransfer()
 	}
 }
 
-usb.InEndpoint.prototype.__stream_stop_cb = function stream_stop_cb(data, error){
-	this.emit("end")
+usb.InEndpoint.prototype.stopStream = function(){
+
 }

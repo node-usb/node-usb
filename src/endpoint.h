@@ -39,8 +39,6 @@ namespace NodeUsb {
 			int32_t endpoint_type;
 			libusb_transfer_type transfer_type;
 			uint32_t idx_endpoint;
-			
-			Stream* stream;
 
 			static void initTemplate(Local<FunctionTemplate> t);
 			int FillTransferStructure(libusb_transfer *_transfer, unsigned char *_buffer, int32_t _buflen, Persistent<Function> _callback, uint32_t _timeout, unsigned int num_iso_packets = 0);
@@ -54,12 +52,7 @@ namespace NodeUsb {
 			
 			// exposed to V8
 			static Handle<Value> New(const Arguments& args);
-			static Handle<Value> Submit(const Arguments& args);
 			static Handle<Value> StartTransfer(const Arguments& args);
-			static Handle<Value> StartStream(const Arguments& args);
-			static Handle<Value> StopStream(const Arguments& args);
-			
-			friend class Stream;
 	};	
 }
 

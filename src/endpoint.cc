@@ -2,7 +2,6 @@
 #include "endpoint.h"
 #include "device.h"
 #include "transfer.h"
-#include "stream.h"
 
 namespace NodeUsb {
 	Persistent<FunctionTemplate> Endpoint::constructor_template_in;
@@ -17,11 +16,9 @@ namespace NodeUsb {
 		// bit[0] and bit[1] of bmAttributes masks transfer_type; 3 = 0000 0011
 		transfer_type = (libusb_transfer_type)(3 & descriptor->bmAttributes);
 		idx_endpoint = _idx_endpoint;
-		stream = NULL;
 	}
 
 	Endpoint::~Endpoint() {
-		delete stream;
 		// TODO Close
 		v8device.Dispose();
 		DEBUG("Endpoint object destroyed")
@@ -58,8 +55,6 @@ namespace NodeUsb {
 		// methods exposed to node.js
 		NODE_SET_PROTOTYPE_METHOD(t_out, "transfer", Endpoint::StartTransfer);
 		NODE_SET_PROTOTYPE_METHOD(t_in, "transfer", Endpoint::StartTransfer);
-		NODE_SET_PROTOTYPE_METHOD(t_in, "startStream", Endpoint::StartStream);
-		NODE_SET_PROTOTYPE_METHOD(t_in, "stopStream", Endpoint::StopStream);
 		
 		// Make it visible in JavaScript
 		target->Set(String::NewSymbol("InEndpoint"), t_in->GetFunction());
@@ -200,59 +195,4 @@ namespace NodeUsb {
 
 		return Undefined();
 	}
-	
-	
-	Handle<Value> Endpoint::StartStream(const Arguments& args){
-		LOCAL(Endpoint, self, args.This())
-		
-		if (self->endpoint_type != LIBUSB_ENDPOINT_IN){
-			THROW_BAD_ARGS("This implementation is only for IN endpoints.");
-		}
-		
-		CHECK_USB(self->device->openHandle(), scope);
-		
-		unsigned transfer_size = libusb_get_max_packet_size(self->device->device, self->descriptor->bEndpointAddress);
-		unsigned n_transfers = 3;
-		
-		//args: n_transfers, transfer_size
-		if (args.Length() >= 1) {
-			INT_ARG(n_transfers, args[0]);
-		}
-
-		if (args.Length() >= 2) { 
-			INT_ARG(transfer_size, args[1]);
-		}
-		
-		if (!self->stream){
-			Handle<Value> streamCb = args.This()->Get(V8SYM("__stream_data_cb"));
-			Handle<Value> streamStopCb = args.This()->Get(V8SYM("__stream_stop_cb"));
-			
-			if (!streamCb->IsFunction() || !streamStopCb->IsFunction()){
-				THROW_BAD_ARGS("Stream prototype functions not defined");
-			}
-		
-			self->stream = new Stream(args.This(),
-			                          Handle<Function>::Cast(streamCb),
-			                          Handle<Function>::Cast(streamStopCb));
-		}
-		
-		if (self->stream->state != Stream::STREAM_IDLE){
-			THROW_BAD_ARGS("Stream cannot be started");
-		}
-				
-		self->stream->start(n_transfers, transfer_size);
-		
-		return Undefined();
-	}
-	
-	Handle<Value> Endpoint::StopStream(const Arguments& args){
-		LOCAL(Endpoint, self, args.This())
-		
-		if (self->stream && self->stream->state == Stream::STREAM_ACTIVE){
-			self->stream->stop();
-		}
-		
-		return Undefined();
-	}
-
 }
