@@ -6,6 +6,9 @@
 #define STRUCT_TO_V8(TARGET, STR, NAME) \
 		TARGET->Set(V8STR(#NAME), Uint32::New((STR).NAME), CONST_PROP);
 
+#define CHECK_OPEN() \
+		if (!self->handle){THROW_ERROR("Device is not opened");}
+
 // Map pinning each libusb_device to a particular V8 instance
 std::map<libusb_device*, Persistent<Value> > Device::byPtr;
 
@@ -149,7 +152,8 @@ struct TP{
 	Persistent<Function> callback;
 	int errcode;
 
-	void submit(Device* d, uv_work_cb backend, uv_work_cb after){
+	void submit(Device* d, Handle<Function> cb, uv_work_cb backend, uv_work_cb after){
+		callback = Persistent<Function>::New(cb);
 		device = d;
 		//device->Ref();
 		req.data = this;
@@ -180,10 +184,10 @@ struct TP{
 struct Device_Reset: TP{
 	static Handle<Value> begin(const Arguments& args){
 		ENTER_METHOD(pDevice, 0);
+		CHECK_OPEN();
+		CALLBACK_ARG(0);
 		auto baton = new Device_Reset;
-		CALLBACK_ARG(baton, 0);
-		baton->submit(self, &backend, &default_after);
-
+		baton->submit(self, callback, &backend, &default_after);
 		return scope.Close(Undefined());
 	}
 
@@ -195,6 +199,7 @@ struct Device_Reset: TP{
 
 Handle<Value> IsKernelDriverActive(const Arguments& args) {
 	ENTER_METHOD(pDevice, 1);
+	CHECK_OPEN();
 	int interface;
 	INT_ARG(interface, 0);
 	int r = libusb_kernel_driver_active(self->handle, interface);
@@ -204,6 +209,7 @@ Handle<Value> IsKernelDriverActive(const Arguments& args) {
 	
 Handle<Value> DetachKernelDriver(const Arguments& args) {
 	ENTER_METHOD(pDevice, 1);
+	CHECK_OPEN();
 	int interface;
 	INT_ARG(interface, 0);
 	CHECK_USB(libusb_detach_kernel_driver(self->handle, interface));
@@ -212,6 +218,7 @@ Handle<Value> DetachKernelDriver(const Arguments& args) {
 
 Handle<Value> AttachKernelDriver(const Arguments& args) {
 	ENTER_METHOD(pDevice, 1);
+	CHECK_OPEN();
 	int interface;
 	INT_ARG(interface, 0);
 	CHECK_USB(libusb_attach_kernel_driver(self->handle, interface));
@@ -220,6 +227,7 @@ Handle<Value> AttachKernelDriver(const Arguments& args) {
 
 Handle<Value> Device_ClaimInterface(const Arguments& args) {
 	ENTER_METHOD(pDevice, 1);
+	CHECK_OPEN();
 	int interface;
 	INT_ARG(interface, 0);
 	CHECK_USB(libusb_claim_interface(self->handle, interface));
@@ -231,10 +239,13 @@ struct Device_ReleaseInterface: TP{
 
 	static Handle<Value> begin(const Arguments& args){
 		ENTER_METHOD(pDevice, 1);
+		CHECK_OPEN();
+		int interface;
+		INT_ARG(interface, 0);
+		CALLBACK_ARG(1);
 		auto baton = new Device_ReleaseInterface;
-		INT_ARG(baton->interface, 0);
-		CALLBACK_ARG(baton, 1);
-		baton->submit(self, &backend, &default_after);
+		baton->interface = interface;
+		baton->submit(self, callback, &backend, &default_after);
 
 		return scope.Close(Undefined());
 	}
@@ -251,11 +262,15 @@ struct Device_SetInterface: TP{
 
 	static Handle<Value> begin(const Arguments& args){
 		ENTER_METHOD(pDevice, 2);
+		CHECK_OPEN();
+		int interface, altsetting;
+		INT_ARG(interface, 0);
+		INT_ARG(altsetting, 1);
+		CALLBACK_ARG(2);
 		auto baton = new Device_SetInterface;
-		INT_ARG(baton->interface, 0);
-		INT_ARG(baton->altsetting, 1);
-		CALLBACK_ARG(baton, 2);
-		baton->submit(self, &backend, &default_after);
+		baton->interface = interface;
+		baton->altsetting = altsetting;
+		baton->submit(self, callback, &backend, &default_after);
 		return scope.Close(Undefined());
 	}
 
