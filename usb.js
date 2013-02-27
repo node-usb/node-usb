@@ -99,6 +99,9 @@ function Endpoint(device, descriptor){
 	this.transferType = descriptor.bmAttributes&0x03
 }
 
+Endpoint.prototype.makeTransfer = function(){
+	return new usb.Transfer(this.device, this.address, this.transferType, this.device.timeout)
+}
 
 Endpoint.prototype.startStream = function(){
 
@@ -118,9 +121,8 @@ InEndpoint.prototype.direction = "in"
 
 InEndpoint.prototype.transfer = function(length, cb){
 	var buffer = new Buffer(length)
-	var t = new usb.Transfer(this.device)
-	return t.submit(this.address, this.transferType, this.device.timeout, buffer,
-		function(error, buffer, actual){
+	return this.makeTransfer().submit(buffer,
+		function(error, buf, actual){
 			cb.call(this, error, buffer.slice(0, actual))
 		}
 	)
@@ -134,11 +136,14 @@ OutEndpoint.prototype = Object.create(Endpoint.prototype)
 OutEndpoint.prototype.direction = "out"
 
 OutEndpoint.prototype.transfer = function(buffer, cb){
-	if (!buffer) buffer = new Buffer(0)
-	else if (!Buffer.isBuffer(buffer)) buffer = new Buffer(buffer)
-	var t = new usb.Transfer(this.device)
-	return t.submit(this.address, this.transferType, this.device.timeout, buffer,
-		function(error, buffer, actual){
+	if (!buffer){
+		buffer = new Buffer(0)
+	}else if (!Buffer.isBuffer(buffer)){
+		buffer = new Buffer(buffer)
+	}
+
+	return this.makeTransfer().submit(buffer,
+		function(error, buf, actual){
 			if (cb) cb.call(error)
 		}
 	)

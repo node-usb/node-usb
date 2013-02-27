@@ -19,31 +19,36 @@ Transfer::~Transfer(){
 }
 
 static Handle<Value> Transfer_constructor(const Arguments& args){
-	ENTER_CONSTRUCTOR(1);
+	ENTER_CONSTRUCTOR(4);
 	UNWRAP_ARG(pDevice, device, 0);
+	int endpoint, type, timeout;
+	INT_ARG(endpoint, 1);
+	INT_ARG(type, 2);
+	INT_ARG(timeout, 3);
 
 	setConst(args.This(), "device", args[0]);
 	auto self = new Transfer();
 	self->attach(args.This());
 	self->device = device;
+	self->transfer->endpoint = endpoint;
+	self->transfer->type = type;
+	self->transfer->timeout = timeout;
 
 	return scope.Close(args.This());
 }
 
 // Transfer.submit(endpointAddr, endpointType, timeout, buffer, callback)
 Handle<Value> Transfer_Submit(const Arguments& args) {
-	ENTER_METHOD(pTransfer, 5);
-	INT_ARG(self->transfer->endpoint, 0);
-	INT_ARG(self->transfer->type, 1);
-	INT_ARG(self->transfer->timeout, 2);
-	if (!Buffer::HasInstance(args[3])){
-		THROW_BAD_ARGS("Buffer arg [3] must be Buffer");
+	ENTER_METHOD(pTransfer, 2);
+	
+	if (!Buffer::HasInstance(args[0])){
+		THROW_BAD_ARGS("Buffer arg [0] must be Buffer");
 	}
-	Local<Object> buffer_obj = args[3]->ToObject();
+	Local<Object> buffer_obj = args[0]->ToObject();
 	if (!self->device->handle){
 		THROW_ERROR("Device is not open");
 	}
-	CALLBACK_ARG(4)
+	CALLBACK_ARG(1)
 
 	// Can't be cached in constructor as device could be closed and re-opened
 	self->transfer->dev_handle = self->device->handle;
