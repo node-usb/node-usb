@@ -66,17 +66,18 @@ public:
 	const InitFn initFn;
 };
 
+// a node ObjectWrap that manages a pointer, deleting it when the v8 object is GC'd
+template <class T>
+struct PointerWrap: public ObjectWrap{
+	PointerWrap(T* v, Handle<Object> js): ptr(v) { Wrap(js); }
+	~PointerWrap(){delete ptr;}
+	T* ptr;
+};
+
 template <class T>
 class Proto : public ProtoBuilder{
 public:
 	typedef T wrappedType;
-
-	// a node ObjectWrap that manages a pointer, deleting it when the v8 object is GC'd
-	struct PointerWrap: public ObjectWrap{
-		PointerWrap(wrappedType* v, Handle<Object> js): ptr(v) { Wrap(js); }
-		~PointerWrap(){delete ptr;}
-		wrappedType* ptr;
-	};
 
 	Proto(const char *_name, ProtoBuilder::InitFn initfn=NULL):
 		ProtoBuilder(_name, initfn){}
@@ -98,12 +99,12 @@ public:
 		if (!handle->IsObject()) return NULL;
 		Handle<Object> o = Handle<Object>::Cast(handle);
 		if (o->FindInstanceInPrototypeChain(tpl).IsEmpty()) return NULL;
-		return ObjectWrap::Unwrap<PointerWrap>(o)->ptr;
+		return ObjectWrap::Unwrap<T>(o);
 	}
 
 	inline T* _wrap(Handle<Object> handle, Handle<Value> ext){
 		auto p = static_cast<T*>(External::Unwrap(ext));
-		new PointerWrap(p, handle);
+		p->attach(handle);
 		return p;
 	}
 };

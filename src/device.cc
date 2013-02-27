@@ -37,8 +37,10 @@ void Device::weakCallback(Persistent<Value> object, void *parameter){
 static Handle<Value> deviceConstructor(const Arguments& args){
 	ENTER_CONSTRUCTOR_POINTER(pDevice, 1);
 
-	args.This()->Set(V8SYM("busNumber"), Uint32::New(libusb_get_bus_number(self->device)), CONST_PROP);
-	args.This()->Set(V8SYM("deviceAddress"), Uint32::New(libusb_get_device_address(self->device)), CONST_PROP);
+	args.This()->Set(V8SYM("busNumber"),
+		Uint32::New(libusb_get_bus_number(self->device)), CONST_PROP);
+	args.This()->Set(V8SYM("deviceAddress"),
+		Uint32::New(libusb_get_device_address(self->device)), CONST_PROP);
 
 	Local<Object> v8dd = Object::New();
 	args.This()->Set(V8SYM("deviceDescriptor"), v8dd, CONST_PROP);
@@ -133,20 +135,24 @@ Handle<Value> Device_GetConfigDescriptor(const Arguments& args){
 
 Handle<Value> Device_Open(const Arguments& args){
 	ENTER_METHOD(pDevice, 0);
-	CHECK_USB(libusb_open(self->device, &self->handle));
+	if (!self->handle){
+		CHECK_USB(libusb_open(self->device, &self->handle));
+	}
 	return scope.Close(Undefined());
 }
 
 Handle<Value> Device_Close(const Arguments& args){
 	ENTER_METHOD(pDevice, 0);
-	// TODO: check if in use
-	libusb_close(self->handle);
-	self->handle = NULL;
+	if (self->canClose()){
+		libusb_close(self->handle);
+		self->handle = NULL;
+	}else{
+		THROW_ERROR("Can't close device with a pending request");
+	}
 	return scope.Close(Undefined());
 }
 
-
-struct TP{
+struct Req{
 	uv_work_t req;
 	Device* device;
 	Persistent<Function> callback;
@@ -155,13 +161,13 @@ struct TP{
 	void submit(Device* d, Handle<Function> cb, uv_work_cb backend, uv_work_cb after){
 		callback = Persistent<Function>::New(cb);
 		device = d;
-		//device->Ref();
+		device->ref();
 		req.data = this;
 		uv_queue_work(uv_default_loop(), &req, backend, (uv_after_work_cb) after);
 	}
 
 	static void default_after(uv_work_t *req){
-		auto baton = (TP*) req->data;
+		auto baton = (Req*) req->data;
 		if (!baton->callback.IsEmpty()) {
 			HandleScope scope;
 			Handle<Value> error = Undefined();
@@ -176,12 +182,12 @@ struct TP{
 			}
 			baton->callback.Dispose();
 		}
-		//baton->device->unref;
+		baton->device->unref();
 		delete baton;
 	}
 };
 
-struct Device_Reset: TP{
+struct Device_Reset: Req{
 	static Handle<Value> begin(const Arguments& args){
 		ENTER_METHOD(pDevice, 0);
 		CHECK_OPEN();
@@ -234,7 +240,7 @@ Handle<Value> Device_ClaimInterface(const Arguments& args) {
 	return Undefined();
 }
 
-struct Device_ReleaseInterface: TP{
+struct Device_ReleaseInterface: Req{
 	int interface;
 
 	static Handle<Value> begin(const Arguments& args){
@@ -256,7 +262,7 @@ struct Device_ReleaseInterface: TP{
 	}
 };
 
-struct Device_SetInterface: TP{
+struct Device_SetInterface: Req{
 	int interface;
 	int altsetting;
 

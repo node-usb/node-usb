@@ -19,6 +19,11 @@ struct Device: public node::ObjectWrap {
 
 	static Handle<Value> get(libusb_device* handle);
 
+	inline void ref(){Ref();}
+	inline void unref(){Unref();}
+	inline bool canClose(){return refs_ == 0;}
+	inline void attach(Handle<Object> o){Wrap(o);}
+
 	private:
 		static std::map<libusb_device*, Persistent<Value> > byPtr;
 		Device(libusb_device* d): device(d), handle(0) {
