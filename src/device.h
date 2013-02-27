@@ -4,52 +4,28 @@
 #include "bindings.h"
 #include "usb.h"
 
-namespace NodeUsb {
-	// intermediate EIO structure for device
-	struct device_request:nodeusb_transfer {
-		Device * device;
-	};
+#include <map>
 
-	class Device : public ObjectWrap {
-		public:
-			// called from outside to initalize V8 class template
-			static void Initalize(Handle<Object> target);
-			static Persistent<FunctionTemplate> constructor_template;
-			Device(libusb_device*);
-			~Device();
-			
-			int openHandle();
-			void close();
-			
-			libusb_device *device;
-			libusb_device_handle *handle;
-			libusb_config_descriptor *config_descriptor;
-			struct libusb_device_descriptor device_descriptor;
-			unsigned timeout;
-			
-		protected:
-			Persistent<Object> v8ConfigDescriptor;
-			Persistent<Array>  v8Interfaces;
-		
-			// V8 getter
-			static Handle<Value> BusNumberGetter(Local<String> property, const AccessorInfo &info);
-			static Handle<Value> DeviceAddressGetter(Local<String> property, const AccessorInfo &info);
-			static Handle<Value> TimeoutGetter(Local<String> property, const AccessorInfo &info);
-			static void TimeoutSetter(Local<String> property, Local<Value> value, const AccessorInfo &info);
-			static Handle<Value> ConfigDescriptorGetter(Local<String> property, const AccessorInfo &info);
-			static Handle<Value> InterfacesGetter(Local<String> property, const AccessorInfo &info);
 
-			// exposed to V8
-			static Handle<Value> New(const Arguments& args);
-			static Handle<Value> Close(const Arguments& args);
-			static Handle<Value> Reset(const Arguments& args);
+struct Device: public node::ObjectWrap {
+	~Device(){
+		printf("Freed device %p\n", device);
+		libusb_close(handle);
+		libusb_unref_device(device);
+	}
 
-			// Reset -> Async
-			static void EIO_Reset(uv_work_t *req);
-			static void EIO_After_Reset(uv_work_t *req);
-			static Handle<Value> ControlTransfer(const Arguments& args);
-			static void EIO_ControlTransfer(uv_work_t *req);
-			static void EIO_After_ControlTransfer(uv_work_t *req);
-	};
-}
+	libusb_device* device;
+	libusb_device_handle* handle;
+
+	static Handle<Value> get(libusb_device* handle);
+
+	private:
+		static std::map<libusb_device*, Persistent<Value> > byPtr;
+		Device(libusb_device* d): device(d), handle(0) {
+			libusb_ref_device(device);
+			printf("Created device %p\n", device);
+		}
+		static void weakCallback(Persistent<Value> object, void *parameter);
+};
+
 #endif

@@ -9,29 +9,33 @@
 #define V8STR(str) String::New(str)
 #define V8SYM(str) String::NewSymbol(str)
 
-#ifdef ENABLE_DEBUG
-  #define DEBUG_HEADER fprintf(stderr, "node-usb [%s:%s() %d]: ", __FILE__, __FUNCTION__, __LINE__); 
-  #define DEBUG_FOOTER fprintf(stderr, "\n");
-  #define DEBUG(STRING) DEBUG_HEADER fprintf(stderr, "%s", STRING); DEBUG_FOOTER
-  #define DEBUG_OPT(...) DEBUG_HEADER fprintf(stderr, __VA_ARGS__); DEBUG_FOOTER
-  #define DUMP_BYTE_STREAM(STREAM, LENGTH) DEBUG_HEADER for (int i = 0; i < LENGTH; i++) { fprintf(stderr, "0x%02X ", STREAM[i]); } DEBUG_FOOTER
-#else
-  #define DEBUG(str)
-  #define DEBUG_OPT(...)
-  #define DUMP_BYTE_STREAM(STREAM, LENGTH)
-#endif
+Local<Value> libusbException(int errorno);
+Local<v8::Value> makeBuffer(const uint8_t* buf, unsigned length);
 
-#define THROW_BAD_ARGS(FAIL_MSG) return ThrowException(Exception::TypeError(V8STR(FAIL_MSG)));
-#define THROW_ERROR(FAIL_MSG) return ThrowException(Exception::Error(V8STR(FAIL_MSG)));
-#define THROW_NOT_YET return ThrowException(Exception::Error(String::Concat(String::New(__FUNCTION__), String::New("not yet supported"))));
-#define CREATE_ERROR_OBJECT_AND_CLOSE_SCOPE(ERRNO, scope) \
-		ThrowException(errno_exception(ERRNO)); \
-		return scope.Close(Undefined());
-
-#define CHECK_USB(r, scope) \
+#define CHECK_USB(r) \
 	if (r < LIBUSB_SUCCESS) { \
-		CREATE_ERROR_OBJECT_AND_CLOSE_SCOPE(r, scope); \
+		ThrowException(libusbException(r)); \
+		return scope.Close(Undefined());   \
 	}
+
+#define CALLBACK_ARG(VARNAME, CALLBACK_ARG_IDX) \
+	Local<Function> callback; \
+	if (args.Length() > (CALLBACK_ARG_IDX)) { \
+		if (!args[CALLBACK_ARG_IDX]->IsFunction()) { \
+			return ThrowException(Exception::TypeError( String::New("Argument " #CALLBACK_ARG_IDX " must be a function"))); \
+		} \
+		callback = Local<Function>::Cast(args[CALLBACK_ARG_IDX]); \
+	} \
+	VARNAME->callback = Persistent<Function>::New(callback);
+
+
+
+
+
+
+
+
+
 
 #define LOCAL(TYPE, VARNAME, REF) \
 		HandleScope scope;\
@@ -86,14 +90,6 @@
 	EIO_CAST(STRUCT, transfer_req)\
 	EIO_AFTER(transfer_req, SELF)\
 	free(transfer_req);
-
-		
-#define INT_ARG(VAR, ARG) \
-	if (!(ARG)->IsInt32()) { \
-		THROW_BAD_ARGS("Expected int as " #VAR " parameter") \
-	} else { \
-		VAR = ((ARG)->Int32Value()); \
-	} 
 	
 #define BUF_LEN_ARG(ARG) \
 	libusb_endpoint_direction modus; \
@@ -125,29 +121,7 @@ namespace NodeUsb  {
 	
 	void doTransferCallback(Handle<Function> v8callback, Handle<Object> v8this, libusb_transfer_status status, uint8_t* buffer, unsigned length);
 	
-	Local<v8::Value> makeBuffer(const uint8_t* buf, unsigned length);
-
-	class AllowConstructor {
-	public:
-		inline AllowConstructor()
-		{
-			m_previous = m_current;
-			m_current = true;
-		}
-
-		inline ~AllowConstructor()
-		{
-			m_current = m_previous;
-		}
-
-		static inline bool Check(){
-			return m_current;
-		}
-
-		static bool m_current;
-	private:
-		bool m_previous;
-	};
+	
 
 	struct nodeusb_endpoint_selection {
 		int interface_number;
@@ -166,59 +140,5 @@ namespace NodeUsb  {
 		unsigned int timeout;
 		uint16_t bytesTransferred;
 	};
-
-
-	static inline Local<Value> errno_exception(int errorno) {
-		const char* err = "";
-		
-		// taken from pyusb
-		switch (errorno) {
-			case LIBUSB_ERROR_IO:
-				err = "Input/output error";
-				break;
-			case LIBUSB_ERROR_INVALID_PARAM:
-				err  = "Invalid parameter";
-				break;
-			case LIBUSB_ERROR_ACCESS:
-				err  = "Access denied (insufficient permissions)";
-				break;
-			case LIBUSB_ERROR_NO_DEVICE:
-				err = "No such device (it may have been disconnected)";
-				break;
-			case LIBUSB_ERROR_NOT_FOUND:
-				err = "Entity not found";
-				break;
-			case LIBUSB_ERROR_BUSY:
-				err = "Resource busy";
-				break;
-			case LIBUSB_ERROR_TIMEOUT:
-				err = "Operation timed out";
-				break;
-			case LIBUSB_ERROR_OVERFLOW:
-				err = "Overflow";
-				break;
-			case LIBUSB_ERROR_PIPE:
-				err = "Pipe error";
-				break;
-			case LIBUSB_ERROR_INTERRUPTED:
-				err = "System call interrupted (perhaps due to signal)";
-				break;
-			case LIBUSB_ERROR_NO_MEM:
-				err = "Insufficient memory";
-				break;
-			case LIBUSB_ERROR_NOT_SUPPORTED:
-				err = "Operation not supported or unimplemented on this platform";
-				break;
-			default:
-				err = "Unknown error";
-				break;
-		}
-		
-		Local<Value> e  = Exception::Error(String::NewSymbol(err));
-		Local<Object> obj = e->ToObject();
-		obj->Set(NODE_PSYMBOL("errno"), Integer::New(errorno));
-
-		return e;
-	}
 }
 #endif

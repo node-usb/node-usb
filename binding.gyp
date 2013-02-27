@@ -4,12 +4,9 @@
       'target_name': 'usb_bindings',
       'sources': [ 
         './src/node_usb.cc',
-        './src/bindings.cc',
-        './src/usb.cc',
+        './src/helpers.cc',
         './src/device.cc',
-        './src/interface.cc',
-        './src/endpoint.cc',
-        './src/transfer.cc',
+        #'./src/transfer.cc',
       ],
       'cflags': [
         '-O3',

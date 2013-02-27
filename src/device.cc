@@ -1,279 +1,294 @@
+#include "node_usb.h"
 #include "bindings.h"
 #include "device.h"
-#include "interface.h"
 #include "transfer.h"
-#include <assert.h>
 
-namespace NodeUsb {
-	/** constructor template is needed for creating new Device objects from outside */
-	Persistent<FunctionTemplate> Device::constructor_template;
+#define STRUCT_TO_V8(TARGET, STR, NAME) \
+		TARGET->Set(V8STR(#NAME), Uint32::New((STR).NAME), CONST_PROP);
 
-	/**
-	 * @param device.busNumber integer
-	 * @param device.deviceAddress integer
-	 */
-	void Device::Initalize(Handle<Object> target) {
-		DEBUG("Entering...")
-		HandleScope  scope;
-		Local<FunctionTemplate> t = FunctionTemplate::New(Device::New);
+// Map pinning each libusb_device to a particular V8 instance
+std::map<libusb_device*, Persistent<Value> > Device::byPtr;
 
-		// Constructor
-		t->InstanceTemplate()->SetInternalFieldCount(1);
-		t->SetClassName(String::NewSymbol("Device"));
-		Device::constructor_template = Persistent<FunctionTemplate>::New(t);
+// Get a V8 instance for a libusb_device: either the existing one from the map, 
+// or create a new one and add it to the map.
+Handle<Value> Device::get(libusb_device* dev){
+	auto it = byPtr.find(dev);
+	if (it != byPtr.end()){
+		return it->second;
+	}else{
+		auto v = Persistent<Value>::New(pDevice.create(new Device(dev)));
+		v.MakeWeak(dev, weakCallback);
+		byPtr.insert(std::make_pair(dev, v));
+		return v;	
+	}
+}
 
-		Local<ObjectTemplate> instance_template = t->InstanceTemplate();
+// Callback to remove an instance from the cache map when V8 wants to GC it
+void Device::weakCallback(Persistent<Value> object, void *parameter){
+	byPtr.erase(static_cast<libusb_device*>(parameter));
+	object.Dispose();
+	object.Clear();
+	printf("Removed cached device %p\n", parameter);
+}
 
-		// Constants
-		// no constants at the moment
-	
-		// Properties
-		instance_template->SetAccessor(V8STR("deviceAddress"), Device::DeviceAddressGetter);
-		instance_template->SetAccessor(V8STR("busNumber"), Device::BusNumberGetter);
-		instance_template->SetAccessor(V8SYM("timeout"), Device::TimeoutGetter, Device::TimeoutSetter);
-		instance_template->SetAccessor(V8STR("configDescriptor"), Device::ConfigDescriptorGetter);
-		instance_template->SetAccessor(V8STR("interfaces"), Device::InterfacesGetter);
+static Handle<Value> deviceConstructor(const Arguments& args){
+	ENTER_CONSTRUCTOR_POINTER(pDevice, 1);
 
-		// Bindings to nodejs
-		NODE_SET_PROTOTYPE_METHOD(t, "reset", Device::Reset);
-		NODE_SET_PROTOTYPE_METHOD(t, "controlTransfer", Device::ControlTransfer);
+	args.This()->Set(V8SYM("busNumber"), Uint32::New(libusb_get_bus_number(self->device)), CONST_PROP);
+	args.This()->Set(V8SYM("deviceAddress"), Uint32::New(libusb_get_device_address(self->device)), CONST_PROP);
 
-		// Make it visible in JavaScript
-		target->Set(String::NewSymbol("Device"), t->GetFunction());	
+	Local<Object> v8dd = Object::New();
+	args.This()->Set(V8SYM("deviceDescriptor"), v8dd, CONST_PROP);
+
+	struct libusb_device_descriptor dd;
+	CHECK_USB(libusb_get_device_descriptor(self->device, &dd));
+
+	STRUCT_TO_V8(v8dd, dd, bLength)
+	STRUCT_TO_V8(v8dd, dd, bDescriptorType)
+	STRUCT_TO_V8(v8dd, dd, bcdUSB)
+	STRUCT_TO_V8(v8dd, dd, bDeviceClass)
+	STRUCT_TO_V8(v8dd, dd, bDeviceSubClass)
+	STRUCT_TO_V8(v8dd, dd, bDeviceProtocol)
+	STRUCT_TO_V8(v8dd, dd, bMaxPacketSize0)
+	STRUCT_TO_V8(v8dd, dd, idVendor)
+	STRUCT_TO_V8(v8dd, dd, idProduct)
+	STRUCT_TO_V8(v8dd, dd, bcdDevice)
+	STRUCT_TO_V8(v8dd, dd, iManufacturer)
+	STRUCT_TO_V8(v8dd, dd, iProduct)
+	STRUCT_TO_V8(v8dd, dd, iSerialNumber)
+	STRUCT_TO_V8(v8dd, dd, bNumConfigurations)
+
+	return scope.Close(args.This());
+}
+
+Handle<Value> Device_GetConfigDescriptor(const Arguments& args){
+	ENTER_METHOD(pDevice, 0);
+
+	libusb_config_descriptor* cdesc;
+	CHECK_USB(libusb_get_active_config_descriptor(self->device, &cdesc));
+
+	Local<Object> v8cdesc = Object::New();
+
+	STRUCT_TO_V8(v8cdesc, *cdesc, bLength)
+	STRUCT_TO_V8(v8cdesc, *cdesc, bDescriptorType)
+	STRUCT_TO_V8(v8cdesc, *cdesc, wTotalLength)
+	STRUCT_TO_V8(v8cdesc, *cdesc, bNumInterfaces)
+	STRUCT_TO_V8(v8cdesc, *cdesc, bConfigurationValue)
+	STRUCT_TO_V8(v8cdesc, *cdesc, iConfiguration)
+	STRUCT_TO_V8(v8cdesc, *cdesc, bmAttributes)
+	STRUCT_TO_V8(v8cdesc, *cdesc, MaxPower)
+	//r->Set(V8STR("extra"), makeBuffer(cd.extra, cd.extra_length), CONST_PROP);
+
+	Local<Array> v8interfaces = Array::New(cdesc->bNumInterfaces);
+	v8cdesc->Set(V8SYM("interfaces"), v8interfaces);
+
+	for (int idxInterface = 0; idxInterface < cdesc->bNumInterfaces; idxInterface++) {
+		int numAltSettings = cdesc->interface[idxInterface].num_altsetting;
 		
-		Usb::LoadDevices();
-		
-		DEBUG("Leave")
-	}
+		Local<Array> v8altsettings = Array::New(numAltSettings);
+		v8interfaces->Set(idxInterface, v8altsettings);
 
-	Device::Device(libusb_device* _device) : 
-		ObjectWrap(), device(_device), handle(NULL), config_descriptor(NULL), timeout(1000) {
-		DEBUG_OPT("Device object %p created", device)
-	}
-
-	Device::~Device() {
-		DEBUG_OPT("Device object %p destroyed", device)
-		// free configuration descriptor
-		close();
-		v8ConfigDescriptor.Dispose();
-		v8Interfaces.Dispose();
-		libusb_free_config_descriptor(config_descriptor);
-		libusb_unref_device(device);
-	}
-	
-	int Device::openHandle() {
-		if (handle) return LIBUSB_SUCCESS;
-		return libusb_open(device, &handle);
-	}
-	
-	void Device::close(){
-		libusb_close(handle);
-		handle = NULL;
-	}
-	
-	Handle<Value> Device::New(const Arguments& args) {
-		HandleScope scope;
-
-		if (!AllowConstructor::Check()) THROW_ERROR("Illegal constructor")
-
-		// need libusb_device structure as first argument
-		if (args.Length() < 1 || !args[0]->IsExternal()) {
-			THROW_BAD_ARGS("Device::New argument is invalid. Must be external!")
-		}
-
-		Local<External> refDevice = Local<External>::Cast(args[0]);
-
-		// cast local reference to local libusb_device structure
-		libusb_device *libusbDevice = static_cast<libusb_device*>(refDevice->Value());
-
-		// create new Device object
-		Device *device = new Device(libusbDevice);
-
-		// wrap created Device object to v8
-		device->Wrap(args.This());
-
-		#define LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(NAME) \
-			dd->Set(V8SYM(#NAME), Uint32::New(device->device_descriptor.NAME), CONST_PROP);
-
-		assert(device->device != NULL);
-		CHECK_USB(libusb_get_device_descriptor(device->device, &device->device_descriptor), scope);
-
-		Local<Object> dd = Object::New();
-
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bLength)
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bDescriptorType)
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bcdUSB)
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bDeviceClass)
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bDeviceSubClass)
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bDeviceProtocol)
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bMaxPacketSize0)
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(idVendor)
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(idProduct)
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bcdDevice)
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(iManufacturer)
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(iProduct)
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(iSerialNumber)
-		LIBUSB_DEVICE_DESCRIPTOR_STRUCT_TO_V8(bNumConfigurations)
-		
-		args.This()->Set(V8SYM("deviceDescriptor"), dd, CONST_PROP);
-		
-		return args.This();
-	}
-	
-	/**
-	 * @return integer
-	 */
-	Handle<Value> Device::BusNumberGetter(Local<String> property, const AccessorInfo &info) {
-		LOCAL(Device, self, info.Holder())
-		uint8_t bus_number = libusb_get_bus_number(self->device);
-
-		return scope.Close(Integer::New(bus_number));
-	}
-
-	/**
-	 * @return integer
-	 */
-	Handle<Value> Device::DeviceAddressGetter(Local<String> property, const AccessorInfo &info) {
-		LOCAL(Device, self, info.Holder())
-		uint8_t address = libusb_get_device_address(self->device);
-
-		return scope.Close(Integer::New(address));
-	}
-	
-	Handle<Value> Device::TimeoutGetter(Local<String> property, const AccessorInfo &info){
-		LOCAL(Device, self, info.Holder())
-		return scope.Close(Integer::New(self->timeout));
-	}
-	
-	void Device::TimeoutSetter(Local<String> property, Local<Value> value, const AccessorInfo &info){
-		LOCAL(Device, self, info.Holder())
-		
-		if (value->IsNumber()){
-			self->timeout = value->Int32Value();
-		}else{
-			ThrowException(Exception::TypeError(V8STR("Timeout must be number")));
-		}
-	}
-
-	/**
-	 * libusb_reset_device incurs a noticeable delay, so this is asynchronous
-	 */
-	Handle<Value> Device::Reset(const Arguments& args) {
-		LOCAL(Device, self, args.This())
-		
-		// allocation of intermediate EIO structure
-		EIO_NEW(device_request, reset_req)
-
-		// create default delegation
-		EIO_DELEGATION(reset_req, 0)
-		
-		reset_req->device = self;
-		reset_req->device->Ref();
-
-		EIO_CUSTOM(EIO_Reset, reset_req, EIO_After_Reset);
-
-		return Undefined();
-	}
-
-	/**
-	 * Contains the blocking libusb_reset_device function
-	 */
-	void Device::EIO_Reset(uv_work_t *req) {
-		// Inside EIO Threadpool, so don't touch V8.
-		// Be careful!
-		EIO_CAST(device_request, reset_req)
-		
-		libusb_device *device = reset_req->device->device;
-		libusb_device_handle *handle;
-
-		int errcode = 0;
-		
-		if ((errcode = libusb_open(device, &handle)) >= LIBUSB_SUCCESS) {
-			if ((errcode = libusb_reset_device(handle)) < LIBUSB_SUCCESS) {
-				libusb_close(handle);
-				reset_req->errsource = "reset";
-			}
-		} else {
-			reset_req->errsource = "open";
-		}
-
-		EIO_AFTER(reset_req, device)
-	}
-	
-	void Device::EIO_After_Reset(uv_work_t *req) {
-		TRANSFER_REQUEST_FREE(device_request, device)
-	}
-	
-
-// TODO: Read-Only
-#define LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(NAME) \
-		r->Set(V8STR(#NAME), Uint32::New(self->config_descriptor->NAME), CONST_PROP);
-
-#define LIBUSB_GET_CONFIG_DESCRIPTOR(scope) \
-		DEBUG("Get active config descriptor"); \
-		if (!self->config_descriptor) { \
-			CHECK_USB(libusb_get_active_config_descriptor(self->device, &(self->config_descriptor)), scope) \
-		}
-
-	/**
-	 * Returns configuration descriptor structure
-	 */
-	Handle<Value> Device::ConfigDescriptorGetter(Local<String> property, const AccessorInfo &info) {
-		LOCAL(Device, self, info.Holder())
-
-		LIBUSB_GET_CONFIG_DESCRIPTOR(scope);
-		
-		if (self->v8ConfigDescriptor.IsEmpty()){
-			Local<Object> r = Object::New();
-
-			LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(bLength)
-			LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(bDescriptorType)
-			LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(wTotalLength)
-			LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(bNumInterfaces)
-			LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(bConfigurationValue)
-			LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(iConfiguration)
-			LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(bmAttributes)
-			LIBUSB_CONFIG_DESCRIPTOR_STRUCT_TO_V8(MaxPower)
-			r->Set(V8STR("extra"), makeBuffer(self->config_descriptor->extra, self->config_descriptor->extra_length), CONST_PROP);
+		for (int idxAltSetting = 0; idxAltSetting < numAltSettings; idxAltSetting++) {
+			const libusb_interface_descriptor& idesc =
+				cdesc->interface[idxInterface].altsetting[idxAltSetting];
 			
-			self->v8ConfigDescriptor = Persistent<Object>::New(r);
-		}
+			Local<Object> v8idesc = Object::New();
+			v8interfaces->Set(idxAltSetting, v8idesc);
 
-		return scope.Close(self->v8ConfigDescriptor);
-	}
-	
-	Handle<Value> Device::InterfacesGetter(Local<String> property, const AccessorInfo &info) {
-		LOCAL(Device, self, info.Holder())
+			STRUCT_TO_V8(v8idesc, idesc, bLength)
+			STRUCT_TO_V8(v8idesc, idesc, bDescriptorType)
+			STRUCT_TO_V8(v8idesc, idesc, bInterfaceNumber)
+			STRUCT_TO_V8(v8idesc, idesc, bAlternateSetting)
+			STRUCT_TO_V8(v8idesc, idesc, bNumEndpoints)
+			STRUCT_TO_V8(v8idesc, idesc, bInterfaceClass)
+			STRUCT_TO_V8(v8idesc, idesc, bInterfaceSubClass)
+			STRUCT_TO_V8(v8idesc, idesc, bInterfaceProtocol)
+			STRUCT_TO_V8(v8idesc, idesc, iInterface)
+			// TODO: extra data
 
-		if (self->v8Interfaces.IsEmpty()){
-			LIBUSB_GET_CONFIG_DESCRIPTOR(scope);
-			AllowConstructor allow;
+			Local<Array> v8endpoints = Array::New(idesc.bNumEndpoints);
+			v8idesc->Set(V8SYM("endpoints"), v8endpoints, CONST_PROP);
+			for (int idxEndpoint = 0; idxEndpoint < idesc.bNumEndpoints; idxEndpoint++){
+				const libusb_endpoint_descriptor& edesc = idesc.endpoint[idxEndpoint];
 
-			self->v8Interfaces = Persistent<Array>::New(Array::New());
-			int idx = 0;
+				Local<Object> v8edesc = Object::New();
+				v8endpoints->Set(idxEndpoint, v8edesc);
 
-			// iterate interfaces
-			int numInterfaces = self->config_descriptor->bNumInterfaces;
-
-			for (int idxInterface = 0; idxInterface < numInterfaces; idxInterface++) {
-				int numAltSettings = ((*self->config_descriptor).interface[idxInterface]).num_altsetting;
-
-				for (int idxAltSetting = 0; idxAltSetting < numAltSettings; idxAltSetting++) {
-					Local<Value> args_new_interface[3] = {
-						info.Holder(),
-						Uint32::New(idxInterface),
-						Uint32::New(idxAltSetting),
-					};
-
-					self->v8Interfaces->Set(idx++,
-						Interface::constructor_template->GetFunction()->NewInstance(3, args_new_interface)
-					);
-				}
+				STRUCT_TO_V8(v8edesc, edesc, bLength)
+				STRUCT_TO_V8(v8edesc, edesc, bDescriptorType)
+				STRUCT_TO_V8(v8edesc, edesc, bEndpointAddress)
+				STRUCT_TO_V8(v8edesc, edesc, bmAttributes)
+				STRUCT_TO_V8(v8edesc, edesc, bInterval)
+				STRUCT_TO_V8(v8edesc, edesc, bRefresh)
+				STRUCT_TO_V8(v8edesc, edesc, bSynchAddress)
 			}
 		}
-		
-		return scope.Close(self->v8Interfaces);
 	}
+
+	return scope.Close(v8cdesc);
+}
+
+Handle<Value> Device_Open(const Arguments& args){
+	ENTER_METHOD(pDevice, 0);
+	CHECK_USB(libusb_open(self->device, &self->handle));
+	return scope.Close(Undefined());
+}
+
+Handle<Value> Device_Close(const Arguments& args){
+	ENTER_METHOD(pDevice, 0);
+	// TODO: check if in use
+	libusb_close(self->handle);
+	self->handle = NULL;
+	return scope.Close(Undefined());
+}
+
+
+struct TP{
+	uv_work_t req;
+	Device* device;
+	Persistent<Function> callback;
+	int errcode;
+
+	void submit(Device* d, uv_work_cb backend, uv_work_cb after){
+		device = d;
+		//device->Ref();
+		req.data = this;
+		uv_queue_work(uv_default_loop(), &req, backend, (uv_after_work_cb) after);
+	}
+
+	static void default_after(uv_work_t *req){
+		auto baton = (TP*) req->data;
+		if (!baton->callback.IsEmpty()) {
+			HandleScope scope;
+			Handle<Value> error = Undefined();
+			if (baton->errcode < 0){
+				error = libusbException(baton->errcode);
+			}
+			Handle<Value> argv[1] = {error};
+			TryCatch try_catch;
+			baton->callback->Call(Context::GetCurrent()->Global(), 1, argv);
+			if (try_catch.HasCaught()) {
+				FatalException(try_catch);
+			}
+			baton->callback.Dispose();
+		}
+		//baton->device->unref;
+		delete baton;
+	}
+};
+
+struct Device_Reset: TP{
+	static Handle<Value> begin(const Arguments& args){
+		ENTER_METHOD(pDevice, 0);
+		auto baton = new Device_Reset;
+		CALLBACK_ARG(baton, 0);
+		baton->submit(self, &backend, &default_after);
+
+		return scope.Close(Undefined());
+	}
+
+	static void backend(uv_work_t *req){
+		auto baton = (Device_Reset*) req->data;
+		baton->errcode = libusb_reset_device(baton->device->handle);
+	}
+};
+
+Handle<Value> IsKernelDriverActive(const Arguments& args) {
+	ENTER_METHOD(pDevice, 1);
+	int interface;
+	INT_ARG(interface, 0);
+	int r = libusb_kernel_driver_active(self->handle, interface);
+	CHECK_USB(r);
+	return scope.Close(Boolean::New(r));
+}	
+	
+Handle<Value> DetachKernelDriver(const Arguments& args) {
+	ENTER_METHOD(pDevice, 1);
+	int interface;
+	INT_ARG(interface, 0);
+	CHECK_USB(libusb_detach_kernel_driver(self->handle, interface));
+	return Undefined();
+}
+
+Handle<Value> AttachKernelDriver(const Arguments& args) {
+	ENTER_METHOD(pDevice, 1);
+	int interface;
+	INT_ARG(interface, 0);
+	CHECK_USB(libusb_attach_kernel_driver(self->handle, interface));
+	return Undefined();
+}
+
+Handle<Value> Device_ClaimInterface(const Arguments& args) {
+	ENTER_METHOD(pDevice, 1);
+	int interface;
+	INT_ARG(interface, 0);
+	CHECK_USB(libusb_claim_interface(self->handle, interface));
+	return Undefined();
+}
+
+struct Device_ReleaseInterface: TP{
+	int interface;
+
+	static Handle<Value> begin(const Arguments& args){
+		ENTER_METHOD(pDevice, 1);
+		auto baton = new Device_ReleaseInterface;
+		INT_ARG(baton->interface, 0);
+		CALLBACK_ARG(baton, 1);
+		baton->submit(self, &backend, &default_after);
+
+		return scope.Close(Undefined());
+	}
+
+	static void backend(uv_work_t *req){
+		auto baton = (Device_ReleaseInterface*) req->data;
+		baton->errcode = libusb_release_interface(baton->device->handle, baton->interface);
+	}
+};
+
+struct Device_SetInterface: TP{
+	int interface;
+	int altsetting;
+
+	static Handle<Value> begin(const Arguments& args){
+		ENTER_METHOD(pDevice, 2);
+		auto baton = new Device_SetInterface;
+		INT_ARG(baton->interface, 0);
+		INT_ARG(baton->altsetting, 1);
+		CALLBACK_ARG(baton, 2);
+		baton->submit(self, &backend, &default_after);
+		return scope.Close(Undefined());
+	}
+
+	static void backend(uv_work_t *req){
+		auto baton = (Device_SetInterface*) req->data;
+		baton->errcode = libusb_set_interface_alt_setting(
+			baton->device->handle, baton->interface, baton->altsetting);
+	}
+};
+
+static void init(Handle<Object> target){
+	pDevice.init(&deviceConstructor);
+	pDevice.addMethod("getConfigDescriptor", Device_GetConfigDescriptor);
+	pDevice.addMethod("__open", Device_Open);
+	pDevice.addMethod("__close", Device_Close);
+	pDevice.addMethod("reset", Device_Reset::begin);
+	
+	pDevice.addMethod("__claimInterface", Device_ClaimInterface);
+	pDevice.addMethod("__releaseInterface", Device_ReleaseInterface::begin);
+	pDevice.addMethod("__setInterface", Device_SetInterface::begin);
+	
+	pDevice.addMethod("__isKernelDriverActive", IsKernelDriverActive);
+	pDevice.addMethod("__detachKernelDriver", DetachKernelDriver);
+	pDevice.addMethod("__attachKernelDriver", AttachKernelDriver);
+
+	//pDevice.addMethod("__createTransfer", Device_CreateTransfer);
+	//pDevice.addMethod("__createControlTransfer", Device_CreateControlTransfer);
+}
+
+Proto<Device> pDevice("Device", &init);
+
+
+#if 0 
 	
 	/**
 	 * Sends control transfer commands to device
@@ -301,10 +316,10 @@ namespace NodeUsb {
 			THROW_BAD_ARGS("Transfer missing arguments!")
 		}
 		
-		INT_ARG(bmRequestType, args[0]);
-		INT_ARG(bRequest, args[1]);
-		INT_ARG(wValue, args[2]);
-		INT_ARG(wIndex, args[3]);
+		INT_ARG(bmRequestType, 0);
+		INT_ARG(bRequest, 1);
+		INT_ARG(wValue, 2);
+		INT_ARG(wIndex, 3);
 		BUF_LEN_ARG(args[4]);
 		
 		if ((bmRequestType & 0x80) != modus){
@@ -334,3 +349,4 @@ namespace NodeUsb {
 	}
 
 }
+#endif

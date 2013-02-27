@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+#include <assert.h>
 #include <iostream>
 
 #include <cstring>
@@ -19,18 +20,13 @@
 #include <node_version.h>
 #include <node_buffer.h>
 #include <uv.h>
-//#include <uv-private/ev.h>
-
-#define NODE_USB_VERSION "0.1"
-
-#ifndef NODE_USB_REVISION
-  #define NODE_USB_REVISION "unknown"
-#endif
 
 using namespace v8;
 using namespace node;
 
-namespace NodeUsb {
-}
+#include "protobuilder.h"
+#include "device.h"
+
+extern Proto<Device> pDevice;
 
 #endif
