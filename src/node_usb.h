@@ -26,7 +26,9 @@ using namespace node;
 
 #include "protobuilder.h"
 #include "device.h"
+#include "transfer.h"
 
 extern Proto<Device> pDevice;
+extern Proto<Transfer> pTransfer;
 
 #endif

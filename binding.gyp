@@ -6,7 +6,7 @@
         './src/node_usb.cc',
         './src/helpers.cc',
         './src/device.cc',
-        #'./src/transfer.cc',
+        './src/transfer.cc',
       ],
       'cflags': [
         '-O3',

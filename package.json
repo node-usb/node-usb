@@ -30,7 +30,8 @@
   },
   "scripts": {
     "preinstall": "node-gyp rebuild",
-    "test": "mocha --compilers coffee:coffee-script"
+    "test": "mocha --compilers coffee:coffee-script",
+    "valgrind": "valgrind --leak-check=full --show-possibly-lost=no node --expose-gc --trace-gc node_modules/mocha/bin/_mocha -R spec --compilers coffee:coffee-script"
   },
   "dependencies": {
     "bindings": "1.0.x"

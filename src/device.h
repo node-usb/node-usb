@@ -6,14 +6,7 @@
 
 #include <map>
 
-
 struct Device: public node::ObjectWrap {
-	~Device(){
-		printf("Freed device %p\n", device);
-		libusb_close(handle);
-		libusb_unref_device(device);
-	}
-
 	libusb_device* device;
 	libusb_device_handle* handle;
 
@@ -24,11 +17,17 @@ struct Device: public node::ObjectWrap {
 	inline bool canClose(){return refs_ == 0;}
 	inline void attach(Handle<Object> o){Wrap(o);}
 
-	private:
+	~Device(){
+		printf("Freed device %p\n", this);
+		libusb_close(handle);
+		libusb_unref_device(device);
+	}
+
+	protected:
 		static std::map<libusb_device*, Persistent<Value> > byPtr;
 		Device(libusb_device* d): device(d), handle(0) {
 			libusb_ref_device(device);
-			printf("Created device %p\n", device);
+			printf("Created device %p\n", this);
 		}
 		static void weakCallback(Persistent<Value> object, void *parameter);
 };

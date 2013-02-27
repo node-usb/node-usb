@@ -98,7 +98,7 @@ Handle<Value> Device_GetConfigDescriptor(const Arguments& args){
 				cdesc->interface[idxInterface].altsetting[idxAltSetting];
 			
 			Local<Object> v8idesc = Object::New();
-			v8interfaces->Set(idxAltSetting, v8idesc);
+			v8altsettings->Set(idxAltSetting, v8idesc);
 
 			STRUCT_TO_V8(v8idesc, idesc, bLength)
 			STRUCT_TO_V8(v8idesc, idesc, bDescriptorType)
@@ -130,6 +130,7 @@ Handle<Value> Device_GetConfigDescriptor(const Arguments& args){
 		}
 	}
 
+	libusb_free_config_descriptor(cdesc);
 	return scope.Close(v8cdesc);
 }
 
@@ -167,22 +168,25 @@ struct Req{
 	}
 
 	static void default_after(uv_work_t *req){
+		HandleScope scope;
 		auto baton = (Req*) req->data;
+
+		auto device = Local<Object>::New(baton->device->handle_);
+		baton->device->unref();
+
 		if (!baton->callback.IsEmpty()) {
-			HandleScope scope;
 			Handle<Value> error = Undefined();
 			if (baton->errcode < 0){
 				error = libusbException(baton->errcode);
 			}
 			Handle<Value> argv[1] = {error};
 			TryCatch try_catch;
-			baton->callback->Call(Context::GetCurrent()->Global(), 1, argv);
+			baton->callback->Call(device, 1, argv);
 			if (try_catch.HasCaught()) {
 				FatalException(try_catch);
 			}
 			baton->callback.Dispose();
 		}
-		baton->device->unref();
 		delete baton;
 	}
 };
@@ -289,7 +293,7 @@ struct Device_SetInterface: Req{
 
 static void init(Handle<Object> target){
 	pDevice.init(&deviceConstructor);
-	pDevice.addMethod("getConfigDescriptor", Device_GetConfigDescriptor);
+	pDevice.addMethod("__getConfigDescriptor", Device_GetConfigDescriptor);
 	pDevice.addMethod("__open", Device_Open);
 	pDevice.addMethod("__close", Device_Close);
 	pDevice.addMethod("reset", Device_Reset::begin);
@@ -301,9 +305,6 @@ static void init(Handle<Object> target){
 	pDevice.addMethod("__isKernelDriverActive", IsKernelDriverActive);
 	pDevice.addMethod("__detachKernelDriver", DetachKernelDriver);
 	pDevice.addMethod("__attachKernelDriver", AttachKernelDriver);
-
-	//pDevice.addMethod("__createTransfer", Device_CreateTransfer);
-	//pDevice.addMethod("__createControlTransfer", Device_CreateControlTransfer);
 }
 
 Proto<Device> pDevice("Device", &init);

@@ -26,45 +26,4 @@ Local<v8::Value> makeBuffer(const uint8_t* buf, unsigned length);
 		callback = Local<Function>::Cast(args[CALLBACK_ARG_IDX]); \
 	} \
 
-
-
-
-
-
-
-
-
-
-	
-#define BUF_LEN_ARG(ARG) \
-	libusb_endpoint_direction modus; \
-	if (Buffer::HasInstance(ARG)) { \
-		modus = LIBUSB_ENDPOINT_OUT; \
-	} else { \
-		modus = LIBUSB_ENDPOINT_IN; \
-		if (!ARG->IsUint32()) { \
-		      THROW_BAD_ARGS("IN transfer requires number of bytes. OUT transfer requires buffer.") \
-		} \
-	} \
-	\
-	if (modus == LIBUSB_ENDPOINT_OUT) { \
-	  	Local<Object> _buffer = ARG->ToObject(); \
-		length = Buffer::Length(_buffer); \
-		buf = reinterpret_cast<unsigned char*>(Buffer::Data(_buffer)); \
-	}else{ \
-		length = ARG->Uint32Value(); \
-		buf = 0; \
-	}
-
-namespace NodeUsb  {
-	class Device;
-	class Endpoint;
-	class Transfer;
-	class Stream;
-	
-	const PropertyAttribute CONST_PROP = static_cast<v8::PropertyAttribute>(ReadOnly|DontDelete);
-	
-	void doTransferCallback(Handle<Function> v8callback, Handle<Object> v8this, libusb_transfer_status status, uint8_t* buffer, unsigned length);
-
-}
 #endif

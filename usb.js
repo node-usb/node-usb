@@ -1,50 +1,151 @@
-/**
- * Expose complete node-usb binding to node.js
- */
 var usb = exports = module.exports = require("bindings")("usb_bindings");
 var events = require('events');
 
-
-//  method for finding devices by vendor and product id
-exports.find_by_vid_and_pid = function(vid, pid) {
-	var r = new Array();
-	var len = usb.devices.length;
+// convenience method for finding a device by vendor and product id
+exports.findByIds = function(vid, pid) {
+	var devices = usb.getDeviceList()
 	
-	for (var i = 0, m = len; i < m; i++) {
-		var dev = usb.devices[i]
-		var deviceDesc = dev.deviceDescriptor;
-
+	for (var i = 0; i < devices.length; i++) {
+		var deviceDesc = devices[i].deviceDescriptor
 		if ((deviceDesc.idVendor == vid) && (deviceDesc.idProduct == pid)) {
-			r.push(dev);
+			return devices[i]
 		}
 	}
-	
-	return r;
 }
 
-usb.Device.prototype.interface = function interface(interface, altSetting){
-	altSetting = altSetting || 0;
-	var interfaces = this.interfaces;
-	for (var i=0; i<interfaces.length; i++){
-		if (interfaces[i].interface == interface && interfaces[i].altSetting == altSetting)
-			return interfaces[i];
+usb.Device.prototype.timeout = 1000
+
+usb.Device.prototype.open = function(){
+	this.__open()
+	this.interfaces = []
+	var len = this.configDescriptor.interfaces.length
+	for (var i=0; i<len; i++){
+		this.interfaces[i] = new Interface(this, i)
 	}
 }
 
-usb.Interface.prototype.endpoint = function endpoint(addr){
-	var endpoints = this.endpoints;
-	for (var i=0; i<endpoints.length; i++){
-		if (endpoints[i].bEndpointAddress == addr) return endpoints[i];
+usb.Device.prototype.close = function(){
+	this.__close()
+	this.interfaces = null
+}
+
+Object.defineProperty(usb.Device.prototype, "configDescriptor", {
+    get: function() {
+        return this.configDescriptor = this.__getConfigDescriptor()
+    }
+});
+
+usb.Device.prototype.controlTransfer = function(){
+
+}
+
+function Interface(device, id){
+	this.device = device
+	this.id = id
+	this.altSetting = 0;
+	this.__refresh()
+}
+
+Interface.prototype.__refresh = function(){
+	this.descriptor = this.device.configDescriptor.interfaces[this.id][this.altSetting]
+	this.endpoints = []
+	var len = this.descriptor.endpoints.length
+	for (var i=0; i<len; i++){
+		var desc = this.descriptor.endpoints[i]
+		var c = (desc.bEndpointAddress&(1 << 7) == usb.LIBUSB_ENDPOINT_IN)?InEndpoint:OutEndpoint
+		this.endpoints[i] = new c(this.device, desc)
 	}
 }
 
-function inherits(target, source) {
-  for (var k in source.prototype)
-    target.prototype[k] = source.prototype[k];
+Interface.prototype.claim = function(){
+	this.device.__claimInterface(this.id)
 }
 
-inherits(usb.OutEndpoint, events.EventEmitter);
+Interface.prototype.release = function(cb){
+	var self = this;
+	this.device.__releaseInterface(this.id, function(err){
+		if (!err){
+			self.altSetting = 0;
+			self.__refresh()
+		}
+		cb.call(self, err)
+	})
+}
 
+Interface.prototype.setAltSetting = function(altSetting, cb){
+	var self = this;
+	this.device.__setInterface(this.id, altSetting, function(err){
+		if (!err){
+			self.altSetting = altSetting;
+			self.__refresh();
+		}
+		cb.call(self, err)
+	})
+
+}
+
+Interface.prototype.endpoint = function(addr){
+	for (var i=0; i<this.endpoints.length; i++){
+		if (this.endpoints[i].address == addr){
+			return this.endpoints[i]
+		}
+	}
+}
+
+function Endpoint(device, descriptor){
+	this.device = device
+	this.descriptor = descriptor
+	this.address = descriptor.bEndpointAddress
+	this.transferType = descriptor.bmAttributes&0x03
+}
+
+
+Endpoint.prototype.startStream = function(){
+
+}
+
+Endpoint.prototype.stopStream = function(){
+
+}
+
+function InEndpoint(device, descriptor){
+	Endpoint.call(this, device, descriptor)
+}
+
+exports.InEndpoint = InEndpoint
+InEndpoint.prototype = Object.create(Endpoint.prototype)
+InEndpoint.prototype.direction = "in"
+
+InEndpoint.prototype.transfer = function(length, cb){
+	var buffer = new Buffer(length)
+	var t = new usb.Transfer(this.device)
+	return t.submit(this.address, this.transferType, this.device.timeout, buffer,
+		function(error, buffer, actual){
+			cb.call(this, error, buffer.slice(0, actual))
+		}
+	)
+}
+
+function OutEndpoint(device, descriptor){
+	Endpoint.call(this, device, descriptor)
+}
+exports.OutEndpoint = OutEndpoint
+OutEndpoint.prototype = Object.create(Endpoint.prototype)
+OutEndpoint.prototype.direction = "out"
+
+OutEndpoint.prototype.transfer = function(buffer, cb){
+	if (!buffer) buffer = new Buffer(0)
+	else if (!Buffer.isBuffer(buffer)) buffer = new Buffer(buffer)
+	var t = new usb.Transfer(this.device)
+	return t.submit(this.address, this.transferType, this.device.timeout, buffer,
+		function(error, buffer, actual){
+			if (cb) cb.call(error)
+		}
+	)
+}
+
+
+/*
 usb.OutEndpoint.prototype.startStream = function startStream(n_transfers, transfer_size){
 	n_transfers = n_transfers || 3;
 	transfer_size = transfer_size || this.maxPacketSize;
@@ -104,7 +205,4 @@ usb.InEndpoint.prototype.startStream = function(n_transfers, transferSize){
 		startTransfer()
 	}
 }
-
-usb.InEndpoint.prototype.stopStream = function(){
-
-}
+*/
