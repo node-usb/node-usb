@@ -96,7 +96,7 @@ namespace NodeUsb {
 		HandleScope scope;
 
 		// need libusb_device structure as first argument
-		if (args.Length() != 1 || !args[0]->IsUint32() || !(((uint32_t)args[0]->Uint32Value() >= 0) && ((uint32_t)args[0]->Uint32Value() < 4))) {
+		if (args.Length() != 1 || !args[0]->IsUint32() || args[0]->Uint32Value() >= 4) {
 			THROW_BAD_ARGS("Usb::SetDebugLevel argument is invalid. [uint:[0-3]]!") 
 		}
 		

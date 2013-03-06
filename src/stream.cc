@@ -46,7 +46,7 @@ void Stream::start(unsigned nTransfers, unsigned transferSize){
 	}
 	
 	activeTransfers = nTransfers;
-	uv_ref(uv_default_loop());
+	completionQueue.ref();
 }
 
 void Stream::stop(){
@@ -66,7 +66,7 @@ void Stream::afterStop(){
 	}
 	
 	transfers.clear();
-	uv_unref(uv_default_loop());
+	completionQueue.unref();
 	
 	HandleScope scope;
 	TryCatch try_catch;

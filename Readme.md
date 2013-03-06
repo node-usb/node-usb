@@ -1,34 +1,31 @@
 USB Library for Node.JS
 ===============================
-`usb.js` is a Node.JS library for communicating with USB devices in JavaScript / CoffeeScript.
 
-This library is based on Christopher Klein's [node-usb](https://github.com/schakko/node-usb),
-but the API is not compatible (hopefully you find it an improvement). Compared to node-usb,
-it's based entirely on libusb's asynchronous API for better efficiency, and provides a stream API
-for continuously streaming data.
+Node.JS library for communicating with USB devices in JavaScript / CoffeeScript.
 
-Tested with Node version 0.6.12/Linux.
+This is a refactoring / rewrite of Christopher Klein's [node-usb](https://github.com/schakko/node-usb). The API is not compatible (hopefully you find it an improvement).
+
+It's based entirely on libusb's asynchronous API for better efficiency, and provides a stream API for continuously streaming data or events.
+
+Tested with Node 0.6.12/Linux and 0.8.14/Linux.
+
 Older versions of libusb segfault when using bulk or interrupt endpoints.
 Use [libusb](http://libusb.org)  or [libusbx](http://libusbx.org) 1.0.9 or greater.
 
 Installation
 ============
-Make sure you have installed libusb-1.0-0-dev (Ubuntu: sudo apt-get install libusb-1.0-0-dev).
+Make sure you have installed libusb-1.0-0-dev (Ubuntu: `sudo apt-get install libusb-1.0-0-dev`).
 
 Just run
 
-	make
+	npm install usb
 
-in the git checkout.
-
-If you want to use the USB vendor ids, execute
-
-	make create-usb-ids
+to install from npm. See the bottom of this page for instructions for building from a git checkout.
 
 API
 ===
 
-    var usb = require('./usb')
+  var usb = require('usb')
 
 usb
 ---
@@ -110,7 +107,6 @@ Object with properties for the fields of the config descriptor:
 Interface
 ---------
 
-
 ### .endpoint(address)
 Return the InEndpoint or OutEndpoint with the specified address.
 
@@ -191,12 +187,9 @@ Endpoints in the IN direction (device->PC) have this type.
 ### .transfer(length, callback(data, error))
 Perform a transfer to read data from the endpoint.
 
-If length is greater than maxPacketSize, libusb will automatically split the transfer in multple packets,
-and you will receive one callback with all data once all packets are complete.
+If length is greater than maxPacketSize, libusb will automatically split the transfer in multiple packets, and you will receive one callback with all data once all packets are complete.
 
-Callback first parameter is `data`, just like OutEndpoint, but will always be undefined as no data is returned.
-
-`this` in the callback is the OutEndpoint object.
+`this` in the callback is the InEndpoint object.
 
 ### .startStream(nTransfers=3, transferSize=maxPacketSize)
 Start a streaming transfer from the endpoint.
@@ -209,7 +202,7 @@ if the Node v8 thread is busy. The `data` and `error` events are emitted as tran
 ### .stopStream()
 Stop the streaming transfer.
 
-Further data may still be received. The `end` event is emitted once all transfers have completed or cancelled.
+Further data may still be received. The `end` event is emitted once all transfers have completed or canceled.
 
 ### Event: data(data : Buffer)
 Emitted with data received by the stream
@@ -218,18 +211,19 @@ Emitted with data received by the stream
 Emitted when the stream encounters an error.
 
 ### Event: end
-Emitted when the stream has been cancelled
+Emitted when the stream has been canceled
 
 OutEndpoint
 -----------
 
 Endpoints in the OUT direction (PC->device) have this type.
 
-### .transfer(data, callback)
+### .transfer(data, callback(data, error))
 Perform a transfer to write `data` to the endpoint.
 
-If length is greater than maxPacketSize, libusb will automatically split the transfer in multple packets,
-and you will receive one callback with all data once all packets are complete.
+If length is greater than maxPacketSize, libusb will automatically split the transfer in multiple packets, and you will receive one callback once all packets are complete.
+
+Callback first parameter is `data`, just like InEndpoint, but will always be undefined as no data is returned.
 
 `this` in the callback is the OutEndpoint object.
 
@@ -248,7 +242,7 @@ Delegates to .transfer(), but differs in that it updates the stream state tracki
 ### .stopStream()
 Stop the streaming transfer.
 
-No further `drain` events will be emitted. When all transfers have been completed, the OutEndpoint emits the `drain` event.
+No further `drain` events will be emitted. When all transfers have been completed, the OutEndpoint emits the `end` event.
 
 ### Event: drain
 Emitted when the stream requests more data. Use the .write() method to start another transfer.
@@ -263,18 +257,17 @@ Emitted when the stream has been stopped and all pending requests have been comp
 Development and testing
 =======================
 
+To build from git:
+
+  git clone https://github.com/nonolith/node-usb.git
+  cd node-usb
+  npm install
+
 To execute the unit tests, [CoffeeScript](http://coffeescript.org) is required. Run
 
-	coffee tests/node-usb-test.coffee
+	npm test
 
-
-For creating debug output you have to compile usb.js with
-
-	make debug
-
-or
-
-	node-waf clean configure --debug=true build
+Some tests require an attached USB device -- firmware to be released soon.
 
 Limitations
 ===========

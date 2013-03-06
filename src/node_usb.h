@@ -12,7 +12,7 @@
 #include <string>
 #include <cstdlib>
 
-#include <libusb.h>
+#include <libusb-1.0/libusb.h>
 #include <v8.h>
 
 #include <node.h>

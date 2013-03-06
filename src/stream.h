@@ -18,7 +18,7 @@ namespace NodeUsb {
 		struct CompletionData{
 			Stream* stream;
 			uint8_t* data;
-			unsigned length;
+			int length;
 			libusb_transfer_status status;
 			bool dead;
 		};

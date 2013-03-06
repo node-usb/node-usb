@@ -1,7 +1,7 @@
 /**
  * Expose complete node-usb binding to node.js
  */
-var usb = exports = module.exports = require("./usb_bindings");
+var usb = exports = module.exports = require("bindings")("usb_bindings");
 var events = require('events');
 
 

@@ -2,7 +2,7 @@
 #define SRC_BINDINGS_H
 
 #include "node_usb.h"
-#include "libusb.h"
+#include "libusb-1.0/libusb.h"
 
 // Taken from node-libmysqlclient
 #define OBJUNWRAP ObjectWrap::Unwrap
@@ -40,8 +40,7 @@
 #define EIO_CUSTOM(FUNC, STRUCTURE, CALLBACK) \
 		uv_work_t* req = new uv_work_t();\
 		req->data = STRUCTURE;\
-		uv_queue_work(uv_default_loop(), req, FUNC, CALLBACK);\
-		uv_ref(uv_default_loop());
+		uv_queue_work(uv_default_loop(), req, FUNC, (uv_after_work_cb) CALLBACK);\
 
 #define	EIO_CAST(TYPE, VARNAME) struct TYPE *VARNAME = reinterpret_cast<struct TYPE *>(req->data);
 #define	EIO_NEW(TYPE, VARNAME) \
@@ -75,7 +74,6 @@
 			}
 
 #define EIO_AFTER(VARNAME, SELF) \
-		uv_unref(uv_default_loop()); \
 		if (!VARNAME->callback.IsEmpty()) { \
 			HandleScope scope; \
 			EIO_HANDLE_ERROR(VARNAME) \
