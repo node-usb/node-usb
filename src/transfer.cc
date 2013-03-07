@@ -1,6 +1,4 @@
-#include "bindings.h"
-#include "transfer.h"
-#include <assert.h>
+#include "node_usb.h"
 
 extern "C" void LIBUSB_CALL usbThreadCb(libusb_transfer *transfer);
 void handleCompletion(Transfer* t);
@@ -18,6 +16,7 @@ Transfer::~Transfer(){
 	libusb_free_transfer(transfer);
 }
 
+// new Transfer(device, endpointAddr, type, timeout)
 static Handle<Value> Transfer_constructor(const Arguments& args){
 	ENTER_CONSTRUCTOR(4);
 	UNWRAP_ARG(pDevice, device, 0);
@@ -37,7 +36,7 @@ static Handle<Value> Transfer_constructor(const Arguments& args){
 	return scope.Close(args.This());
 }
 
-// Transfer.submit(endpointAddr, endpointType, timeout, buffer, callback)
+// Transfer.submit(buffer, callback)
 Handle<Value> Transfer_Submit(const Arguments& args) {
 	ENTER_METHOD(pTransfer, 2);
 	

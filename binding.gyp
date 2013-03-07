@@ -4,7 +4,6 @@
       'target_name': 'usb_bindings',
       'sources': [ 
         './src/node_usb.cc',
-        './src/helpers.cc',
         './src/device.cc',
         './src/transfer.cc',
       ],

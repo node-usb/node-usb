@@ -1,5 +1,4 @@
 #include "node_usb.h"
-#include "bindings.h"
 #include <thread>
 
 extern ProtoBuilder::ProtoList ProtoBuilder::initProto;
@@ -108,4 +107,11 @@ void initConstants(Handle<Object> target){
 	NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_SHORT_NOT_OK);
 	NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_FREE_BUFFER);
 	NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_FREE_TRANSFER);
+}
+
+Local<Value> libusbException(int errorno) {
+	const char* err = libusb_error_name(errorno);	
+	Local<Value> e  = Exception::Error(String::NewSymbol(err));
+	e->ToObject()->Set(V8SYM("errno"), Integer::New(errorno));
+	return e;
 }

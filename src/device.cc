@@ -1,7 +1,4 @@
 #include "node_usb.h"
-#include "bindings.h"
-#include "device.h"
-#include "transfer.h"
 
 #define STRUCT_TO_V8(TARGET, STR, NAME) \
 		TARGET->Set(V8STR(#NAME), Uint32::New((STR).NAME), CONST_PROP);

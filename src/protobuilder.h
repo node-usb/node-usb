@@ -3,6 +3,9 @@
 
 using namespace v8;
 
+#define V8STR(str) String::New(str)
+#define V8SYM(str) String::NewSymbol(str)
+
 #define THROW_BAD_ARGS(FAIL_MSG) return ThrowException(Exception::TypeError(String::New(FAIL_MSG)));
 #define THROW_ERROR(FAIL_MSG) return ThrowException(Exception::Error(String::New(FAIL_MSG)));
 #define CHECK_N_ARGS(MIN_ARGS) if (args.Length() < MIN_ARGS) THROW_BAD_ARGS("Expected " #MIN_ARGS " arguments")
