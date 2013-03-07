@@ -1,12 +1,16 @@
 #include "node_usb.h"
 
-extern "C" void LIBUSB_CALL usbThreadCb(libusb_transfer *transfer);
+extern "C" void LIBUSB_CALL usbCompletionCb(libusb_transfer *transfer);
 void handleCompletion(Transfer* t);
-UVQueue<Transfer*> Transfer::completionQueue(handleCompletion);
+
+#ifndef USE_POLL
+#include "uv_async_queue.h"
+UVQueue<Transfer*> completionQueue(handleCompletion);
+#endif
 
 Transfer::Transfer(){
 	transfer = libusb_alloc_transfer(0);
-	transfer->callback = usbThreadCb;
+	transfer->callback = usbCompletionCb;
 	transfer->user_data = this;
 	printf("Created Transfer %p\n", this);
 }
@@ -60,7 +64,10 @@ Handle<Value> Transfer_Submit(const Arguments& args) {
 
 	self->ref();
 	self->device->ref();
-	Transfer::completionQueue.ref();
+
+	#ifndef USE_POLL
+	completionQueue.ref();
+	#endif
 
 	printf("Submitting, %p %x %i %i %i %p %p\n", 
 		self->transfer->dev_handle,
@@ -77,18 +84,25 @@ Handle<Value> Transfer_Submit(const Arguments& args) {
 	return scope.Close(args.This());
 }
 
-extern "C" void LIBUSB_CALL usbThreadCb(libusb_transfer *transfer){
+extern "C" void LIBUSB_CALL usbCompletionCb(libusb_transfer *transfer){
 	Transfer* t = static_cast<Transfer*>(transfer->user_data);
 	printf("Completion callback %p\n", t);
 	assert(t != NULL);
-	Transfer::completionQueue.post(t);
+
+	#ifdef USE_POLL
+	handleCompletion(t);
+	#else
+	completionQueue.post(t);
+	#endif
 }
 
 void handleCompletion(Transfer* self){
 	printf("HandleCompletion %p\n", self);
 
 	self->device->unref();
-	Transfer::completionQueue.unref();
+	#ifndef USE_POLL
+	completionQueue.unref();
+	#endif
 	
 	if (!self->v8callback.IsEmpty()) {
 		HandleScope scope;

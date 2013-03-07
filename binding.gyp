@@ -31,6 +31,9 @@
                 {
                     'libraries': [
                       '-lusb-1.0'
+                    ],
+                    'defines': [
+                      'USE_POLL',
                     ]
                 }
             ],

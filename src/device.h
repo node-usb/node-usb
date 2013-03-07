@@ -1,7 +1,6 @@
 #ifndef SRC_DEVICE_H
 #define SRC_DEVICE_H
 
-#include "bindings.h"
 #include "usb.h"
 
 #include <map>

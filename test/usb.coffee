@@ -100,8 +100,8 @@ describe 'Device', ->
 				assert.throws -> inEndpoint.transfer(b)
 
 			it 'should support read', (done) ->
-				inEndpoint.transfer 64, (e, d, actual) ->
-					console.log("BulkTransferIn", d, e, actual)
+				inEndpoint.transfer 64, (e, d) ->
+					console.log("BulkTransferIn", d, e)
 					assert.ok(e == undefined, e)
 					done()
 
@@ -175,3 +175,6 @@ describe 'Device', ->
 					done()
 
 				outEndpoint.startStream 4, 64
+
+	after ->
+		device.close()

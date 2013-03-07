@@ -1,10 +1,8 @@
 #ifndef SRC_TRANSFER_H
 #define SRC_TRANSFER_H
 
-#include "bindings.h"
 #include "usb.h"
 #include "device.h"
-#include "uv_async_queue.h"
 
 struct Transfer: public node::ObjectWrap {
 	libusb_transfer* transfer;
@@ -19,8 +17,6 @@ struct Transfer: public node::ObjectWrap {
 
 	Transfer();
 	~Transfer();
-
-	static UVQueue<Transfer*> completionQueue;
 };
 
 #endif
