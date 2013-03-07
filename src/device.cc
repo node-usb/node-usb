@@ -6,6 +6,18 @@
 #define CHECK_OPEN() \
 		if (!self->handle){THROW_ERROR("Device is not opened");}
 
+Device::Device(libusb_device* d): device(d), handle(0) {
+	libusb_ref_device(device);
+	DEBUG("Created device %p", this);
+}
+
+
+Device::~Device(){
+	DEBUG("Freed device %p", this);
+	libusb_close(handle);
+	libusb_unref_device(device);
+}
+
 // Map pinning each libusb_device to a particular V8 instance
 std::map<libusb_device*, Persistent<Value> > Device::byPtr;
 
@@ -28,7 +40,7 @@ void Device::weakCallback(Persistent<Value> object, void *parameter){
 	byPtr.erase(static_cast<libusb_device*>(parameter));
 	object.Dispose();
 	object.Clear();
-	printf("Removed cached device %p\n", parameter);
+	DEBUG("Removed cached device %p", parameter);
 }
 
 static Handle<Value> deviceConstructor(const Arguments& args){

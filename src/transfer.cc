@@ -12,11 +12,11 @@ Transfer::Transfer(){
 	transfer = libusb_alloc_transfer(0);
 	transfer->callback = usbCompletionCb;
 	transfer->user_data = this;
-	printf("Created Transfer %p\n", this);
+	DEBUG("Created Transfer %p", this);
 }
 
 Transfer::~Transfer(){
-	printf("Freed Transfer %p\n", this);
+	DEBUG("Freed Transfer %p", this);
 	libusb_free_transfer(transfer);
 }
 
@@ -69,7 +69,7 @@ Handle<Value> Transfer_Submit(const Arguments& args) {
 	completionQueue.ref();
 	#endif
 
-	printf("Submitting, %p %x %i %i %i %p %p\n", 
+	DEBUG("Submitting, %p %x %i %i %i %p %p", 
 		self->transfer->dev_handle,
 		self->transfer->endpoint,
 		self->transfer->type,
@@ -80,13 +80,12 @@ Handle<Value> Transfer_Submit(const Arguments& args) {
 	);
 
 	CHECK_USB(libusb_submit_transfer(self->transfer));
-	printf("Submitted transfer %p\n", self);
 	return scope.Close(args.This());
 }
 
 extern "C" void LIBUSB_CALL usbCompletionCb(libusb_transfer *transfer){
 	Transfer* t = static_cast<Transfer*>(transfer->user_data);
-	printf("Completion callback %p\n", t);
+	DEBUG("Completion callback %p", t);
 	assert(t != NULL);
 
 	#ifdef USE_POLL
@@ -97,7 +96,7 @@ extern "C" void LIBUSB_CALL usbCompletionCb(libusb_transfer *transfer){
 }
 
 void handleCompletion(Transfer* self){
-	printf("HandleCompletion %p\n", self);
+	DEBUG("HandleCompletion %p", self);
 
 	self->device->unref();
 	#ifndef USE_POLL

@@ -38,4 +38,12 @@ Local<Value> libusbException(int errorno);
 		callback = Local<Function>::Cast(args[CALLBACK_ARG_IDX]); \
 	} \
 
+#ifdef ENABLE_DEBUG
+  #define DEBUG_HEADER fprintf(stderr, "node-usb [%s:%s() %d]: ", __FILE__, __FUNCTION__, __LINE__); 
+  #define DEBUG_FOOTER fprintf(stderr, "\n");
+  #define DEBUG(...) DEBUG_HEADER fprintf(stderr, __VA_ARGS__); DEBUG_FOOTER
+#else
+  #define DEBUG(...)
+#endif
+
 #endif
