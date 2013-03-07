@@ -53,9 +53,10 @@ describe 'Device', ->
 	it 'should open', ->
 		device.open()
 
-	xdescribe 'control transfer', ->
+	describe 'control transfer', ->
+		b = Buffer([0x30...0x40])
 		it 'should OUT transfer when the IN bit is not set', (done) ->
-			device.controlTransfer 0x40, 0x81, 0, 0, b, (d, e) ->
+			device.controlTransfer 0x40, 0x81, 0, 0, b, (e) ->
 				#console.log("ControlTransferOut", d, e)
 				assert.ok(e == undefined, e)
 				done()
@@ -64,7 +65,7 @@ describe 'Device', ->
 			assert.throws(-> device.controlTransfer(0x40, 0x81, 0, 0, 64))
 
 		it 'should IN transfer when the IN bit is set', (done) ->
-			device.controlTransfer 0xc0, 0x81, 0, 0, 64, (d, e) ->
+			device.controlTransfer 0xc0, 0x81, 0, 0, 128, (e, d) ->
 				#console.log("ControlTransferIn", d, e)
 				assert.ok(e == undefined, e)
 				assert.equal(d.toString(), b.toString())

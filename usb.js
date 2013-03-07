@@ -35,7 +35,53 @@ Object.defineProperty(usb.Device.prototype, "configDescriptor", {
     }
 });
 
-usb.Device.prototype.controlTransfer = function(){
+var SETUP_SIZE = usb.LIBUSB_CONTROL_SETUP_SIZE
+
+usb.Device.prototype.controlTransfer =
+function(bmRequestType, bRequest, wValue, wIndex, data_or_length, callback){
+	var self = this
+	var timeout = 1000
+	var isIn = !!(bmRequestType & usb.LIBUSB_ENDPOINT_IN)
+	var wLength
+
+	if (isIn){
+		if (!(data_or_length >= 0)){
+			throw new TypeError("Expected size number for IN transfer (based on bmRequestType)")
+		}
+		wLength = data_or_length
+	}else{
+		if (!Buffer.isBuffer(data_or_length)){
+			throw new TypeError("Expected buffer for OUT transfer (based on bmRequestType)")
+		}
+		wLength = data_or_length.length
+	}
+
+	// Buffer for the setup packet
+	// http://libusbx.sourceforge.net/api-1.0/structlibusb__control__setup.html
+	var buf = new Buffer(wLength + SETUP_SIZE)
+	buf.writeUInt8(   bmRequestType, 0)
+	buf.writeUInt8(   bRequest,      1)
+	buf.writeUInt16LE(wValue,        2)
+	buf.writeUInt16LE(wIndex,        4)
+	buf.writeUInt16LE(wLength,       6)
+
+	if (!isIn){
+		data_or_length.copy(buf, SETUP_SIZE)
+	}
+
+	var transfer = new usb.Transfer(this, 0, usb.LIBUSB_TRANSFER_TYPE_CONTROL, timeout)
+	return transfer.submit(buf,
+		function(error, buf, actual){
+			if (callback){
+				if (isIn){
+					callback.call(self, error, buf.slice(SETUP_SIZE, SETUP_SIZE + actual))
+				}else{
+					callback.call(self, error)
+				}
+			}
+		}
+	)
+
 
 }
 
@@ -120,10 +166,11 @@ InEndpoint.prototype = Object.create(Endpoint.prototype)
 InEndpoint.prototype.direction = "in"
 
 InEndpoint.prototype.transfer = function(length, cb){
+	var self = this
 	var buffer = new Buffer(length)
 	return this.makeTransfer().submit(buffer,
 		function(error, buf, actual){
-			cb.call(this, error, buffer.slice(0, actual))
+			cb.call(self, error, buffer.slice(0, actual))
 		}
 	)
 }
@@ -136,6 +183,7 @@ OutEndpoint.prototype = Object.create(Endpoint.prototype)
 OutEndpoint.prototype.direction = "out"
 
 OutEndpoint.prototype.transfer = function(buffer, cb){
+	var self = this
 	if (!buffer){
 		buffer = new Buffer(0)
 	}else if (!Buffer.isBuffer(buffer)){
@@ -144,7 +192,7 @@ OutEndpoint.prototype.transfer = function(buffer, cb){
 
 	return this.makeTransfer().submit(buffer,
 		function(error, buf, actual){
-			if (cb) cb.call(error)
+			if (cb) cb.call(self, error)
 		}
 	)
 }
