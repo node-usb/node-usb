@@ -3,6 +3,7 @@
 
 #include <assert.h>
 #include <string>
+#include <map>
 
 #include <libusb-1.0/libusb.h>
 #include <v8.h>
@@ -15,13 +16,47 @@ using namespace v8;
 using namespace node;
 
 #include "protobuilder.h"
-#include "device.h"
-#include "transfer.h"
+
+Local<Value> libusbException(int errorno);
+
+
+struct Device: public node::ObjectWrap {
+	libusb_device* device;
+	libusb_device_handle* handle;
+
+	static Handle<Value> get(libusb_device* handle);
+
+	inline void ref(){Ref();}
+	inline void unref(){Unref();}
+	inline bool canClose(){return refs_ == 0;}
+	inline void attach(Handle<Object> o){Wrap(o);}
+
+	~Device();
+
+	protected:
+		static std::map<libusb_device*, Persistent<Value> > byPtr;
+		Device(libusb_device* d);
+		static void weakCallback(Persistent<Value> object, void *parameter);
+};
+
+
+struct Transfer: public node::ObjectWrap {
+	libusb_transfer* transfer;
+	Device* device;
+	Persistent<Object> v8buffer;
+	Persistent<Function> v8callback;
+
+
+	inline void ref(){Ref();}
+	inline void unref(){Unref();}
+	inline void attach(Handle<Object> o){Wrap(o);}
+
+	Transfer();
+	~Transfer();
+};
 
 extern Proto<Device> pDevice;
 extern Proto<Transfer> pTransfer;
-
-Local<Value> libusbException(int errorno);
 
 #define CHECK_USB(r) \
 	if (r < LIBUSB_SUCCESS) { \
