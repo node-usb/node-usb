@@ -101,36 +101,32 @@ describe 'Device', ->
 
 			it 'should support read', (done) ->
 				inEndpoint.transfer 64, (e, d) ->
-					console.log("BulkTransferIn", d, e)
 					assert.ok(e == undefined, e)
 					done()
 
-			xit 'should signal errors', (done) ->
-				inEndpoint.transfer 1, (d, e) ->
-					assert.equal e, usb.LIBUSB_TRANSFER_OVERFLOW
-					assert.equal d, undefined
+			it 'should signal errors', (done) ->
+				inEndpoint.transfer 1, (e, d) ->
+					assert.equal e.errno, usb.LIBUSB_TRANSFER_OVERFLOW
 					done()
 
-			xit 'should be a readableStream', (done) ->
+			it 'should be a readableStream', (done) ->
 				pkts = 0
 		
+				inEndpoint.startStream 8, 64
 				inEndpoint.on 'data', (d) ->
 					#console.log("Stream callback", d)
 					pkts++
 					
-					if pkts == 10
+					if pkts == 100
 						inEndpoint.stopStream()
-						#console.log("Stopping stream")
 						
 				inEndpoint.on 'error', (e) ->
-					#console.log("Stream error", e)
-					assert.equal(e, 3)
+					throw e
 						
 				inEndpoint.on 'end', ->
 					#console.log("Stream stopped")
 					done()
 				
-				inEndpoint.startStream 4, 64
 
 		describe 'OUT endpoint', ->
 			outEndpoint = null
@@ -146,19 +142,16 @@ describe 'Device', ->
 			it 'should have the OUT direction flag', ->
 				assert.equal(outEndpoint.direction, 'out')
 
-			xit 'should fail to read', ->
-				assert.throws -> outEndpoint.transfer(64)
-
 			it 'should support write', (done) ->
 				outEndpoint.transfer [1,2,3,4], (d, e) ->
 					#console.log("BulkTransferOut", d, e)
 					done()
 
-			xit 'should be a writableStream', (done)->
+			it 'should be a writableStream', (done)->
 				pkts = 0
 
+				outEndpoint.startStream 4, 64
 				outEndpoint.on 'drain', ->
-					#console.log("Stream callback")
 					pkts++
 
 					outEndpoint.write(new Buffer(64));
@@ -174,7 +167,6 @@ describe 'Device', ->
 					#console.log("Stream stopped")
 					done()
 
-				outEndpoint.startStream 4, 64
 
 	after ->
 		device.close()

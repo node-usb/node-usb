@@ -1,5 +1,6 @@
-var usb = exports = module.exports = require("bindings")("usb_bindings");
-var events = require('events');
+var usb = exports = module.exports = require("bindings")("usb_bindings")
+var events = require('events')
+var util = require('util')
 
 // convenience method for finding a device by vendor and product id
 exports.findByIds = function(vid, pid) {
@@ -69,8 +70,7 @@ function(bmRequestType, bRequest, wValue, wIndex, data_or_length, callback){
 		data_or_length.copy(buf, SETUP_SIZE)
 	}
 
-	var transfer = new usb.Transfer(this, 0, usb.LIBUSB_TRANSFER_TYPE_CONTROL, timeout)
-	return transfer.submit(buf,
+	var transfer = new usb.Transfer(this, 0, usb.LIBUSB_TRANSFER_TYPE_CONTROL, timeout, 
 		function(error, buf, actual){
 			if (callback){
 				if (isIn){
@@ -81,8 +81,7 @@ function(bmRequestType, bRequest, wValue, wIndex, data_or_length, callback){
 			}
 		}
 	)
-
-
+	return transfer.submit(buf)
 }
 
 function Interface(device, id){
@@ -144,17 +143,34 @@ function Endpoint(device, descriptor){
 	this.address = descriptor.bEndpointAddress
 	this.transferType = descriptor.bmAttributes&0x03
 }
+util.inherits(Endpoint, events.EventEmitter)
 
-Endpoint.prototype.makeTransfer = function(){
-	return new usb.Transfer(this.device, this.address, this.transferType, this.device.timeout)
+Endpoint.prototype.makeTransfer = function(timeout, callback){
+	return new usb.Transfer(this.device, this.address, this.transferType, timeout, callback)
 }
 
-Endpoint.prototype.startStream = function(){
+Endpoint.prototype.startStream = function(nTransfers, transferSize, callback){
+	if (this.streamTransfers){
+		throw new Error("Stream already active")
+	}
 
+	nTransfers = nTransfers || 3;
+	this.streamTransferSize = transferSize || this.maxPacketSize;
+	this.streamActive = true
+	this.streamPending = 0
+
+	var transfers = []
+	for (var i=0; i<nTransfers; i++){
+		transfers[i] = this.makeTransfer(0, callback)
+	}
+	return transfers;
 }
 
 Endpoint.prototype.stopStream = function(){
-
+	for (var i=0; i<this.streamTransfers.length; i++){
+		this.streamTransfers[i].cancel()
+	}
+	this.streamActive = false
 }
 
 function InEndpoint(device, descriptor){
@@ -162,24 +178,58 @@ function InEndpoint(device, descriptor){
 }
 
 exports.InEndpoint = InEndpoint
-InEndpoint.prototype = Object.create(Endpoint.prototype)
+util.inherits(InEndpoint, Endpoint)
 InEndpoint.prototype.direction = "in"
 
 InEndpoint.prototype.transfer = function(length, cb){
 	var self = this
 	var buffer = new Buffer(length)
-	return this.makeTransfer().submit(buffer,
-		function(error, buf, actual){
-			cb.call(self, error, buffer.slice(0, actual))
-		}
-	)
+
+	function callback(error, buf, actual){
+		cb.call(self, error, buffer.slice(0, actual))
+	}
+
+	return this.makeTransfer(this.device.timeout, callback).submit(buffer)
 }
+
+InEndpoint.prototype.startStream = function(nTransfers, transferSize){
+	var self = this
+	this.streamTransfers = InEndpoint.super_.prototype.startStream.call(this, nTransfers, transferSize, transferDone)
+	
+	function transferDone(error, buf, actual){
+		if (!error){
+			self.emit("data", buf.slice(actual))
+		}else if (error.errno != usb.LIBUSB_TRANSFER_CANCELLED){
+			self.emit("error", error)
+			self.stopStream()
+		}
+
+		if (self.streamActive){
+			startTransfer(this)
+		}else{
+			self.streamPending--
+
+			if (self.streamPending == 0){
+				self.emit('end')
+			}
+		}
+	}
+
+	function startTransfer(t){
+		t.submit(new Buffer(self.streamTransferSize), transferDone)
+	}
+
+	this.streamTransfers.forEach(startTransfer)
+	self.streamPending = this.streamTransfers.length
+}
+
+
 
 function OutEndpoint(device, descriptor){
 	Endpoint.call(this, device, descriptor)
 }
 exports.OutEndpoint = OutEndpoint
-OutEndpoint.prototype = Object.create(Endpoint.prototype)
+util.inherits(OutEndpoint, Endpoint)
 OutEndpoint.prototype.direction = "out"
 
 OutEndpoint.prototype.transfer = function(buffer, cb){
@@ -190,25 +240,27 @@ OutEndpoint.prototype.transfer = function(buffer, cb){
 		buffer = new Buffer(buffer)
 	}
 
-	return this.makeTransfer().submit(buffer,
-		function(error, buf, actual){
-			if (cb) cb.call(self, error)
-		}
-	)
+	function callback(error, buf, actual){
+		if (cb) cb.call(self, error)
+	}
+
+	return this.makeTransfer(this.device.timeout, callback).submit(buffer)
 }
 
 
-/*
-usb.OutEndpoint.prototype.startStream = function startStream(n_transfers, transfer_size){
+
+OutEndpoint.prototype.startStream = function startStream(n_transfers, transfer_size){
 	n_transfers = n_transfers || 3;
 	transfer_size = transfer_size || this.maxPacketSize;
 	this._streamTransfers = n_transfers;
 	this._pendingTransfers = 0;
-	for (var i=0; i<n_transfers; i++) this.emit('drain');
+	var self = this
+	process.nextTick(function(){
+		for (var i=0; i<n_transfers; i++) self.emit('drain')
+	})
 }
 
-function out_ep_callback(d, err){
-	//console.log("out_ep_callback", d, err, this._pendingTransfers, this._streamTransfers)
+function out_ep_callback(err, d){
 	if (err) this.emit('error', err);
 	this._pendingTransfers--;
 	if (this._pendingTransfers < this._streamTransfers){
@@ -228,34 +280,3 @@ usb.OutEndpoint.prototype.stopStream = function stopStream(){
 	this._streamTransfers = 0;
 	if (this._pendingTransfers == 0) this.emit('end');
 }
-
-inherits(usb.InEndpoint, events.EventEmitter);
-
-usb.InEndpoint.prototype.startStream = function(n_transfers, transferSize){
-	var self = this
-	n_transfers = n_transfers || 3;
-	transferSize = transferSize || this.maxPacketSize;
-	
-	function transferDone(data, error){
-		if (!error){
-			self.emit("data", data)
-
-			if (data.length == transferSize){
-				startTransfer()
-			}else{
-				self.emit("end")
-			}
-		}else{
-			self.emit("error", error)
-		}
-	}
-
-	function startTransfer(){
-		self.transfer(transferSize, transferDone)
-	}
-
-	for (var i=0; i<n_transfers; i++){
-		startTransfer()
-	}
-}
-*/

@@ -16,7 +16,8 @@
         '-O3',
         '-Wall',
         '-Werror',
-        '-std=gnu++0x'
+        '-std=gnu++0x',
+        '-g'
       ],      
       'defines': [
         '_FILE_OFFSET_BITS=64',
@@ -34,6 +35,7 @@
                     ],
                     'defines': [
                       'USE_POLL',
+                      #'ENABLE_DEBUG'
                     ]
                 }
             ],
