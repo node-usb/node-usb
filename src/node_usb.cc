@@ -31,7 +31,7 @@ void LIBUSB_CALL onPollFDAdded(int fd, short events, void *user_data){
 		pollByFD.insert(std::make_pair(fd, poll_fd));
 	}
 
-	DEBUG("Added pollfd %i, %p", fd, poll_fd);
+	DEBUG_LOG("Added pollfd %i, %p", fd, poll_fd);
 	unsigned flags = ((events&POLLIN) ? UV_READABLE:0)
 	               | ((events&POLLOUT)? UV_WRITABLE:0);
 	uv_poll_start(poll_fd, flags, onPollSuccess);
@@ -40,7 +40,7 @@ void LIBUSB_CALL onPollFDAdded(int fd, short events, void *user_data){
 void LIBUSB_CALL onPollFDRemoved(int fd, void *user_data){
 	auto it = pollByFD.find(fd);
 	if (it != pollByFD.end()){
-		DEBUG("Removed pollfd %i, %p", fd, it->second);
+		DEBUG_LOG("Removed pollfd %i, %p", fd, it->second);
 		uv_poll_stop(it->second);
 		uv_close((uv_handle_t*) it->second, (uv_close_cb) free);
 		pollByFD.erase(it);

@@ -8,12 +8,12 @@
 
 Device::Device(libusb_device* d): device(d), handle(0) {
 	libusb_ref_device(device);
-	DEBUG("Created device %p", this);
+	DEBUG_LOG("Created device %p", this);
 }
 
 
 Device::~Device(){
-	DEBUG("Freed device %p", this);
+	DEBUG_LOG("Freed device %p", this);
 	libusb_close(handle);
 	libusb_unref_device(device);
 }
@@ -40,7 +40,7 @@ void Device::weakCallback(Persistent<Value> object, void *parameter){
 	byPtr.erase(static_cast<libusb_device*>(parameter));
 	object.Dispose();
 	object.Clear();
-	DEBUG("Removed cached device %p", parameter);
+	DEBUG_LOG("Removed cached device %p", parameter);
 }
 
 static Handle<Value> deviceConstructor(const Arguments& args){

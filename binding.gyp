@@ -16,7 +16,7 @@
         '-O3',
         '-Wall',
         '-Werror',
-        '-std=gnu++0x',
+        '-std=c++0x',
         '-g'
       ],      
       'defines': [
@@ -35,7 +35,6 @@
                     ],
                     'defines': [
                       'USE_POLL',
-                      #'ENABLE_DEBUG'
                     ]
                 }
             ],

@@ -12,11 +12,11 @@ Transfer::Transfer(){
 	transfer = libusb_alloc_transfer(0);
 	transfer->callback = usbCompletionCb;
 	transfer->user_data = this;
-	DEBUG("Created Transfer %p", this);
+	DEBUG_LOG("Created Transfer %p", this);
 }
 
 Transfer::~Transfer(){
-	DEBUG("Freed Transfer %p", this);
+	DEBUG_LOG("Freed Transfer %p", this);
 	v8callback.Dispose();
 	libusb_free_transfer(transfer);
 }
@@ -74,7 +74,7 @@ Handle<Value> Transfer_Submit(const Arguments& args) {
 	completionQueue.ref();
 	#endif
 
-	DEBUG("Submitting, %p %p %x %i %i %i %p", 
+	DEBUG_LOG("Submitting, %p %p %x %i %i %i %p", 
 		self,
 		self->transfer->dev_handle,
 		self->transfer->endpoint,
@@ -90,7 +90,7 @@ Handle<Value> Transfer_Submit(const Arguments& args) {
 
 extern "C" void LIBUSB_CALL usbCompletionCb(libusb_transfer *transfer){
 	Transfer* t = static_cast<Transfer*>(transfer->user_data);
-	DEBUG("Completion callback %p", t);
+	DEBUG_LOG("Completion callback %p", t);
 	assert(t != NULL);
 
 	#ifdef USE_POLL
@@ -101,7 +101,7 @@ extern "C" void LIBUSB_CALL usbCompletionCb(libusb_transfer *transfer){
 }
 
 void handleCompletion(Transfer* self){
-	DEBUG("HandleCompletion %p", self);
+	DEBUG_LOG("HandleCompletion %p", self);
 
 	self->device->unref();
 	#ifndef USE_POLL
@@ -136,7 +136,7 @@ void handleCompletion(Transfer* self){
 
 Handle<Value> Transfer_Cancel(const Arguments& args) {
 	ENTER_METHOD(pTransfer, 0);
-	DEBUG("Cancel %p %i", self, !!self->transfer->buffer);
+	DEBUG_LOG("Cancel %p %i", self, !!self->transfer->buffer);
 	int r = libusb_cancel_transfer(self->transfer);
 	if (r == LIBUSB_ERROR_NOT_FOUND){
 		// Not useful to throw an error for this case
