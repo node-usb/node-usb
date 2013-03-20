@@ -198,7 +198,7 @@ InEndpoint.prototype.startStream = function(nTransfers, transferSize){
 	
 	function transferDone(error, buf, actual){
 		if (!error){
-			self.emit("data", buf.slice(actual))
+			self.emit("data", buf.slice(0, actual))
 		}else if (error.errno != usb.LIBUSB_TRANSFER_CANCELLED){
 			self.emit("error", error)
 			self.stopStream()
