@@ -7,15 +7,7 @@
         './src/device.cc',
         './src/transfer.cc',
       ],
-      'cflags': [
-        '-O3',
-        '-Wall',
-        '-Werror',  
-      ],
       'cflags_cc': [
-        '-O3',
-        '-Wall',
-        '-Werror',
         '-std=c++0x'
       ],
       'defines': [
@@ -25,30 +17,30 @@
       'include_dirs+': [
         'src/'
       ],
-      'link_settings': {
-        'conditions' : [
-            ['OS=="linux"',
-                {
-                    'libraries': [
-                      '-lusb-1.0'
-                    ],
-                    'defines': [
-                      'USE_POLL',
-                    ]
-                }
+      'conditions' : [
+          ['OS=="linux"', {
+            'include_dirs+': [
+              '<!@(pkg-config libusb-1.0 --cflags-only-I | sed s/-I//g)'
             ],
-            ['OS=="mac"',
-                {
-                    'libraries': [
-                      '-lusb-1.0'
-                    ],
-                    'defines': [
-                      'USE_POLL',
-                    ]
-                }
+            'libraries': [
+              '<!@(pkg-config libusb-1.0 --libs)'
+            ],
+            'defines': [
+              'USE_POLL',
             ]
-        ]
-      }  
+          }],
+          ['OS=="mac"', {
+            'include_dirs+': [
+              '<!@(pkg-config libusb-1.0 --cflags-only-I | sed s/-I//g)'
+            ],
+            'libraries': [
+              '<!@(pkg-config libusb-1.0 --libs)'
+            ],
+            'defines': [
+              'USE_POLL',
+            ]
+          }],
+      ]
     }
   ]
 }
