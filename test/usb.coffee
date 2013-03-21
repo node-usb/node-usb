@@ -82,14 +82,15 @@ describe 'Device', ->
 		it 'should be the same as the interfaceNo 0', ->
 			assert.strictEqual iface, device.interface(0)
 
-		it "shouldn't have a kernel driver", ->
-			assert.equal iface.isKernelDriverActive(), false
+		if process.platform == 'linux'
+			it "shouldn't have a kernel driver", ->
+				assert.equal iface.isKernelDriverActive(), false
 
-		it "should fail to detach the kernel driver", ->
-			assert.throws -> iface.detachKernelDriver()
+			it "should fail to detach the kernel driver", ->
+				assert.throws -> iface.detachKernelDriver()
 
-		it "should fail to attach the kernel driver", ->
-			assert.throws -> iface.attachKernelDriver()
+			it "should fail to attach the kernel driver", ->
+				assert.throws -> iface.attachKernelDriver()
 
 		it 'should be able to claim an interface', ->
 			iface.claim()	

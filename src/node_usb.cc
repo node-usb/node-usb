@@ -1,6 +1,6 @@
 #include "node_usb.h"
 
-extern ProtoBuilder::ProtoList ProtoBuilder::initProto;
+ProtoBuilder::ProtoList ProtoBuilder::initProto;
 
 Handle<Value> SetDebugLevel(const Arguments& args);
 Handle<Value> GetDeviceList(const Arguments& args);
@@ -48,10 +48,9 @@ void LIBUSB_CALL onPollFDRemoved(int fd, void *user_data){
 }
 
 #else
-#include <thread>
-std::thread usb_thread;
+uv_thread_t usb_thread;
 
-void USBThreadFn(){
+void USBThreadFn(void*){
 	while(1) libusb_handle_events(usb_context);
 }
 #endif
@@ -73,8 +72,7 @@ extern "C" void Initialize(Handle<Object> target) {
 	free(pollfds);
 
 	#else
-	usb_thread = std::thread(USBThreadFn);
-	usb_thread.detach();
+	uv_thread_create(&usb_thread, USBThreadFn, NULL);
 	#endif
 
 	ProtoBuilder::initAll(target);
