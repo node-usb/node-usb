@@ -93,7 +93,7 @@ Open the device. All methods below require the device to be open before use.
 
 Close the device.
 
-### .controlTransfer(bmRequestType, bRequest, wValue, wIndex, data_or_length, callback(data, error))
+### .controlTransfer(bmRequestType, bRequest, wValue, wIndex, data_or_length, callback(error, data))
 
 Perform a control transfer with `libusb_control_transfer`.
 
