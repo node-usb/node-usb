@@ -16,9 +16,8 @@
         '-O3',
         '-Wall',
         '-Werror',
-        '-std=c++0x',
-        '-g'
-      ],      
+        '-std=c++0x'
+      ],
       'defines': [
         '_FILE_OFFSET_BITS=64',
         '_LARGEFILE_SOURCE',
@@ -42,6 +41,9 @@
                 {
                     'libraries': [
                       '-lusb-1.0'
+                    ],
+                    'defines': [
+                      'USE_POLL',
                     ]
                 }
             ]
