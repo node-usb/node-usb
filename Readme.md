@@ -7,16 +7,22 @@ This is a refactoring / rewrite of Christopher Klein's [node-usb](https://github
 
 It's based entirely on libusb's asynchronous API for better efficiency, and provides a stream API for continuously streaming data or events.
 
-Tested with Node 0.10/Linux.
-
-Older versions of libusb segfault when using bulk or interrupt endpoints.
-Use [libusb](http://libusb.org)  or [libusbx](http://libusbx.org) 1.0.9 or greater.
+Tested with Node 0.10/Fedora and Node 0.10/WinXP.
 
 Installation
 ============
-Make sure you have installed libusb-1.0-0-dev (Ubuntu: `sudo apt-get install libusb-1.0-0-dev`).
 
-Just run
+Libusb is required. Older versions of libusb segfault when using bulk or interrupt endpoints.
+Use [libusb](http://libusb.org) or [libusbx](http://libusbx.org) 1.0.9 or greater.
+
+**Ubuntu/Debian:** `sudo apt-get install libusb-1.0-0-dev`
+**Fedora:** `sudo yum install libusbx-devel`
+
+**OSX:** `brew install libusb`
+
+**Windows:** Download a Windows Binary package from http://libusbx.org/ and extract it at `C:\Program Files\libusb`. Use [Zadig](http://sourceforge.net/projects/libwdi/files/zadig/) to install the WinUSB driver for your USB device. Otherwise you will get a `LIBUSB_ERROR_NOT_SUPPORTED` when attempting to open devices.
+
+Then, just run
 
 	npm install usb
 
