@@ -4,25 +4,12 @@
       'target_name': 'usb_bindings',
       'sources': [ 
         './src/node_usb.cc',
-        './src/bindings.cc',
-        './src/usb.cc',
         './src/device.cc',
-        './src/interface.cc',
-        './src/endpoint.cc',
         './src/transfer.cc',
-        './src/stream.cc',  
-      ],
-      'cflags': [
-        '-O3',
-        '-Wall',
-        '-Werror',
       ],
       'cflags_cc': [
-        '-O3',
-        '-Wall',
-        '-Werror',
-        '-std=gnu++0x'
-      ],      
+        '-std=c++0x'
+      ],
       'defines': [
         '_FILE_OFFSET_BITS=64',
         '_LARGEFILE_SOURCE',
@@ -30,24 +17,50 @@
       'include_dirs+': [
         'src/'
       ],
-      'link_settings': {
-        'conditions' : [
-            ['OS=="linux"',
-                {
-                    'libraries': [
-                      '-lusb-1.0'
-                    ]
-                }
+      'conditions' : [
+          ['OS=="linux"', {
+            'include_dirs+': [
+              '<!@(pkg-config libusb-1.0 --cflags-only-I | sed s/-I//g)'
             ],
-            ['OS=="mac"',
-                {
-                    'libraries': [
-                      '-lusb-1.0'
-                    ]
-                }
+            'libraries': [
+              '<!@(pkg-config libusb-1.0 --libs)'
+            ],
+            'defines': [
+              'USE_POLL',
             ]
-        ]
-      }  
+          }],
+          ['OS=="mac"', {
+            'include_dirs+': [
+              '<!@(pkg-config libusb-1.0 --cflags-only-I | sed s/-I//g)'
+            ],
+            'libraries': [
+              '<!@(pkg-config libusb-1.0 --libs)'
+            ],
+            'defines': [
+              'USE_POLL',
+            ]
+          }],
+          ['OS=="win"', {
+            'variables': {
+              # Path to extracted libusbx windows binary package from http://libusbx.org/
+              'libusb_path': "C:/Program Files/libusb"
+            },
+            'defines':[
+              'WIN32_LEAN_AND_MEAN'
+            ],
+            'libraries': [
+               '<(libusb_path)/MS32/static/libusb-1.0.lib'
+            ],
+            'include_dirs+': [
+              '<(libusb_path)/include/libusbx-1.0'
+            ],
+            'msvs_settings': {
+              'VCCLCompilerTool': {
+                'AdditionalOptions': [ '/EHsc /MD' ],
+              },
+            },
+          }]
+      ]
     }
   ]
 }

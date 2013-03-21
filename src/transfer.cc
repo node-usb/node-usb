@@ -1,96 +1,154 @@
-#include "bindings.h"
-#include "transfer.h"
-#include <assert.h>
+#include "node_usb.h"
 
-using namespace NodeUsb;
+extern "C" void LIBUSB_CALL usbCompletionCb(libusb_transfer *transfer);
+void handleCompletion(Transfer* t);
 
-UVQueue<Transfer*> Transfer::completionQueue(Transfer::handleCompletion);
+#ifndef USE_POLL
+#include "uv_async_queue.h"
+UVQueue<Transfer*> completionQueue(handleCompletion);
+#endif
 
-Transfer::Transfer(Handle<Object> _device, Handle<Object> _v8this, Handle<Function> _callback):
-	v8device(Persistent<Object>::New(_device)),
-	v8this(Persistent<Object>::New(_v8this)),
-	v8callback(Persistent<Function>::New(_callback)),
-	device(ObjectWrap::Unwrap<Device>(_device)){
+Transfer::Transfer(){
 	transfer = libusb_alloc_transfer(0);
+	transfer->callback = usbCompletionCb;
+	transfer->user_data = this;
+	DEBUG_LOG("Created Transfer %p", this);
 }
 
 Transfer::~Transfer(){
-	v8this.Dispose();
-	v8device.Dispose();
+	DEBUG_LOG("Freed Transfer %p", this);
 	v8callback.Dispose();
-	free(transfer->buffer);
 	libusb_free_transfer(transfer);
 }
 
-extern "C" void LIBUSB_CALL usbThreadCb(libusb_transfer *t);
+// new Transfer(device, endpointAddr, type, timeout)
+static Handle<Value> Transfer_constructor(const Arguments& args){
+	ENTER_CONSTRUCTOR(5);
+	UNWRAP_ARG(pDevice, device, 0);
+	int endpoint, type, timeout;
+	INT_ARG(endpoint, 1);
+	INT_ARG(type, 2);
+	INT_ARG(timeout, 3);
+	CALLBACK_ARG(4);
 
-Transfer* Transfer::newControlTransfer(Handle<Object> device,
-                                         uint8_t bmRequestType,
-                                         uint8_t bRequest,
-                                         uint16_t wValue,
-                                         uint16_t wIndex,
-                                         uint8_t* data,
-                                         uint16_t wLength,
-                                         unsigned timeout,
-                                         Handle<Function> callback){
-	Transfer *t = new Transfer(device, device, callback);
-	
-	uint8_t *buffer = (uint8_t*) malloc(LIBUSB_CONTROL_SETUP_SIZE+wLength);
-	libusb_fill_control_setup(buffer, bmRequestType, bRequest, wValue, wIndex, wLength);
-	if (data) memcpy(buffer+LIBUSB_CONTROL_SETUP_SIZE, data, wLength);
-	t->direction = data?LIBUSB_ENDPOINT_OUT:LIBUSB_ENDPOINT_IN;
-	libusb_fill_control_transfer(t->transfer, t->device->handle, buffer, usbThreadCb, (void*) t, timeout);
-	
-	return t;
+	setConst(args.This(), "device", args[0]);
+	auto self = new Transfer();
+	self->attach(args.This());
+	self->device = device;
+	self->transfer->endpoint = endpoint;
+	self->transfer->type = type;
+	self->transfer->timeout = timeout;
+
+	self->v8callback = Persistent<Function>::New(callback);
+
+	return scope.Close(args.This());
 }
 
-Transfer* Transfer::newTransfer(libusb_transfer_type type,
-                                Handle<Object> device,
-                                Handle<Object> v8endpoint,
-                                uint8_t endpoint,
-                                unsigned char *data,
-                                int length,
-                                unsigned int timeout,
-                                Handle<Function> callback){
-	Transfer *t = new Transfer(device, v8endpoint, callback);
-	uint8_t *buffer = (uint8_t*) malloc(length);
-	if (data) memcpy(buffer, data, length);
-	t->direction = data?LIBUSB_ENDPOINT_OUT:LIBUSB_ENDPOINT_IN;
-	
+// Transfer.submit(buffer, callback)
+Handle<Value> Transfer_Submit(const Arguments& args) {
+	ENTER_METHOD(pTransfer, 1);
 
-	libusb_fill_interrupt_transfer(t->transfer, t->device->handle, endpoint,
-			                       buffer, length,
-			                       usbThreadCb, (void*) t, timeout);
-	
-	t->transfer->type = type;
-	
-	return t;
-}
-
-void Transfer::submit(){
-	completionQueue.ref();
-	libusb_submit_transfer(transfer);
-}
-
-void Transfer::handleCompletion(Transfer* t){
-	uint8_t* buffer = 0;
-	unsigned length = t->transfer->actual_length;
-	
-	if (t->direction == LIBUSB_ENDPOINT_IN){
-		buffer = t->transfer->buffer;
-		if (t->transfer->type == LIBUSB_TRANSFER_TYPE_CONTROL){
-			buffer += LIBUSB_CONTROL_SETUP_SIZE;
-		}
+	if (self->transfer->buffer){
+		THROW_ERROR("Transfer is already active")
 	}
 	
-	doTransferCallback(t->v8callback, t->v8this, t->transfer->status, buffer, length);
-	
-	completionQueue.unref();
-	delete t;
+	if (!Buffer::HasInstance(args[0])){
+		THROW_BAD_ARGS("Buffer arg [0] must be Buffer");
+	}
+	Local<Object> buffer_obj = args[0]->ToObject();
+	if (!self->device->handle){
+		THROW_ERROR("Device is not open");
+	}
+
+	// Can't be cached in constructor as device could be closed and re-opened
+	self->transfer->dev_handle = self->device->handle;
+
+	self->v8buffer = Persistent<Object>::New(buffer_obj);
+	self->transfer->buffer = (unsigned char*) Buffer::Data(buffer_obj);
+	self->transfer->length = Buffer::Length(buffer_obj);
+
+	self->ref();
+	self->device->ref();
+
+	#ifndef USE_POLL
+	completionQueue.ref();
+	#endif
+
+	DEBUG_LOG("Submitting, %p %p %x %i %i %i %p", 
+		self,
+		self->transfer->dev_handle,
+		self->transfer->endpoint,
+		self->transfer->type,
+		self->transfer->timeout,
+		self->transfer->length,
+		self->transfer->buffer
+	);
+
+	CHECK_USB(libusb_submit_transfer(self->transfer));
+	return scope.Close(args.This());
 }
 
-extern "C" void LIBUSB_CALL usbThreadCb(libusb_transfer *transfer){
+extern "C" void LIBUSB_CALL usbCompletionCb(libusb_transfer *transfer){
 	Transfer* t = static_cast<Transfer*>(transfer->user_data);
+	DEBUG_LOG("Completion callback %p", t);
 	assert(t != NULL);
-	Transfer::completionQueue.post(t);
+
+	#ifdef USE_POLL
+	handleCompletion(t);
+	#else
+	completionQueue.post(t);
+	#endif
 }
+
+void handleCompletion(Transfer* self){
+	HandleScope scope;
+	DEBUG_LOG("HandleCompletion %p", self);
+
+	self->device->unref();
+	#ifndef USE_POLL
+	completionQueue.unref();
+	#endif
+
+	// The callback may resubmit and overwrite these, so need to clear the
+	// persistent first.
+	Local<Object> buffer = Local<Object>::New(self->v8buffer);
+	self->v8buffer.Dispose();
+	self->v8buffer.Clear();
+	self->transfer->buffer = NULL;
+
+	if (!self->v8callback.IsEmpty()) {
+		Handle<Value> error = Undefined();
+		if (self->transfer->status != 0){
+			error = libusbException(self->transfer->status);
+		}
+		Handle<Value> argv[] = {error, buffer,
+			Uint32::New(self->transfer->actual_length)};
+		TryCatch try_catch;
+		self->v8callback->Call(self->handle_, 3, argv);
+		if (try_catch.HasCaught()) {
+			FatalException(try_catch);
+		}
+	}
+
+	self->unref();
+}
+
+Handle<Value> Transfer_Cancel(const Arguments& args) {
+	ENTER_METHOD(pTransfer, 0);
+	DEBUG_LOG("Cancel %p %i", self, !!self->transfer->buffer);
+	int r = libusb_cancel_transfer(self->transfer);
+	if (r == LIBUSB_ERROR_NOT_FOUND){
+		// Not useful to throw an error for this case
+		return False();
+	}
+	CHECK_USB(r);
+	return True();
+}
+
+static void init(Handle<Object> target){
+	pTransfer.init(&Transfer_constructor);
+	pTransfer.addMethod("submit", Transfer_Submit);
+	pTransfer.addMethod("cancel", Transfer_Cancel);
+}
+
+Proto<Transfer> pTransfer("Transfer", &init);
