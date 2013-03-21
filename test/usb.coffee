@@ -71,7 +71,7 @@ describe 'Device', ->
 				assert.equal(d.toString(), b.toString())
 				done()
 
-	describe 'interface', ->
+	describe 'Interface', ->
 		iface = null
 		before ->
 			iface = device.interfaces[0]
@@ -79,8 +79,20 @@ describe 'Device', ->
 		it 'should have one interface', ->
 			assert.notEqual(iface, undefined)
 
+		it 'should be the same as the interfaceNo 0', ->
+			assert.strictEqual iface, device.interface(0)
+
+		it "shouldn't have a kernel driver", ->
+			assert.equal iface.isKernelDriverActive(), false
+
+		it "should fail to detach the kernel driver", ->
+			assert.throws -> iface.detachKernelDriver()
+
+		it "should fail to attach the kernel driver", ->
+			assert.throws -> iface.attachKernelDriver()
+
 		it 'should be able to claim an interface', ->
-			iface.claim()
+			iface.claim()	
 
 		describe 'IN endpoint', ->
 			inEndpoint = null
@@ -102,6 +114,7 @@ describe 'Device', ->
 			it 'should support read', (done) ->
 				inEndpoint.transfer 64, (e, d) ->
 					assert.ok(e == undefined, e)
+					assert.ok(d.length == 64)
 					done()
 
 			it 'should signal errors', (done) ->
@@ -114,7 +127,7 @@ describe 'Device', ->
 		
 				inEndpoint.startStream 8, 64
 				inEndpoint.on 'data', (d) ->
-					#console.log("Stream callback", d)
+					assert.equal d.length, 64
 					pkts++
 					
 					if pkts == 100
@@ -143,8 +156,8 @@ describe 'Device', ->
 				assert.equal(outEndpoint.direction, 'out')
 
 			it 'should support write', (done) ->
-				outEndpoint.transfer [1,2,3,4], (d, e) ->
-					#console.log("BulkTransferOut", d, e)
+				outEndpoint.transfer [1,2,3,4], (e) ->
+					assert.ok(e == undefined, e)
 					done()
 
 			it 'should be a writableStream', (done)->
@@ -156,7 +169,7 @@ describe 'Device', ->
 
 					outEndpoint.write(new Buffer(64));
 
-					if pkts == 10
+					if pkts == 100
 						outEndpoint.stopStream()
 						#console.log("Stopping stream")
 
@@ -167,6 +180,8 @@ describe 'Device', ->
 					#console.log("Stream stopped")
 					done()
 
+		after (cb) ->
+			iface.release(cb)
 
 	after ->
 		device.close()

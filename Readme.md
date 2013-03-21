@@ -7,7 +7,7 @@ This is a refactoring / rewrite of Christopher Klein's [node-usb](https://github
 
 It's based entirely on libusb's asynchronous API for better efficiency, and provides a stream API for continuously streaming data or events.
 
-Tested with Node 0.6.12/Linux and 0.8.14/Linux.
+Tested with Node 0.10/Linux.
 
 Older versions of libusb segfault when using bulk or interrupt endpoints.
 Use [libusb](http://libusb.org)  or [libusbx](http://libusbx.org) 1.0.9 or greater.
@@ -32,46 +32,28 @@ usb
 
 Top-level object.
 
-### .devices
-List of Device objects for the USB devices attached to the system.
+### usb.getDevices()
+Return a list of `Device` objects for the USB devices attached to the system.
 
-### .LIBUSB_*
+### usb.findByIds(vid, pid)
+Convenience method to get the first device with the specified VID and PID, or `undefined` if no such device is present.
+
+### usb.LIBUSB_*
 Constant properties from libusb
 
-### .setDebugLevel(level : int)
+### usb.setDebugLevel(level : int)
 Set the libusb debug level (between 0 and 4)
-
 
 Device
 ------
 
 Represents a USB device.
 
-### .controlTransfer(bmRequestType, bRequest, wValue, wIndex, data_or_length, callback(data, error))
-
-Perform a control transfer with `libusb_control_transfer`.
-
-Parameter `data_or_length` can be a integer length for an IN transfer, or a Buffer for an out transfer. The type must match the direction specified in the MSB of bmRequestType.
-
-The `data` parameter of the callback is always undefined for OUT transfers, or will be passed a Buffer for IN transfers.
-
-### .interface(interface=0, altsetting=0)
-Return the interface with the specified index and alternate setting.
-
-### .interfaces
-List of Interface objects for the interfaces of the default configuration of the device.
-
-### .timeout
-(property getter/setter) Timeout in milliseconds to use for controlTransfer and endpoint transfers.
-
-### .deviceAddress
-Integer USB device address
-
 ### .busNumber
 Integer USB device number
 
-### .reset(callback)
-Performs a reset of the device. Callback is called when complete.
+### .deviceAddress
+Integer USB device address
 
 ### .deviceDescriptor
 Object with properties for the fields of the device descriptor:
@@ -92,7 +74,7 @@ Object with properties for the fields of the device descriptor:
   - bNumConfigurations
 
 ### .configDescriptor
-Object with properties for the fields of the config descriptor:
+Object with properties for the fields of the configuration descriptor:
 
   - bLength
   - bDescriptorType
@@ -102,7 +84,35 @@ Object with properties for the fields of the config descriptor:
   - iConfiguration
   - bmAttributes
   - MaxPower
-  - extra: Buffer containing additional data
+
+### .open()
+
+Open the device. All methods below require the device to be open before use.
+
+### .close()
+
+Close the device.
+
+### .controlTransfer(bmRequestType, bRequest, wValue, wIndex, data_or_length, callback(data, error))
+
+Perform a control transfer with `libusb_control_transfer`.
+
+Parameter `data_or_length` can be a integer length for an IN transfer, or a Buffer for an out transfer. The type must match the direction specified in the MSB of bmRequestType.
+
+The `data` parameter of the callback is always undefined for OUT transfers, or will be passed a Buffer for IN transfers.
+
+### .interface(interface)
+Return the interface with the specified interface number.
+
+### .interfaces
+List of Interface objects for the interfaces of the default configuration of the device.
+
+### .timeout
+Timeout in milliseconds to use for controlTransfer and endpoint transfers.
+
+### .reset(callback(error))
+Performs a reset of the device. Callback is called when complete.
+
 
 Interface
 ---------
@@ -119,23 +129,26 @@ Integer interface number.
 ### .altSetting
 Integer alternate setting number.
 
+### .setAltSetting(altSetting, callback(error))
+Sets the alternate setting. It updates the `interface.endpoints` array to reflect the endpoints found in the alternate setting.
+
 ### .claim()
 Claims the interface. This method must be called before using any endpoints of this interface.
 
-### .release(callback)
+### .release(callback(error))
 Releases the interface and resets the alternate setting. Calls callback when complete.
 
-### .detachKernelDriver()
-Detaches the kernel driver from interface.
-
-### .attachKernelDriver() : undefined
-Re-attaches the kernel driver to interface.
-
 ### .isKernelDriverActive()
-Returns 0  if not active; 1 if active.
+Returns `false` if a kernel driver is not active; `true` if active.
 
-### Descriptor attributes
-Fields from the interface descriptor, see libusb documentation or USB spec.
+### .detachKernelDriver()
+Detaches the kernel driver from the interface.
+
+### .attachKernelDriver()
+Re-attaches the kernel driver for the interface.
+
+### .descriptor
+Object with fields from the interface descriptor -- see libusb documentation or USB spec.
 
   - bLength
   - bDescriptorType
@@ -146,7 +159,6 @@ Fields from the interface descriptor, see libusb documentation or USB spec.
   - bInterfaceSubClass
   - bInterfaceProtocol
   - iInterface
-  - extraData : Buffer
 
 Endpoint
 --------
@@ -159,14 +171,8 @@ Endpoint direction: `usb.LIBUSB_ENDPOINT_IN` or `usb.LIBUSB_ENDPOINT_OUT`.
 ### .transferType
 Endpoint type: `usb.LIBUSB_TRANSFER_BULK`, `usb.LIBUSB_TRANSFER_INTERRUPT`, or `usb.LIBUSB_TRANSFER_ISOCHRONOUS`.
 
-### .maxPacketSize
-The max packet size.
-
-### .maxIsoPacketSize
-The max isochronous packet size if transfer type is isochronous.
-
-###  Descriptor attributes
-Fields from the interface descriptor, see libusb documentation or USB spec.
+###  .descriptor
+Object with fields from the endpoint descriptor -- see libusb documentation or USB spec.
 
   - bLength
   - bDescriptorType
@@ -176,15 +182,13 @@ Fields from the interface descriptor, see libusb documentation or USB spec.
   - bInterval
   - bRefresh
   - bSynchAddress
-  - extra_length	
-  - extraData : Buffer
 
 InEndpoint
 ----------
 
 Endpoints in the IN direction (device->PC) have this type.
 
-### .transfer(length, callback(data, error))
+### .transfer(length, callback(error, data))
 Perform a transfer to read data from the endpoint.
 
 If length is greater than maxPacketSize, libusb will automatically split the transfer in multiple packets, and you will receive one callback with all data once all packets are complete.
@@ -218,12 +222,10 @@ OutEndpoint
 
 Endpoints in the OUT direction (PC->device) have this type.
 
-### .transfer(data, callback(data, error))
+### .transfer(data, callback(error))
 Perform a transfer to write `data` to the endpoint.
 
 If length is greater than maxPacketSize, libusb will automatically split the transfer in multiple packets, and you will receive one callback once all packets are complete.
-
-Callback first parameter is `data`, just like InEndpoint, but will always be undefined as no data is returned.
 
 `this` in the callback is the OutEndpoint object.
 

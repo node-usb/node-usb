@@ -36,6 +36,18 @@ Object.defineProperty(usb.Device.prototype, "configDescriptor", {
     }
 });
 
+usb.Device.prototype.interface = function(addr){
+	if (!this.interfaces){
+		throw new Error("Device must be open before searching for interfaces")
+	}
+	addr = addr || 0
+	for (var i=0; i<this.interfaces.length; i++){
+		if (this.interfaces[i].interfaceNumber == addr){
+			return this.interfaces[i]
+		}
+	}
+}
+
 var SETUP_SIZE = usb.LIBUSB_CONTROL_SETUP_SIZE
 
 usb.Device.prototype.controlTransfer =
@@ -93,6 +105,7 @@ function Interface(device, id){
 
 Interface.prototype.__refresh = function(){
 	this.descriptor = this.device.configDescriptor.interfaces[this.id][this.altSetting]
+	this.interfaceNumber = this.descriptor.bInterfaceNumber
 	this.endpoints = []
 	var len = this.descriptor.endpoints.length
 	for (var i=0; i<len; i++){
@@ -116,6 +129,19 @@ Interface.prototype.release = function(cb){
 		cb.call(self, err)
 	})
 }
+
+Interface.prototype.isKernelDriverActive = function(){
+	return this.device.__isKernelDriverActive(this.id)
+}
+
+Interface.prototype.detachKernelDriver = function() {
+	return this.device.__detachKernelDriver(this.id)
+};
+
+Interface.prototype.attachKernelDriver = function() {
+	return this.device.__attachKernelDriver(this.id)
+};
+
 
 Interface.prototype.setAltSetting = function(altSetting, cb){
 	var self = this;
