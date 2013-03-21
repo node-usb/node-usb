@@ -117,8 +117,6 @@ void handleCompletion(Transfer* self){
 	self->transfer->buffer = NULL;
 
 	if (!self->v8callback.IsEmpty()) {
-		HandleScope scope;
-
 		Handle<Value> error = Undefined();
 		if (self->transfer->status != 0){
 			error = libusbException(self->transfer->status);
