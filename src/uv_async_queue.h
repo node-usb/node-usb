@@ -3,13 +3,14 @@
 
 #include <uv.h>
 #include <node_version.h>
-#include <functional>
 #include <queue>
 
 template <class T>
 class UVQueue{
 	public:
-		UVQueue(std::function<void(T&)> cb, bool _keep_alive=false): callback(cb), keep_alive(_keep_alive) {
+		typedef void (*fptr)(T);
+
+		UVQueue(fptr cb, bool _keep_alive=false): callback(cb), keep_alive(_keep_alive) {
 			uv_mutex_init(&mutex);
 			uv_async_init(uv_default_loop(), &async, UVQueue::internal_callback);
 			async.data = this;
@@ -46,7 +47,7 @@ class UVQueue{
 		}
 		
 	private:
-		std::function<void(T&)> callback;
+		fptr callback;
 		std::queue<T> queue;
 		uv_mutex_t mutex;
 		uv_async_t async;
