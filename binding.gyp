@@ -48,9 +48,6 @@
             'defines':[
               'WIN32_LEAN_AND_MEAN'
             ],
-            'libraries': [
-               '<(libusb_path)/MS32/static/libusb-1.0.lib'
-            ],
             'include_dirs+': [
               '<(libusb_path)/include/libusbx-1.0'
             ],
@@ -59,6 +56,18 @@
                 'AdditionalOptions': [ '/EHsc /MD' ],
               },
             },
+            "conditions" : [
+              ["target_arch=='ia32'", {
+                'libraries': [
+                   '<(libusb_path)/MS32/static/libusb-1.0.lib'
+                ]
+              }],
+              ["target_arch=='x64'", {
+                'libraries': [
+                   '<(libusb_path)/MS64/static/libusb-1.0.lib'
+                ]
+              }]
+            ]
           }]
       ]
     }
