@@ -36,9 +36,6 @@
             'libraries': [
               '<!@(pkg-config libusb-1.0 --libs)'
             ],
-            'defines': [
-              'USE_POLL',
-            ]
           }],
           ['OS=="win"', {
             'variables': {
