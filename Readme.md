@@ -18,7 +18,7 @@ Use [libusb](http://libusb.org) or [libusbx](http://libusbx.org) 1.0.9 or greate
 **Ubuntu/Debian:** `sudo apt-get install libusb-1.0-0-dev`
 **Fedora:** `sudo yum install libusbx-devel`
 
-**OSX:** `brew install libusb`
+**OSX:** `brew install libusb pkg-config`
 
 **Windows:** Download a Windows Binary package from http://libusbx.org/ and extract it at `C:\Program Files\libusb`. Use [Zadig](http://sourceforge.net/projects/libwdi/files/zadig/) to install the WinUSB driver for your USB device. Otherwise you will get a `LIBUSB_ERROR_NOT_SUPPORTED` when attempting to open devices.
 
