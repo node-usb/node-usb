@@ -21,7 +21,7 @@
   ],
   "version": "0.1.2",
   "engines": {
-    "node": ">=0.6.x  <0.10.9999"
+    "node": ">=0.8.x"
   },
   "main": "./usb",
   "repository": {
@@ -37,8 +37,8 @@
     "bindings": "1.0.x"
   },
   "devDependencies": {
-    "coffee-script": "~1.4.0",
-    "mocha": "~1.7.4"
+    "coffee-script": "~1.6.2",
+    "mocha": "~1.8.2"
   },
   "license": "MIT"
 }
