@@ -38,7 +38,7 @@ usb
 
 Top-level object.
 
-### usb.getDevices()
+### usb.getDeviceList()
 Return a list of `Device` objects for the USB devices attached to the system.
 
 ### usb.findByIds(vid, pid)
