@@ -267,9 +267,9 @@ Development and testing
 
 To build from git:
 
-  git clone https://github.com/nonolith/node-usb.git
-  cd node-usb
-  npm install
+	git clone https://github.com/nonolith/node-usb.git
+	cd node-usb
+	npm install
 
 To execute the unit tests, [CoffeeScript](http://coffeescript.org) is required. Run
 
