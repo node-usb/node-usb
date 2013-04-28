@@ -110,7 +110,7 @@ Interface.prototype.__refresh = function(){
 	var len = this.descriptor.endpoints.length
 	for (var i=0; i<len; i++){
 		var desc = this.descriptor.endpoints[i]
-		var c = (desc.bEndpointAddress&(1 << 7) == usb.LIBUSB_ENDPOINT_IN)?InEndpoint:OutEndpoint
+		var c = (desc.bEndpointAddress&usb.LIBUSB_ENDPOINT_IN)?InEndpoint:OutEndpoint
 		this.endpoints[i] = new c(this.device, desc)
 	}
 }
