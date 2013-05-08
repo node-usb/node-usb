@@ -15,7 +15,7 @@ Installation
 Libusb is required. Older versions of libusb segfault when using bulk or interrupt endpoints.
 Use [libusb](http://libusb.org) or [libusbx](http://libusbx.org) 1.0.9 or greater.
 
-**Ubuntu/Debian:** `sudo apt-get install libusb-1.0-0-dev`
+**Ubuntu/Debian:** `sudo apt-get install build-essential pkg-config libusb-1.0-0-dev`  
 **Fedora:** `sudo yum install libusbx-devel`
 
 **OSX:** `brew install libusb pkg-config`
