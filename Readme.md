@@ -175,7 +175,7 @@ Common base for InEndpoint and OutEndpoint, see below.
 Endpoint direction: `usb.LIBUSB_ENDPOINT_IN` or `usb.LIBUSB_ENDPOINT_OUT`.
 
 ### .transferType
-Endpoint type: `usb.LIBUSB_TRANSFER_BULK`, `usb.LIBUSB_TRANSFER_INTERRUPT`, or `usb.LIBUSB_TRANSFER_ISOCHRONOUS`.
+Endpoint type: `usb.LIBUSB_TRANSFER_TYPE_BULK`, `usb.LIBUSB_TRANSFER_TYPE_INTERRUPT`, or `usb.LIBUSB_TRANSFER_TYPE_ISOCHRONOUS`.
 
 ###  .descriptor
 Object with fields from the endpoint descriptor -- see libusb documentation or USB spec.
