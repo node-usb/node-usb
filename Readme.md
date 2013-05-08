@@ -42,7 +42,7 @@ Top-level object.
 Return a list of `Device` objects for the USB devices attached to the system.
 
 ### usb.findByIds(vid, pid)
-Convenience method to get the first device with the specified VID and PID, or `undefined` if no such device is present.
+Convenience method to get the first device with the specified VID (decimal) and PID (decimal), or `undefined` if no such device is present.
 
 ### usb.LIBUSB_*
 Constant properties from libusb
