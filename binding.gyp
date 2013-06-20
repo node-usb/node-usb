@@ -7,9 +7,9 @@
         './src/device.cc',
         './src/transfer.cc',
       ],
-      'cflags_cc': [
-        '-std=c++0x'
-      ],
+      'xcode_settings': {
+        'OTHER_CFLAGS': [ '-std=c++0x' ]
+      },
       'defines': [
         '_FILE_OFFSET_BITS=64',
         '_LARGEFILE_SOURCE',
