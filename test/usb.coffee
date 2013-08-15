@@ -109,6 +109,10 @@ describe 'Device', ->
 			it 'should have the IN direction flag', ->
 				assert.equal(inEndpoint.direction, 'in')
 
+			it 'should have a descriptor', ->
+				assert.equal(inEndpoint.descriptor.bEndpointAddress, 0x81)
+				assert.equal(inEndpoint.descriptor.wMaxPacketSize, 64)
+
 			it 'should fail to write', ->
 				assert.throws -> inEndpoint.transfer(b)
 
