@@ -132,6 +132,7 @@ Handle<Value> Device_GetConfigDescriptor(const Arguments& args){
 				STRUCT_TO_V8(v8edesc, edesc, bDescriptorType)
 				STRUCT_TO_V8(v8edesc, edesc, bEndpointAddress)
 				STRUCT_TO_V8(v8edesc, edesc, bmAttributes)
+				STRUCT_TO_V8(v8edesc, edesc, wMaxPacketSize)
 				STRUCT_TO_V8(v8edesc, edesc, bInterval)
 				STRUCT_TO_V8(v8edesc, edesc, bRefresh)
 				STRUCT_TO_V8(v8edesc, edesc, bSynchAddress)
