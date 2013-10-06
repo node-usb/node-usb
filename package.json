@@ -34,7 +34,7 @@
     "valgrind": "valgrind --leak-check=full --show-possibly-lost=no node --expose-gc --trace-gc node_modules/mocha/bin/_mocha -R spec --compilers coffee:coffee-script"
   },
   "dependencies": {
-    "bindings": "1.0.x"
+    "bindings": "1.1.x"
   },
   "devDependencies": {
     "coffee-script": "~1.6.2",
