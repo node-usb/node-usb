@@ -6,6 +6,19 @@
 #define CHECK_OPEN() \
 		if (!self->handle){THROW_ERROR("Device is not opened");}
 
+Handle<Object> makeBuffer(const unsigned char* ptr, unsigned length) {
+	HandleScope scope;
+	Buffer* buf = Buffer::New((const char*) ptr, length);
+	Local<Object> global = Context::GetCurrent()->Global();
+
+	Local<Value> bufferConstructor = global->Get(V8SYM("Buffer"));
+	assert(bufferConstructor->IsFunction());
+	Local<Function> bufferConstructorFn = Local<Function>::Cast(bufferConstructor);
+
+	Handle<Value> argv[3] = { buf->handle_, Integer::New(length), Integer::New(0) };
+	return scope.Close(bufferConstructorFn->NewInstance(3, argv));
+}
+
 Device::Device(libusb_device* d): device(d), handle(0) {
 	libusb_ref_device(device);
 	DEBUG_LOG("Created device %p", this);
@@ -91,7 +104,8 @@ Handle<Value> Device_GetConfigDescriptor(const Arguments& args){
 	STRUCT_TO_V8(v8cdesc, *cdesc, iConfiguration)
 	STRUCT_TO_V8(v8cdesc, *cdesc, bmAttributes)
 	STRUCT_TO_V8(v8cdesc, *cdesc, MaxPower)
-	//r->Set(V8STR("extra"), makeBuffer(cd.extra, cd.extra_length), CONST_PROP);
+
+	v8cdesc->Set(V8SYM("extra"), makeBuffer(cdesc->extra, cdesc->extra_length), CONST_PROP);
 
 	Local<Array> v8interfaces = Array::New(cdesc->bNumInterfaces);
 	v8cdesc->Set(V8SYM("interfaces"), v8interfaces);
@@ -118,7 +132,8 @@ Handle<Value> Device_GetConfigDescriptor(const Arguments& args){
 			STRUCT_TO_V8(v8idesc, idesc, bInterfaceSubClass)
 			STRUCT_TO_V8(v8idesc, idesc, bInterfaceProtocol)
 			STRUCT_TO_V8(v8idesc, idesc, iInterface)
-			// TODO: extra data
+
+			v8idesc->Set(V8SYM("extra"), makeBuffer(idesc.extra, idesc.extra_length), CONST_PROP);
 
 			Local<Array> v8endpoints = Array::New(idesc.bNumEndpoints);
 			v8idesc->Set(V8SYM("endpoints"), v8endpoints, CONST_PROP);
@@ -136,6 +151,8 @@ Handle<Value> Device_GetConfigDescriptor(const Arguments& args){
 				STRUCT_TO_V8(v8edesc, edesc, bInterval)
 				STRUCT_TO_V8(v8edesc, edesc, bRefresh)
 				STRUCT_TO_V8(v8edesc, edesc, bSynchAddress)
+
+				v8edesc->Set(V8SYM("extra"), makeBuffer(edesc.extra, edesc.extra_length), CONST_PROP);
 			}
 		}
 	}

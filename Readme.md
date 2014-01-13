@@ -90,6 +90,7 @@ Object with properties for the fields of the configuration descriptor:
   - iConfiguration
   - bmAttributes
   - MaxPower
+  - extra (Buffer containing any extra data or additional descriptors)
 
 ### .open()
 
@@ -165,6 +166,7 @@ Object with fields from the interface descriptor -- see libusb documentation or 
   - bInterfaceSubClass
   - bInterfaceProtocol
   - iInterface
+  - extra (Buffer containing any extra data or additional descriptors)
 
 Endpoint
 --------
@@ -188,6 +190,7 @@ Object with fields from the endpoint descriptor -- see libusb documentation or U
   - bInterval
   - bRefresh
   - bSynchAddress
+  - extra (Buffer containing any extra data or additional descriptors)
 
 InEndpoint
 ----------
