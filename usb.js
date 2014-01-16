@@ -53,7 +53,6 @@ var SETUP_SIZE = usb.LIBUSB_CONTROL_SETUP_SIZE
 usb.Device.prototype.controlTransfer =
 function(bmRequestType, bRequest, wValue, wIndex, data_or_length, callback){
 	var self = this
-	var timeout = 1000
 	var isIn = !!(bmRequestType & usb.LIBUSB_ENDPOINT_IN)
 	var wLength
 
@@ -82,7 +81,7 @@ function(bmRequestType, bRequest, wValue, wIndex, data_or_length, callback){
 		data_or_length.copy(buf, SETUP_SIZE)
 	}
 
-	var transfer = new usb.Transfer(this, 0, usb.LIBUSB_TRANSFER_TYPE_CONTROL, timeout, 
+	var transfer = new usb.Transfer(this, 0, usb.LIBUSB_TRANSFER_TYPE_CONTROL, this.timeout,
 		function(error, buf, actual){
 			if (callback){
 				if (isIn){
