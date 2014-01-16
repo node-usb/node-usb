@@ -53,11 +53,16 @@ describe 'Device', ->
 	it 'should open', ->
 		device.open()
 
+	it 'gets string descriptors', (done) ->
+		device.getStringDescriptor device.deviceDescriptor.iManufacturer, (e, s) ->
+			assert.ok(e == undefined, e)
+			assert.equal(s, 'Nonolith Labs')
+			done()
+
 	describe 'control transfer', ->
 		b = Buffer([0x30...0x40])
 		it 'should OUT transfer when the IN bit is not set', (done) ->
 			device.controlTransfer 0x40, 0x81, 0, 0, b, (e) ->
-				#console.log("ControlTransferOut", d, e)
 				assert.ok(e == undefined, e)
 				done()
 

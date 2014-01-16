@@ -95,6 +95,22 @@ function(bmRequestType, bRequest, wValue, wIndex, data_or_length, callback){
 	return transfer.submit(buf)
 }
 
+usb.Device.prototype.getStringDescriptor = function (desc_index, callback) {
+	var langid = 0x0409;
+	var length = 1024;
+	this.controlTransfer(
+		usb.LIBUSB_ENDPOINT_IN,
+		usb.LIBUSB_REQUEST_GET_DESCRIPTOR,
+		((usb.LIBUSB_DT_STRING << 8) | desc_index),
+		langid,
+		length,
+		function (error, buf) {
+			if (error) return callback(error);
+			callback(undefined, buf.toString('utf16le', 2));
+		}
+	);
+}
+
 function Interface(device, id){
 	this.device = device
 	this.id = id

@@ -108,6 +108,9 @@ Parameter `data_or_length` can be a integer length for an IN transfer, or a Buff
 
 The `data` parameter of the callback is always undefined for OUT transfers, or will be passed a Buffer for IN transfers.
 
+### .getStringDescriptor(index, callback(error, data))
+Perform a control transfer to retrieve a string descriptor
+
 ### .interface(interface)
 Return the interface with the specified interface number.
 
