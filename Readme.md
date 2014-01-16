@@ -89,7 +89,7 @@ Object with properties for the fields of the configuration descriptor:
   - bConfigurationValue
   - iConfiguration
   - bmAttributes
-  - MaxPower
+  - bMaxPower
   - extra (Buffer containing any extra data or additional descriptors)
 
 ### .open()

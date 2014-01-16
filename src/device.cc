@@ -103,7 +103,8 @@ Handle<Value> Device_GetConfigDescriptor(const Arguments& args){
 	STRUCT_TO_V8(v8cdesc, *cdesc, bConfigurationValue)
 	STRUCT_TO_V8(v8cdesc, *cdesc, iConfiguration)
 	STRUCT_TO_V8(v8cdesc, *cdesc, bmAttributes)
-	STRUCT_TO_V8(v8cdesc, *cdesc, MaxPower)
+	// Libusb 1.0 typo'd bMaxPower as MaxPower
+	v8cdesc->Set(V8STR("bMaxPower"), Uint32::New(cdesc->MaxPower), CONST_PROP);
 
 	v8cdesc->Set(V8SYM("extra"), makeBuffer(cdesc->extra, cdesc->extra_length), CONST_PROP);
 
