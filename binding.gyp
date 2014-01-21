@@ -1,4 +1,7 @@
 {
+  'variables': {
+    'target_arch%': 'ia32', # built for a 32-bit CPU by default
+  },
   'targets': [  
     {
       'target_name': 'usb_bindings',
@@ -48,20 +51,51 @@
             'include_dirs+': [
               '<(libusb_path)/include/libusbx-1.0'
             ],
+            'default_configuration': 'Debug',
+            'configurations': {
+              'Debug': {
+                'defines': [ 'DEBUG', '_DEBUG' ],
+                'msvs_settings': {
+                  'VCCLCompilerTool': {
+                    'RuntimeLibrary': 1, # static debug
+                  },
+                },
+              },
+              'Release': {
+                'defines': [ 'NDEBUG' ],
+                'msvs_settings': {
+                  'VCCLCompilerTool': {
+                    'RuntimeLibrary': 0, # static release
+                  },
+                },
+              }
+            },
             'msvs_settings': {
               'VCCLCompilerTool': {
-                'AdditionalOptions': [ '/EHsc /MD' ],
+                'AdditionalOptions': [ '/EHsc' ],
               },
             },
             "conditions" : [
               ["target_arch=='ia32'", {
                 'libraries': [
-                   '<(libusb_path)/MS32/static/libusb-1.0.lib'
+                   '<(libusb_path)/MS32/dll/libusb-1.0.lib'
+                ],
+                "copies": [
+                  {
+                    "destination": "<(PRODUCT_DIR)",
+                    'files': [ '<(libusb_path)/MS32/dll/libusb-1.0.dll' ]
+                  }
                 ]
               }],
               ["target_arch=='x64'", {
                 'libraries': [
-                   '<(libusb_path)/MS64/static/libusb-1.0.lib'
+                   '<(libusb_path)/MS64/dll/libusb-1.0.lib'
+                ],
+                "copies": [
+                  {
+                    "destination": "<(PRODUCT_DIR)",
+                    'files': [ '<(libusb_path)/MS64/dll/libusb-1.0.dll' ]
+                  }
                 ]
               }]
             ]
