@@ -1,0 +1,1 @@
+process.exit(process.argv.slice(2).indexOf(process.platform + '-' + process.arch) > -1 ? 0 : 1);

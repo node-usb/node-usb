@@ -5,6 +5,9 @@
 #include <string>
 #include <map>
 
+#ifdef _WIN32
+#include <WinSock2.h>
+#endif
 #include <libusb.h>
 #include <v8.h>
 
