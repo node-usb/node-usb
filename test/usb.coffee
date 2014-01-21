@@ -15,14 +15,14 @@ describe 'Module', ->
 		assert.throws -> new usb.Device()
 		assert.throws -> usb.Device()
 
-describe 'setDebugLevel', ->
-	it 'should throw when passed invalid args', ->
-		assert.throws((-> usb.setDebugLevel()), TypeError)
-		assert.throws((-> usb.setDebugLevel(-1)), TypeError)
-		assert.throws((-> usb.setDebugLevel(4)), TypeError)
+	describe 'setDebugLevel', ->
+		it 'should throw when passed invalid args', ->
+			assert.throws((-> usb.setDebugLevel()), TypeError)
+			assert.throws((-> usb.setDebugLevel(-1)), TypeError)
+			assert.throws((-> usb.setDebugLevel(4)), TypeError)
 
-	it 'should succeed with good args', ->
-		assert.doesNotThrow(-> usb.setDebugLevel(0))
+		it 'should succeed with good args', ->
+			assert.doesNotThrow(-> usb.setDebugLevel(0))
 
 describe 'getDeviceList', ->
 	it 'should return at least one device', ->
