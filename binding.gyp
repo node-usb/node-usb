@@ -37,7 +37,8 @@
               '<!@(pkg-config libusb-1.0 --cflags-only-I | sed s/-I//g)'
             ],
             'libraries': [
-              '<!@(pkg-config libusb-1.0 --libs)'
+              # Force static library linkage
+              '<!@(pkg-config libusb-1.0 --libs | sed s/-L//g | sed "s/ -l/\/lib/g").a'
             ],
           }],
           ['OS=="win"', {
