@@ -8,7 +8,8 @@
 
 Handle<Object> makeBuffer(const unsigned char* ptr, unsigned length) {
 	HandleScope scope;
-	Buffer* buf = Buffer::New((const char*) ptr, length);
+	Buffer* buf = Buffer::New(length);
+	memcpy(node::Buffer::Data(buf), ptr, length);
 	Local<Object> global = Context::GetCurrent()->Global();
 
 	Local<Value> bufferConstructor = global->Get(V8SYM("Buffer"));
