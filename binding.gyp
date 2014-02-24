@@ -40,6 +40,10 @@
               # Force static library linkage
               '<!@(pkg-config libusb-1.0 --libs | sed s/-L//g | sed "s/ -l/\/lib/g").a'
             ],
+            'xcode_settings': {
+              'SDKROOT': 'macosx',
+              'MACOSX_DEPLOYMENT_TARGET': '10.5',
+            },
           }],
           ['OS=="win"', {
             'variables': {

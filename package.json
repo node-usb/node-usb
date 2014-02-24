@@ -19,11 +19,11 @@
       "name": "Christopher Klein"
     }
   ],
-  "version": "0.3.3",
+  "version": "0.3.4",
   "optionalDependencies": {
-    "usb-shyp-win32-x64": "0.3.1",
-    "usb-shyp-win32-ia32": "0.3.1",
-    "usb-shyp-darwin-x64": "0.3.2"
+    "usb-shyp-win32-x64": "0.3.x",
+    "usb-shyp-win32-ia32": "0.3.x",
+    "usb-shyp-darwin-x64": "0.3.x"
   },
   "engines": {
     "node": ">=0.8.x"
@@ -34,7 +34,7 @@
     "url": "https://github.com/nonolith/node-usb.git"
   },
   "scripts": {
-    "install": "node shyp-blacklist.js usb win32-x64 win32-ia32 darwin-x64 || node-gyp rebuild",
+    "install": "node shyp-blacklist.js win32-x64 win32-ia32 darwin-x64 || node-gyp rebuild",
     "test": "mocha --compilers coffee:coffee-script --grep Module",
     "full-test": "mocha --compilers coffee:coffee-script",
     "valgrind": "valgrind --leak-check=full --show-possibly-lost=no node --expose-gc --trace-gc node_modules/mocha/bin/_mocha -R spec --compilers coffee:coffee-script"

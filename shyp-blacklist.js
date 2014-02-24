@@ -10,7 +10,7 @@ function nodeABI () {
 }
 var platarch = process.platform + '-' + process.arch;
 process.exit(
-	process.argv.slice(3).indexOf(platarch) > -1
-	&& require('fs').existsSync('node_modules/' + process.argv[2] + '-shyp-' + platarch + '/' + nodeABI())
+	process.argv.slice(2).indexOf(platarch) > -1
+	&& require('fs').existsSync('node_modules/' + require('./package.json').name + '-shyp-' + platarch + '/' + nodeABI())
 		? 0
 		: 1);
