@@ -50,7 +50,8 @@
               'WIN32_LEAN_AND_MEAN'
             ],
             'include_dirs+': [
-              '<(libusb_path)/include/libusbx-1.0'
+              '<(libusb_path)/include/libusbx-1.0',
+              '<(libusb_path)/include/libusb-1.0',
             ],
             'default_configuration': 'Debug',
             'configurations': {
