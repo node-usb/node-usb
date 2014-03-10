@@ -31,19 +31,11 @@ class UVQueue{
 		}
 
 		void ref(){
-			#if NODE_VERSION_AT_LEAST(0, 7, 9)
 			uv_ref((uv_handle_t*)&async);
-			#else
-			uv_ref(uv_default_loop());
-			#endif
 		}
 
 		void unref(){
-			#if NODE_VERSION_AT_LEAST(0, 7, 9)
 			uv_unref((uv_handle_t*)&async);
-			#else
-			uv_unref(uv_default_loop());
-			#endif
 		}
 		
 	private:
