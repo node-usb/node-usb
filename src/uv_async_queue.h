@@ -10,11 +10,13 @@ class UVQueue{
 	public:
 		typedef void (*fptr)(T);
 
-		UVQueue(fptr cb, bool _keep_alive=false): callback(cb), keep_alive(_keep_alive) {
+		UVQueue(fptr cb, int _ref_count=0): callback(cb), ref_count(_ref_count) {
 			uv_mutex_init(&mutex);
 			uv_async_init(uv_default_loop(), &async, UVQueue::internal_callback);
 			async.data = this;
-			if (!keep_alive) unref();
+			if (ref_count < 1) {
+				uv_unref((uv_handle_t*)&async);
+			}
 		}
 		
 		void post(T value){
@@ -25,17 +27,22 @@ class UVQueue{
 		}
 		
 		~UVQueue(){
-			if (!keep_alive) ref();
 			uv_mutex_destroy(&mutex);
 			uv_close((uv_handle_t*)&async, NULL); //TODO: maybe we can't delete UVQueue until callback?
 		}
 
 		void ref(){
-			uv_ref((uv_handle_t*)&async);
+			ref_count++;
+			if (ref_count == 1) {
+				uv_ref((uv_handle_t*)&async);
+			}
 		}
 
 		void unref(){
-			uv_unref((uv_handle_t*)&async);
+			ref_count--;
+			if (ref_count == 0) {
+				uv_unref((uv_handle_t*)&async);
+			}
 		}
 		
 	private:
@@ -43,7 +50,7 @@ class UVQueue{
 		std::queue<T> queue;
 		uv_mutex_t mutex;
 		uv_async_t async;
-		bool keep_alive;
+		int ref_count;
 		
 		static void internal_callback(uv_async_t *handle, int status){
 			UVQueue* uvqueue = static_cast<UVQueue*>(handle->data);
