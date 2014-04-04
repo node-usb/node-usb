@@ -1,0 +1,14 @@
+install:
+  - cinst nodejs.install -x86
+  - set PATH=%PATH%;"C:\Program Files (x86)\nodejs\"
+  - ps: (new-object System.Net.WebClient).Downloadfile("https://downloads.sourceforge.net/project/libusb/libusb-1.0/libusb-1.0.18/libusb-1.0.18-win.7z", "c:\libusb-1.0.18-win.7z")
+  - 7z x -y "c:\libusb-1.0.18-win.7z" -o"C:\Program Files\libusb"
+  - npm install -g node-gyp
+
+build_script:
+  - git submodule update --init
+  - npm install --ignore-scripts
+  - node-gyp rebuild
+
+platforms:
+  - x32
