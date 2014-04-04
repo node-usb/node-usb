@@ -1,6 +1,8 @@
 USB Library for Node.JS
 ===============================
 
+**POSIX:** [![Build Status](https://travis-ci.org/nonolith/node-usb.svg?branch=tcr-usb)](https://travis-ci.org/nonolith/node-usb) &nbsp;&nbsp;&nbsp; **Windows:** [![Build status](https://ci.appveyor.com/api/projects/status/1q64jnnfseidkjwl)](https://ci.appveyor.com/project/tcr/node-usb)
+
 Node.JS library for communicating with USB devices in JavaScript / CoffeeScript.
 
 This is a refactoring / rewrite of Christopher Klein's [node-usb](https://github.com/schakko/node-usb). The API is not compatible (hopefully you find it an improvement).
