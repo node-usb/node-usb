@@ -2,6 +2,8 @@
 
 ProtoBuilder::ProtoList ProtoBuilder::initProto;
 
+NAN_METHOD(SetDebugLevel);
+NAN_METHOD(GetDeviceList);
 Handle<Value> SetDebugLevel(const Arguments& args);
 Handle<Value> GetDeviceList(const Arguments& args);
 void initConstants(Handle<Object> target);
@@ -56,7 +58,7 @@ void USBThreadFn(void*){
 #endif
 
 extern "C" void Initialize(Handle<Object> target) {
-	HandleScope  scope;
+	NanScope();
 
 	// Initialize libusb. On error, halt initialization.
 	int res = libusb_init(&usb_context);
@@ -89,18 +91,18 @@ extern "C" void Initialize(Handle<Object> target) {
 
 NODE_MODULE(usb_bindings, Initialize)
 
-Handle<Value> SetDebugLevel(const Arguments& args) {
-	HandleScope scope;
-	if (args.Length() != 1 || !args[0]->IsUint32() || args[0]->Uint32Value() > 4) {
-		THROW_BAD_ARGS("Usb::SetDebugLevel argument is invalid. [uint:[0-4]]!")
+NAN_METHOD(SetDebugLevel) {
+	NanScope();
+	if (args.Length() != 1 || !args[0]->IsUint32() || args[0]->Uint32Value() >= 4) {
+		THROW_BAD_ARGS("Usb::SetDebugLevel argument is invalid. [uint:[0-3]]!") 
 	}
 	
 	libusb_set_debug(usb_context, args[0]->Uint32Value());
-	return Undefined();
+	NanReturnValue(Undefined());
 }
 
-Handle<Value> GetDeviceList(const Arguments& args) {
-	HandleScope scope;
+NAN_METHOD(GetDeviceList) {
+	NanScope();
 	libusb_device **devs;
 	int cnt = libusb_get_device_list(usb_context, &devs);
 	CHECK_USB(cnt);
@@ -111,7 +113,7 @@ Handle<Value> GetDeviceList(const Arguments& args) {
 		arr->Set(i, Device::get(devs[i]));
 	}
 	libusb_free_device_list(devs, true);
-	return scope.Close(arr);
+	NanReturnValue(arr);
 }
 
 void initConstants(Handle<Object> target){

@@ -1,13 +1,14 @@
 #include <vector>
 #include <v8.h>
+#include "nan.h"
 
 using namespace v8;
 
 #define V8STR(str) String::New(str)
 #define V8SYM(str) String::NewSymbol(str)
 
-#define THROW_BAD_ARGS(FAIL_MSG) return ThrowException(Exception::TypeError(String::New(FAIL_MSG)));
-#define THROW_ERROR(FAIL_MSG) return ThrowException(Exception::Error(String::New(FAIL_MSG)));
+#define THROW_BAD_ARGS(FAIL_MSG) NanThrowTypeError(FAIL_MSG);
+#define THROW_ERROR(FAIL_MSG) NanThrowError(FAIL_MSG);
 #define CHECK_N_ARGS(MIN_ARGS) if (args.Length() < MIN_ARGS) THROW_BAD_ARGS("Expected " #MIN_ARGS " arguments")
 
 const PropertyAttribute CONST_PROP = static_cast<PropertyAttribute>(ReadOnly|DontDelete);
@@ -31,38 +32,35 @@ public:
 	ProtoBuilder(const char *_name, ProtoBuilder::InitFn _initFn=NULL)
 		:name(_name), initFn(_initFn){
 		ProtoBuilder::initProto.push_back(this);
-		tpl = Persistent<FunctionTemplate>::New(FunctionTemplate::New());
-		tpl->InstanceTemplate()->SetInternalFieldCount(1);
+		Local<FunctionTemplate> obj = FunctionTemplate::New();
+		NanInitPersistent(FunctionTemplate, tpl, obj);
+		NanPersistentToLocal(tpl)->InstanceTemplate()->SetInternalFieldCount(1);
 	}
 
-	void init(InvocationCallback constructor){
-		tpl->SetCallHandler(constructor);
-		tpl->SetClassName(String::NewSymbol(name));
+	void init(FunctionCallback constructor){
+		NanPersistentToLocal(tpl)->SetCallHandler(constructor);
+		NanPersistentToLocal(tpl)->SetClassName(String::NewSymbol(name));
 	}
 
 	void inherit(ProtoBuilder& other){
-		tpl->Inherit(other.tpl);
+		NanPersistentToLocal(tpl)->Inherit(NanPersistentToLocal(other.tpl));
 	}
 
 	Handle<Object> get(){
-		return tpl->GetFunction();	
+		return NanPersistentToLocal(tpl)->GetFunction();	
 	}
 
 	void addToModule(Handle<Object> target){
 		target->Set(String::NewSymbol(name), get());
 	}
 
-	void addMethod(const char* name, v8::InvocationCallback fn){
-		NODE_SET_PROTOTYPE_METHOD(tpl, name, fn);
+	void addMethod(const char* name, v8::FunctionCallback fn){
+		NODE_SET_PROTOTYPE_METHOD(NanPersistentToLocal(tpl), name, fn);
 	}
 
-	void addStaticMethod(const char* name, v8::InvocationCallback fn){
-		NODE_SET_METHOD(tpl, name, fn);
-	}
-
-	void addAccessor(const char* name, AccessorGetter getter, AccessorSetter setter=0){
-		tpl->InstanceTemplate()->SetAccessor(String::NewSymbol(name), getter, setter);
-	}
+	void addStaticMethod(const char* name, v8::FunctionCallback fn){
+		NODE_SET_METHOD(NanPersistentToLocal(tpl), name, fn);
+	}	
 
 	Persistent<FunctionTemplate> tpl;
 	const char* const name;
@@ -87,26 +85,26 @@ public:
 
 	Handle<Object> create(Handle<Value> arg1 = Undefined(), Handle<Value> arg2 = Undefined()){
 		Handle<Value> args[2] = {arg1, arg2};
-		Handle<Object> o = tpl->GetFunction()->NewInstance(2, args);
+		Handle<Object> o = NanPersistentToLocal(tpl)->GetFunction()->NewInstance(2, args);
 		return o;
 	}
 
 	Handle<Value> create(T* v, Handle<Value> arg1 = Undefined(), Handle<Value> arg2 = Undefined()){
 		if (!v) return Undefined();
 		Handle<Value> args[3] = {External::New(v), arg1, arg2};
-		Handle<Object> o = tpl->GetFunction()->NewInstance(3, args);
+		Handle<Object> o = NanPersistentToLocal(tpl)->GetFunction()->NewInstance(3, args);
 		return o;
 	}
 
 	inline T* unwrap(Handle<Value> handle){
 		if (!handle->IsObject()) return NULL;
 		Handle<Object> o = Handle<Object>::Cast(handle);
-		if (o->FindInstanceInPrototypeChain(tpl).IsEmpty()) return NULL;
+		if (o->FindInstanceInPrototypeChain(NanPersistentToLocal(tpl)).IsEmpty()) return NULL;
 		return ObjectWrap::Unwrap<T>(o);
 	}
 
 	inline T* _wrap(Handle<Object> handle, Handle<Value> ext){
-		auto p = static_cast<T*>(External::Unwrap(ext));
+		auto p = static_cast<T*>(ext);
 		p->attach(handle);
 		return p;
 	}
@@ -117,7 +115,7 @@ inline static void setConst(Handle<Object> obj, const char* const name, Handle<V
 }
 
 #define ENTER_CONSTRUCTOR(MIN_ARGS) \
-	HandleScope scope;              \
+	NanScope();              \
 	if (!args.IsConstructCall()) THROW_ERROR("Must be called with `new`!"); \
 	CHECK_N_ARGS(MIN_ARGS);
 
@@ -130,13 +128,13 @@ inline static void setConst(Handle<Object> obj, const char* const name, Handle<V
 	(void) self
 
 #define ENTER_METHOD(PROTO, MIN_ARGS) \
-	HandleScope scope;                \
+	NanScope();                \
 	CHECK_N_ARGS(MIN_ARGS);           \
 	auto self = PROTO.unwrap(args.This()); \
 	if (self == NULL) { THROW_BAD_ARGS(#PROTO " method called on invalid object") }
 
 #define ENTER_ACCESSOR(PROTO) \
-		HandleScope scope;                \
+		NanScope();                \
 		auto self = PROTO.unwrap(info.Holder());
 
 #define UNWRAP_ARG(PROTO, NAME, ARGNO)     \
