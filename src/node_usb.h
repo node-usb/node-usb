@@ -14,6 +14,7 @@
 #include <node.h>
 #include <node_buffer.h>
 #include <uv.h>
+#include "nan.h"
 
 using namespace v8;
 using namespace node;
@@ -40,7 +41,7 @@ struct Device: public node::ObjectWrap {
 	protected:
 		static std::map<libusb_device*, Persistent<Value> > byPtr;
 		Device(libusb_device* d);
-		static void weakCallback(Persistent<Value> object, void *parameter);
+		static NAN_WEAK_CALLBACK(libusb_device *, weakCallback);
 };
 
 
@@ -66,7 +67,6 @@ extern Proto<Transfer> pTransfer;
 	if (r < LIBUSB_SUCCESS) { \
 		ThrowException(libusbException(r)); \
 		NanReturnValue(Undefined()); \
-		return;   \
 	}
 
 #define CALLBACK_ARG(CALLBACK_ARG_IDX) \

@@ -42,9 +42,10 @@ Handle<Value> Device::get(libusb_device* dev){
 	if (it != byPtr.end()){
 		return NanPersistentToLocal(it->second);
 	}else{
+		// TODO NanMakeWeakPersistent
 		NanInitPersistent(Value, v, pDevice.create(new Device(dev)));
-		NanMakeWeak(v, dev, weakCallback);
-		byPtr.insert(std::make_pair(dev, v));
+		// NanMakeWeak(v, dev, weakCallback);
+		// byPtr.insert(std::make_pair(dev, v));
 		return NanPersistentToLocal(v);	
 	}
 }
@@ -55,10 +56,11 @@ void Device::unpin(libusb_device* device) {
 }
 
 // Callback to remove an instance from the cache map when V8 wants to GC it
-void Device::weakCallback(Persistent<Value> object, void *parameter){
-	unpin(static_cast<libusb_device*>(parameter));
-	object.Dispose();
-	object.Clear();
+NAN_WEAK_CALLBACK(libusb_device *, Device::weakCallback){
+	byPtr.erase(NAN_WEAK_CALLBACK_DATA(libusb_device*))
+	// object.Dispose();
+	// object.Clear();
+	DEBUG_LOG("Removed cached device %p", parameter);
 }
 
 static NAN_METHOD(deviceConstructor){
@@ -193,7 +195,7 @@ struct Req{
 	int errcode;
 
 	void submit(Device* d, Handle<Function> cb, uv_work_cb backend, uv_work_cb after){
-		NanInitPersistent(Handle<Function>, callback, cb);
+		NanInitPersistent(Function, callback, cb);
 		device = d;
 		device->ref();
 		req.data = this;
@@ -204,7 +206,7 @@ struct Req{
 		NanScope();
 		auto baton = (Req*) req->data;
 
-		Local<Object> device = baton->device->handle();
+		Handle<Value> device = baton->device->get(baton->device->device);
 		baton->device->unref();
 
 		if (!baton->callback.IsEmpty()) {
@@ -214,7 +216,7 @@ struct Req{
 			}
 			Handle<Value> argv[1] = {error};
 			TryCatch try_catch;
-			NanPersistentToLocal(baton->callback)->Call(device, 1, argv);
+			NanPersistentToLocal(baton->callback)->Call(device->ToObject(), 1, argv);
 			if (try_catch.HasCaught()) {
 				FatalException(try_catch);
 			}

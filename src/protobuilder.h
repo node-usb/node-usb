@@ -4,6 +4,10 @@
 
 using namespace v8;
 
+# if !NODE_VERSION_AT_LEAST(0, 11, 8)
+#define FunctionCallback InvocationCallback 
+# endif
+
 #define V8STR(str) String::New(str)
 #define V8SYM(str) String::NewSymbol(str)
 
@@ -103,8 +107,8 @@ public:
 		return ObjectWrap::Unwrap<T>(o);
 	}
 
-	inline T* _wrap(Handle<Object> handle, Handle<Value> ext){
-		auto p = static_cast<T*>(ext);
+	inline T* _wrap(Handle<Object> handle, Handle<Object> ext){
+		auto p = static_cast<T*>(ObjectWrap::Unwrap<T>(ext));
 		p->attach(handle);
 		return p;
 	}
@@ -124,7 +128,7 @@ inline static void setConst(Handle<Object> obj, const char* const name, Handle<V
 	if (!args.Length() || !args[0]->IsExternal()){ \
 		THROW_BAD_ARGS("This type cannot be created directly!"); \
 	}                                               \
-	auto self = (PROTO)._wrap(args.This(), args[0]); \
+	auto self = (PROTO)._wrap(args.This(), args[0]->ToObject()); \
 	(void) self
 
 #define ENTER_METHOD(PROTO, MIN_ARGS) \
