@@ -288,6 +288,14 @@ OutEndpoint.prototype.transfer = function(buffer, cb){
 	return this.makeTransfer(this.device.timeout, callback).submit(buffer)
 }
 
+OutEndpoint.prototype.transferWithZLP = function (buf, cb) {
+	if (buf.length % this.descriptor.wMaxPacketSize == 0) {
+		this.transfer(buf);
+		this.transfer(new Buffer(0), cb);
+	} else {
+		this.transfer(buf, cb);
+	}
+}
 
 
 OutEndpoint.prototype.startStream = function startStream(n_transfers, transfer_size){
