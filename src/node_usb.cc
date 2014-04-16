@@ -58,7 +58,12 @@ void USBThreadFn(void*){
 extern "C" void Initialize(Handle<Object> target) {
 	HandleScope  scope;
 
-	libusb_init(&usb_context);
+	// Initialize libusb. On error, halt initialization.
+	int res = libusb_init(&usb_context);
+	target->Set(String::NewSymbol("INIT_ERROR"), Number::New(res));
+	if (res != 0) {
+		return;
+	}
 
 	#ifdef USE_POLL
 	assert(libusb_pollfds_handle_timeouts(usb_context));
