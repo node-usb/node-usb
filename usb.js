@@ -2,6 +2,11 @@ var usb = exports = module.exports = require("bindings-shyp")("usb_bindings")
 var events = require('events')
 var util = require('util')
 
+// Check that libusb was initialized.
+if (usb.INIT_ERROR) {
+	throw new Error('Could not initialize libusb. Check that your system has a usb controller.');
+}
+
 // convenience method for finding a device by vendor and product id
 exports.findByIds = function(vid, pid) {
 	var devices = usb.getDeviceList()
