@@ -139,25 +139,25 @@ Interface.prototype.claim = function(){
 	this.device.__claimInterface(this.id)
 }
 
-Interface.prototype.release = function(graceful, cb){
+Interface.prototype.release = function(closeEndpoints, cb){
 	var self = this;
-	if (typeof graceful == 'function') {
-		cb = graceful;
-		graceful = null;
+	if (typeof closeEndpoints == 'function') {
+		cb = closeEndpoints;
+		closeEndpoints = null;
 	}
 
-	if (!graceful || this.endpoints.length == 0) {
-		next.call(self);
+	if (!closeEndpoints || this.endpoints.length == 0) {
+		next();
 	} else {
 		var n = self.endpoints.length;
 		self.endpoints.forEach(function (ep, i) {
 			if (ep.streamActive) {
 				ep.once('end', function () {
-					if (--n == 0) next.call(self);
+					if (--n == 0) next();
 				});
 				ep.stopStream();
 			} else {
-				if (--n == 0) next.call(self);
+				if (--n == 0) next();
 			}
 		});
 	}
