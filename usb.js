@@ -139,15 +139,38 @@ Interface.prototype.claim = function(){
 	this.device.__claimInterface(this.id)
 }
 
-Interface.prototype.release = function(cb){
+Interface.prototype.release = function(graceful, cb){
 	var self = this;
-	this.device.__releaseInterface(this.id, function(err){
-		if (!err){
-			self.altSetting = 0;
-			self.__refresh()
-		}
-		cb.call(self, err)
-	})
+	if (typeof graceful == 'function') {
+		cb = graceful;
+		graceful = null;
+	}
+
+	if (!graceful || this.endpoints.length == 0) {
+		next.call(self);
+	} else {
+		var n = self.endpoints.length;
+		self.endpoints.forEach(function (ep, i) {
+			if (ep.streamActive) {
+				ep.once('end', function () {
+					if (--n == 0) next.call(self);
+				});
+				ep.stopStream();
+			} else {
+				if (--n == 0) next.call(self);
+			}
+		});
+	}
+
+	function next () {
+		self.device.__releaseInterface(self.id, function(err){
+			if (!err){
+				self.altSetting = 0;
+				self.__refresh()
+			}
+			cb.call(self, err)
+		})
+	}
 }
 
 Interface.prototype.isKernelDriverActive = function(){
@@ -309,6 +332,7 @@ OutEndpoint.prototype.transferWithZLP = function (buf, cb) {
 OutEndpoint.prototype.startStream = function startStream(n_transfers, transfer_size){
 	n_transfers = n_transfers || 3;
 	transfer_size = transfer_size || this.maxPacketSize;
+	this.streamActive = true;
 	this._streamTransfers = n_transfers;
 	this._pendingTransfers = 0;
 	var self = this
@@ -335,6 +359,7 @@ usb.OutEndpoint.prototype.write = function write(data){
 
 usb.OutEndpoint.prototype.stopStream = function stopStream(){
 	this._streamTransfers = 0;
+	this.streamActive = false;
 	if (this._pendingTransfers === null) throw new Error('stopStream invoked on non-active stream.');
 	if (this._pendingTransfers == 0) this.emit('end');
 }
