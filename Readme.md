@@ -147,8 +147,10 @@ Sets the alternate setting. It updates the `interface.endpoints` array to reflec
 ### .claim()
 Claims the interface. This method must be called before using any endpoints of this interface.
 
-### .release(callback(error))
+### .release([closeEndpoints], callback(error))
 Releases the interface and resets the alternate setting. Calls callback when complete.
+
+It is an error to release an interface with pending transfers. If the optional closeEndpoints parameter is true, any active endpoint streams are stopped (see `Endpoint.stopStream`), and the interface is released after the stream transfers are cancelled. Transfers submitted individually with `Endpoint.transfer` are not affected by this parameter.
 
 ### .isKernelDriverActive()
 Returns `false` if a kernel driver is not active; `true` if active.
