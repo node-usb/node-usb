@@ -16,10 +16,15 @@
       "url": "http://kevinmehall.net"
     },
     {
+      "name": "Tim Ryan",
+      "email": "tim@technical.io",
+      "url": "http://timryan.org"
+    },
+    {
       "name": "Christopher Klein"
     }
   ],
-  "version": "0.3.8",
+  "version": "0.3.9",
   "optionalDependencies": {
     "usb-shyp-win32-x64": "0.3.x",
     "usb-shyp-win32-ia32": "0.3.x",
