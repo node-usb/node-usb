@@ -213,6 +213,9 @@ Endpoint.prototype.startStream = function(nTransfers, transferSize, callback){
 }
 
 Endpoint.prototype.stopStream = function(){
+	if (!this.streamTransfers) {
+		throw new Error('Stream is not active.');
+	}
 	for (var i=0; i<this.streamTransfers.length; i++){
 		this.streamTransfers[i].cancel()
 	}
@@ -332,5 +335,6 @@ usb.OutEndpoint.prototype.write = function write(data){
 
 usb.OutEndpoint.prototype.stopStream = function stopStream(){
 	this._streamTransfers = 0;
+	if (this._pendingTransfers === null) throw new Error('stopStream invoked on non-active stream.');
 	if (this._pendingTransfers == 0) this.emit('end');
 }
