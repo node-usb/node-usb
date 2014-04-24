@@ -91,8 +91,8 @@ NODE_MODULE(usb_bindings, Initialize)
 
 Handle<Value> SetDebugLevel(const Arguments& args) {
 	HandleScope scope;
-	if (args.Length() != 1 || !args[0]->IsUint32() || args[0]->Uint32Value() >= 4) {
-		THROW_BAD_ARGS("Usb::SetDebugLevel argument is invalid. [uint:[0-3]]!") 
+	if (args.Length() != 1 || !args[0]->IsUint32() || args[0]->Uint32Value() > 4) {
+		THROW_BAD_ARGS("Usb::SetDebugLevel argument is invalid. [uint:[0-4]]!")
 	}
 	
 	libusb_set_debug(usb_context, args[0]->Uint32Value());
