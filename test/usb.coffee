@@ -19,7 +19,7 @@ describe 'Module', ->
 		it 'should throw when passed invalid args', ->
 			assert.throws((-> usb.setDebugLevel()), TypeError)
 			assert.throws((-> usb.setDebugLevel(-1)), TypeError)
-			assert.throws((-> usb.setDebugLevel(4)), TypeError)
+			assert.throws((-> usb.setDebugLevel(5)), TypeError)
 
 		it 'should succeed with good args', ->
 			assert.doesNotThrow(-> usb.setDebugLevel(0))
