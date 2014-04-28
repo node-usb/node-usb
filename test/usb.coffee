@@ -14,6 +14,7 @@ describe 'Module', ->
 	it 'should handle abuse without crashing', ->
 		assert.throws -> new usb.Device()
 		assert.throws -> usb.Device()
+		assert.throws -> usb.Device.prototype.open.call({})
 
 	describe 'setDebugLevel', ->
 		it 'should throw when passed invalid args', ->

@@ -133,7 +133,7 @@ inline static void setConst(Handle<Object> obj, const char* const name, Handle<V
 	HandleScope scope;                \
 	CHECK_N_ARGS(MIN_ARGS);           \
 	auto self = PROTO.unwrap(args.This()); \
-	(void) self
+	if (self == NULL) { THROW_BAD_ARGS(#PROTO " method called on invalid object") }
 
 #define ENTER_ACCESSOR(PROTO) \
 		HandleScope scope;                \
