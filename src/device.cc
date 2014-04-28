@@ -50,12 +50,16 @@ Handle<Value> Device::get(libusb_device* dev){
 	}
 }
 
+void Device::unpin(libusb_device* device) {
+	byPtr.erase(device);
+	DEBUG_LOG("Removed cached device %p", device);
+}
+
 // Callback to remove an instance from the cache map when V8 wants to GC it
 void Device::weakCallback(Persistent<Value> object, void *parameter){
-	byPtr.erase(static_cast<libusb_device*>(parameter));
+	unpin(static_cast<libusb_device*>(parameter));
 	object.Dispose();
 	object.Clear();
-	DEBUG_LOG("Removed cached device %p", parameter);
 }
 
 static Handle<Value> deviceConstructor(const Arguments& args){
@@ -321,6 +325,25 @@ struct Device_SetInterface: Req{
 	}
 };
 
+Handle<Value> Device_Destroy(const Arguments& args){
+	ENTER_METHOD(pDevice, 0);
+
+	// Remove from pin table
+	Device::unpin(self->device);
+
+	// Kill persistent, so ObjectWrap doesn't complain
+	self->handle_.Dispose();
+	self->handle_.Clear();
+
+	// Kill internal field (any future method calls will think this is not a Device object)
+	args.This()->SetPointerInInternalField(0, NULL);
+
+	// Free the device (which unrefs the libusb_device)
+	delete self;
+
+	return Undefined();
+}
+
 static void init(Handle<Object> target){
 	pDevice.init(&deviceConstructor);
 	pDevice.addMethod("__getConfigDescriptor", Device_GetConfigDescriptor);
@@ -335,6 +358,8 @@ static void init(Handle<Object> target){
 	pDevice.addMethod("__isKernelDriverActive", IsKernelDriverActive);
 	pDevice.addMethod("__detachKernelDriver", DetachKernelDriver);
 	pDevice.addMethod("__attachKernelDriver", AttachKernelDriver);
+
+	pDevice.addMethod("__destroy", Device_Destroy);
 }
 
 Proto<Device> pDevice("Device", &init);

@@ -35,6 +35,7 @@ struct Device: public node::ObjectWrap {
 	inline void attach(Handle<Object> o){Wrap(o);}
 
 	~Device();
+	static void unpin(libusb_device* device);
 
 	protected:
 		static std::map<libusb_device*, Persistent<Value> > byPtr;
