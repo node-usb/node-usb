@@ -58,8 +58,8 @@ void Device::weakCallback(Persistent<Value> object, void *parameter){
 	DEBUG_LOG("Removed cached device %p", parameter);
 }
 
-Handle<Value> Device_Refresh(const Arguments& args){
-	ENTER_METHOD(pDevice, 0);
+static Handle<Value> deviceConstructor(const Arguments& args){
+	ENTER_CONSTRUCTOR_POINTER(pDevice, 1);
 
 	args.This()->Set(V8SYM("busNumber"),
 		Uint32::New(libusb_get_bus_number(self->device)), CONST_PROP);
@@ -87,12 +87,6 @@ Handle<Value> Device_Refresh(const Arguments& args){
 	STRUCT_TO_V8(v8dd, dd, iSerialNumber)
 	STRUCT_TO_V8(v8dd, dd, bNumConfigurations)
 
-	return scope.Close(args.This());
-}
-
-static Handle<Value> deviceConstructor(const Arguments& args){
-	ENTER_CONSTRUCTOR_POINTER(pDevice, 1);
-	Device_Refresh(args);
 	return scope.Close(args.This());
 }
 
@@ -329,7 +323,6 @@ struct Device_SetInterface: Req{
 
 static void init(Handle<Object> target){
 	pDevice.init(&deviceConstructor);
-	pDevice.addMethod("__refresh", Device_Refresh);
 	pDevice.addMethod("__getConfigDescriptor", Device_GetConfigDescriptor);
 	pDevice.addMethod("__open", Device_Open);
 	pDevice.addMethod("__close", Device_Close);
