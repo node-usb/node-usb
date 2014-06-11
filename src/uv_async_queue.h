@@ -4,6 +4,7 @@
 #include <uv.h>
 #include <node_version.h>
 #include <queue>
+#include "polyfill.h"
 
 template <class T>
 class UVQueue{
@@ -52,7 +53,7 @@ class UVQueue{
 		uv_async_t async;
 		int ref_count;
 		
-		static void internal_callback(uv_async_t *handle, int status){
+		static UV_ASYNC_CB(internal_callback){
 			UVQueue* uvqueue = static_cast<UVQueue*>(handle->data);
 			
 			while(1){

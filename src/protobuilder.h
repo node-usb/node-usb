@@ -1,6 +1,7 @@
 #include <vector>
 #include <v8.h>
 #include <nan.h>
+#include "polyfill.h"
 
 using namespace v8;
 
@@ -73,12 +74,6 @@ struct PointerWrap: public ObjectWrap{
 	~PointerWrap(){delete ptr;}
 	T* ptr;
 };
-
-#if (NODE_MODULE_VERSION > 0x000B)
-#define EXTERNAL_NEW(x) External::New(Isolate::GetCurrent(), x)
-#else
-#define EXTERNAL_NEW(x) External::New(x)
-#endif
 
 template <class T>
 class Proto : public ProtoBuilder{
