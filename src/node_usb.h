@@ -38,7 +38,7 @@ struct Device: public node::ObjectWrap {
 	static void unpin(libusb_device* device);
 
 	protected:
-		static std::map<libusb_device*, Persistent<Value> > byPtr;
+		static std::map<libusb_device*, Handle<Value> > byPtr;
 		Device(libusb_device* d);
 };
 

@@ -24,7 +24,7 @@ Device::~Device(){
 }
 
 // Map pinning each libusb_device to a particular V8 instance
-std::map<libusb_device*, Persistent<Value> > Device::byPtr;
+std::map<libusb_device*, Handle<Value> > Device::byPtr;
 
 NAN_WEAK_CALLBACK(DeviceWeakCallback) {
 	Device::unpin(data.GetParameter());
@@ -35,9 +35,9 @@ NAN_WEAK_CALLBACK(DeviceWeakCallback) {
 Handle<Value> Device::get(libusb_device* dev){
 	auto it = byPtr.find(dev);
 	if (it != byPtr.end()){
-		return it->second;
+		return NanNew(it->second);
 	}else{
-		auto v = pDevice.create(new Device(dev));
+		Handle<Value> v = pDevice.create(new Device(dev));
 		NanMakeWeakPersistent(v, dev, DeviceWeakCallback);
 		byPtr.insert(std::make_pair(dev, v));
 		return v;	
@@ -195,14 +195,14 @@ struct Req{
 		auto device = NanNew<Object>(baton->device->handle_);
 		baton->device->unref();
 
-		if (!baton->callback.IsEmpty()) {
+		if (!NanNew(baton->callback).IsEmpty()) {
 			Handle<Value> error = NanUndefined();
 			if (baton->errcode < 0){
 				error = libusbException(baton->errcode);
 			}
 			Handle<Value> argv[1] = {error};
 			TryCatch try_catch;
-			baton->callback->Call(device, 1, argv);
+			NanNew(baton->callback)->Call(device, 1, argv);
 			if (try_catch.HasCaught()) {
 				FatalException(try_catch);
 			}
