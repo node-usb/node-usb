@@ -173,7 +173,7 @@ Handle<Value> Device_Open(const Arguments& args){
 	if (!self->handle){
 		CHECK_USB(libusb_open(self->device, &self->handle));
 	}
-	return scope.Close(Undefined());
+	return scope.Close(NanUndefined());
 }
 
 Handle<Value> Device_Close(const Arguments& args){
@@ -184,7 +184,7 @@ Handle<Value> Device_Close(const Arguments& args){
 	}else{
 		THROW_ERROR("Can't close device with a pending request");
 	}
-	return scope.Close(Undefined());
+	return scope.Close(NanUndefined());
 }
 
 struct Req{
@@ -209,7 +209,7 @@ struct Req{
 		baton->device->unref();
 
 		if (!baton->callback.IsEmpty()) {
-			Handle<Value> error = Undefined();
+			Handle<Value> error = NanUndefined();
 			if (baton->errcode < 0){
 				error = libusbException(baton->errcode);
 			}
@@ -232,7 +232,7 @@ struct Device_Reset: Req{
 		CALLBACK_ARG(0);
 		auto baton = new Device_Reset;
 		baton->submit(self, callback, &backend, &default_after);
-		return scope.Close(Undefined());
+		return scope.Close(NanUndefined());
 	}
 
 	static void backend(uv_work_t *req){
@@ -257,7 +257,7 @@ Handle<Value> DetachKernelDriver(const Arguments& args) {
 	int interface;
 	INT_ARG(interface, 0);
 	CHECK_USB(libusb_detach_kernel_driver(self->handle, interface));
-	return Undefined();
+	return NanUndefined();
 }
 
 Handle<Value> AttachKernelDriver(const Arguments& args) {
@@ -266,7 +266,7 @@ Handle<Value> AttachKernelDriver(const Arguments& args) {
 	int interface;
 	INT_ARG(interface, 0);
 	CHECK_USB(libusb_attach_kernel_driver(self->handle, interface));
-	return Undefined();
+	return NanUndefined();
 }
 
 Handle<Value> Device_ClaimInterface(const Arguments& args) {
@@ -275,7 +275,7 @@ Handle<Value> Device_ClaimInterface(const Arguments& args) {
 	int interface;
 	INT_ARG(interface, 0);
 	CHECK_USB(libusb_claim_interface(self->handle, interface));
-	return Undefined();
+	return NanUndefined();
 }
 
 struct Device_ReleaseInterface: Req{
@@ -291,7 +291,7 @@ struct Device_ReleaseInterface: Req{
 		baton->interface = interface;
 		baton->submit(self, callback, &backend, &default_after);
 
-		return scope.Close(Undefined());
+		return scope.Close(NanUndefined());
 	}
 
 	static void backend(uv_work_t *req){
@@ -315,7 +315,7 @@ struct Device_SetInterface: Req{
 		baton->interface = interface;
 		baton->altsetting = altsetting;
 		baton->submit(self, callback, &backend, &default_after);
-		return scope.Close(Undefined());
+		return scope.Close(NanUndefined());
 	}
 
 	static void backend(uv_work_t *req){
@@ -341,7 +341,7 @@ Handle<Value> Device_Destroy(const Arguments& args){
 	// Free the device (which unrefs the libusb_device)
 	delete self;
 
-	return Undefined();
+	return NanUndefined();
 }
 
 static void init(Handle<Object> target){

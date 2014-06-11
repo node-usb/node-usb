@@ -5,7 +5,7 @@
 using namespace v8;
 
 #define V8STR(str) String::New(str)
-#define V8SYM(str) String::NewSymbol(str)
+#define V8SYM(str) NanNew<String>(str)
 
 #define THROW_BAD_ARGS(FAIL_MSG) return ThrowException(Exception::TypeError(String::New(FAIL_MSG)));
 #define THROW_ERROR(FAIL_MSG) return ThrowException(Exception::Error(String::New(FAIL_MSG)));
@@ -36,9 +36,9 @@ public:
 		tpl->InstanceTemplate()->SetInternalFieldCount(1);
 	}
 
-	void init(InvocationCallback constructor){
+	void init(NanFunctionCallback constructor){
 		tpl->SetCallHandler(constructor);
-		tpl->SetClassName(String::NewSymbol(name));
+		tpl->SetClassName(NanNew<String>(name));
 	}
 
 	void inherit(ProtoBuilder& other){
@@ -50,19 +50,19 @@ public:
 	}
 
 	void addToModule(Handle<Object> target){
-		target->Set(String::NewSymbol(name), get());
+		target->Set(NanNew<String>(name), get());
 	}
 
-	void addMethod(const char* name, v8::InvocationCallback fn){
+	void addMethod(const char* name, NanFunctionCallback fn){
 		NODE_SET_PROTOTYPE_METHOD(tpl, name, fn);
 	}
 
-	void addStaticMethod(const char* name, v8::InvocationCallback fn){
+	void addStaticMethod(const char* name, NanFunctionCallback fn){
 		NODE_SET_METHOD(tpl, name, fn);
 	}
 
 	void addAccessor(const char* name, AccessorGetter getter, AccessorSetter setter=0){
-		tpl->InstanceTemplate()->SetAccessor(String::NewSymbol(name), getter, setter);
+		tpl->InstanceTemplate()->SetAccessor(NanNew<String>(name), getter, setter);
 	}
 
 	Persistent<FunctionTemplate> tpl;
@@ -86,14 +86,14 @@ public:
 	Proto(const char *_name, ProtoBuilder::InitFn initfn=NULL):
 		ProtoBuilder(_name, initfn){}
 
-	Handle<Object> create(Handle<Value> arg1 = Undefined(), Handle<Value> arg2 = Undefined()){
+	Handle<Object> create(Handle<Value> arg1 = NanUndefined(), Handle<Value> arg2 = NanUndefined()){
 		Handle<Value> args[2] = {arg1, arg2};
 		Handle<Object> o = tpl->GetFunction()->NewInstance(2, args);
 		return o;
 	}
 
-	Handle<Value> create(T* v, Handle<Value> arg1 = Undefined(), Handle<Value> arg2 = Undefined()){
-		if (!v) return Undefined();
+	Handle<Value> create(T* v, Handle<Value> arg1 = NanUndefined(), Handle<Value> arg2 = NanUndefined()){
+		if (!v) return NanUndefined();
 		Handle<Value> args[3] = {External::New(v), arg1, arg2};
 		Handle<Object> o = tpl->GetFunction()->NewInstance(3, args);
 		return o;
@@ -114,7 +114,7 @@ public:
 };
 
 inline static void setConst(Handle<Object> obj, const char* const name, Handle<Value> value){
-	obj->ForceSet(String::NewSymbol(name), value, CONST_PROP);
+	obj->ForceSet(NanNew<String>(name), value, CONST_PROP);
 }
 
 #define ENTER_CONSTRUCTOR(MIN_ARGS) \

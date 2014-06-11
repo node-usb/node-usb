@@ -65,7 +65,7 @@ extern Proto<Transfer> pTransfer;
 #define CHECK_USB(r) \
 	if (r < LIBUSB_SUCCESS) { \
 		ThrowException(libusbException(r)); \
-		return scope.Close(Undefined());   \
+		return scope.Close(NanUndefined());   \
 	}
 
 #define CALLBACK_ARG(CALLBACK_ARG_IDX) \

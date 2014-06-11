@@ -96,7 +96,7 @@ Handle<Value> SetDebugLevel(const Arguments& args) {
 	}
 	
 	libusb_set_debug(usb_context, args[0]->Uint32Value());
-	return Undefined();
+	return NanUndefined();
 }
 
 Handle<Value> GetDeviceList(const Arguments& args) {
