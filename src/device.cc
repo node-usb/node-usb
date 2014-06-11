@@ -2,23 +2,13 @@
 #include <string.h>
 
 #define STRUCT_TO_V8(TARGET, STR, NAME) \
-		TARGET->Set(V8STR(#NAME), Uint32::New((STR).NAME), CONST_PROP);
+		TARGET->Set(V8STR(#NAME), NanNew<Uint32>((uint32_t) (STR).NAME), CONST_PROP);
 
 #define CHECK_OPEN() \
 		if (!self->handle){THROW_ERROR("Device is not opened");}
 
 Handle<Object> makeBuffer(const unsigned char* ptr, unsigned length) {
-	HandleScope scope;
-	Buffer* buf = Buffer::New(length);
-	memcpy(node::Buffer::Data(buf), ptr, length);
-	Local<Object> global = Context::GetCurrent()->Global();
-
-	Local<Value> bufferConstructor = global->Get(V8SYM("Buffer"));
-	assert(bufferConstructor->IsFunction());
-	Local<Function> bufferConstructorFn = Local<Function>::Cast(bufferConstructor);
-
-	Handle<Value> argv[3] = { buf->handle_, Integer::New(length), Integer::New(0) };
-	return scope.Close(bufferConstructorFn->NewInstance(3, argv));
+	return NanNewBufferHandle((char*) ptr, (uint32_t) length);
 }
 
 Device::Device(libusb_device* d): device(d), handle(0) {
@@ -36,6 +26,10 @@ Device::~Device(){
 // Map pinning each libusb_device to a particular V8 instance
 std::map<libusb_device*, Persistent<Value> > Device::byPtr;
 
+NAN_WEAK_CALLBACK(DeviceWeakCallback) {
+	Device::unpin(data.GetParameter());
+}
+
 // Get a V8 instance for a libusb_device: either the existing one from the map, 
 // or create a new one and add it to the map.
 Handle<Value> Device::get(libusb_device* dev){
@@ -43,8 +37,8 @@ Handle<Value> Device::get(libusb_device* dev){
 	if (it != byPtr.end()){
 		return it->second;
 	}else{
-		auto v = Persistent<Value>::New(pDevice.create(new Device(dev)));
-		v.MakeWeak(dev, weakCallback);
+		auto v = pDevice.create(new Device(dev));
+		NanMakeWeakPersistent(v, dev, DeviceWeakCallback);
 		byPtr.insert(std::make_pair(dev, v));
 		return v;	
 	}
@@ -55,22 +49,15 @@ void Device::unpin(libusb_device* device) {
 	DEBUG_LOG("Removed cached device %p", device);
 }
 
-// Callback to remove an instance from the cache map when V8 wants to GC it
-void Device::weakCallback(Persistent<Value> object, void *parameter){
-	unpin(static_cast<libusb_device*>(parameter));
-	object.Dispose();
-	object.Clear();
-}
-
-static Handle<Value> deviceConstructor(const Arguments& args){
+static NAN_METHOD(deviceConstructor) {
 	ENTER_CONSTRUCTOR_POINTER(pDevice, 1);
 
 	args.This()->Set(V8SYM("busNumber"),
-		Uint32::New(libusb_get_bus_number(self->device)), CONST_PROP);
+		NanNew<Uint32>((uint32_t) libusb_get_bus_number(self->device)), CONST_PROP);
 	args.This()->Set(V8SYM("deviceAddress"),
-		Uint32::New(libusb_get_device_address(self->device)), CONST_PROP);
+		NanNew<Uint32>((uint32_t) libusb_get_device_address(self->device)), CONST_PROP);
 
-	Local<Object> v8dd = Object::New();
+	Local<Object> v8dd = NanNew<Object>();
 	args.This()->Set(V8SYM("deviceDescriptor"), v8dd, CONST_PROP);
 
 	struct libusb_device_descriptor dd;
@@ -91,16 +78,16 @@ static Handle<Value> deviceConstructor(const Arguments& args){
 	STRUCT_TO_V8(v8dd, dd, iSerialNumber)
 	STRUCT_TO_V8(v8dd, dd, bNumConfigurations)
 
-	return scope.Close(args.This());
+	NanReturnValue(args.This());
 }
 
-Handle<Value> Device_GetConfigDescriptor(const Arguments& args){
+NAN_METHOD(Device_GetConfigDescriptor) {
 	ENTER_METHOD(pDevice, 0);
 
 	libusb_config_descriptor* cdesc;
 	CHECK_USB(libusb_get_active_config_descriptor(self->device, &cdesc));
 
-	Local<Object> v8cdesc = Object::New();
+	Local<Object> v8cdesc = NanNew<Object>();
 
 	STRUCT_TO_V8(v8cdesc, *cdesc, bLength)
 	STRUCT_TO_V8(v8cdesc, *cdesc, bDescriptorType)
@@ -110,24 +97,24 @@ Handle<Value> Device_GetConfigDescriptor(const Arguments& args){
 	STRUCT_TO_V8(v8cdesc, *cdesc, iConfiguration)
 	STRUCT_TO_V8(v8cdesc, *cdesc, bmAttributes)
 	// Libusb 1.0 typo'd bMaxPower as MaxPower
-	v8cdesc->Set(V8STR("bMaxPower"), Uint32::New(cdesc->MaxPower), CONST_PROP);
+	v8cdesc->Set(V8STR("bMaxPower"), NanNew<Uint32>((uint32_t) cdesc->MaxPower), CONST_PROP);
 
 	v8cdesc->Set(V8SYM("extra"), makeBuffer(cdesc->extra, cdesc->extra_length), CONST_PROP);
 
-	Local<Array> v8interfaces = Array::New(cdesc->bNumInterfaces);
+	Local<Array> v8interfaces = NanNew<Array>(cdesc->bNumInterfaces);
 	v8cdesc->Set(V8SYM("interfaces"), v8interfaces);
 
 	for (int idxInterface = 0; idxInterface < cdesc->bNumInterfaces; idxInterface++) {
 		int numAltSettings = cdesc->interface[idxInterface].num_altsetting;
 		
-		Local<Array> v8altsettings = Array::New(numAltSettings);
+		Local<Array> v8altsettings = NanNew<Array>(numAltSettings);
 		v8interfaces->Set(idxInterface, v8altsettings);
 
 		for (int idxAltSetting = 0; idxAltSetting < numAltSettings; idxAltSetting++) {
 			const libusb_interface_descriptor& idesc =
 				cdesc->interface[idxInterface].altsetting[idxAltSetting];
 			
-			Local<Object> v8idesc = Object::New();
+			Local<Object> v8idesc = NanNew<Object>();
 			v8altsettings->Set(idxAltSetting, v8idesc);
 
 			STRUCT_TO_V8(v8idesc, idesc, bLength)
@@ -142,12 +129,12 @@ Handle<Value> Device_GetConfigDescriptor(const Arguments& args){
 
 			v8idesc->Set(V8SYM("extra"), makeBuffer(idesc.extra, idesc.extra_length), CONST_PROP);
 
-			Local<Array> v8endpoints = Array::New(idesc.bNumEndpoints);
+			Local<Array> v8endpoints = NanNew<Array>(idesc.bNumEndpoints);
 			v8idesc->Set(V8SYM("endpoints"), v8endpoints, CONST_PROP);
 			for (int idxEndpoint = 0; idxEndpoint < idesc.bNumEndpoints; idxEndpoint++){
 				const libusb_endpoint_descriptor& edesc = idesc.endpoint[idxEndpoint];
 
-				Local<Object> v8edesc = Object::New();
+				Local<Object> v8edesc = NanNew<Object>();
 				v8endpoints->Set(idxEndpoint, v8edesc);
 
 				STRUCT_TO_V8(v8edesc, edesc, bLength)
@@ -165,18 +152,18 @@ Handle<Value> Device_GetConfigDescriptor(const Arguments& args){
 	}
 
 	libusb_free_config_descriptor(cdesc);
-	return scope.Close(v8cdesc);
+	NanReturnValue(v8cdesc);
 }
 
-Handle<Value> Device_Open(const Arguments& args){
+NAN_METHOD(Device_Open) {
 	ENTER_METHOD(pDevice, 0);
 	if (!self->handle){
 		CHECK_USB(libusb_open(self->device, &self->handle));
 	}
-	return scope.Close(NanUndefined());
+	NanReturnValue(NanUndefined());
 }
 
-Handle<Value> Device_Close(const Arguments& args){
+NAN_METHOD(Device_Close) {
 	ENTER_METHOD(pDevice, 0);
 	if (self->canClose()){
 		libusb_close(self->handle);
@@ -184,7 +171,7 @@ Handle<Value> Device_Close(const Arguments& args){
 	}else{
 		THROW_ERROR("Can't close device with a pending request");
 	}
-	return scope.Close(NanUndefined());
+	NanReturnValue(NanUndefined());
 }
 
 struct Req{
@@ -194,7 +181,7 @@ struct Req{
 	int errcode;
 
 	void submit(Device* d, Handle<Function> cb, uv_work_cb backend, uv_work_cb after){
-		callback = Persistent<Function>::New(cb);
+		NanAssignPersistent(callback, cb);
 		device = d;
 		device->ref();
 		req.data = this;
@@ -202,10 +189,10 @@ struct Req{
 	}
 
 	static void default_after(uv_work_t *req){
-		HandleScope scope;
+		NanScope();
 		auto baton = (Req*) req->data;
 
-		auto device = Local<Object>::New(baton->device->handle_);
+		auto device = NanNew<Object>(baton->device->handle_);
 		baton->device->unref();
 
 		if (!baton->callback.IsEmpty()) {
@@ -219,20 +206,20 @@ struct Req{
 			if (try_catch.HasCaught()) {
 				FatalException(try_catch);
 			}
-			baton->callback.Dispose();
+			NanDisposePersistent(baton->callback);
 		}
 		delete baton;
 	}
 };
 
 struct Device_Reset: Req{
-	static Handle<Value> begin(const Arguments& args){
+	static NAN_METHOD(begin) {
 		ENTER_METHOD(pDevice, 0);
 		CHECK_OPEN();
 		CALLBACK_ARG(0);
 		auto baton = new Device_Reset;
 		baton->submit(self, callback, &backend, &default_after);
-		return scope.Close(NanUndefined());
+		NanReturnValue(NanUndefined());
 	}
 
 	static void backend(uv_work_t *req){
@@ -241,47 +228,47 @@ struct Device_Reset: Req{
 	}
 };
 
-Handle<Value> IsKernelDriverActive(const Arguments& args) {
+NAN_METHOD(IsKernelDriverActive) {
 	ENTER_METHOD(pDevice, 1);
 	CHECK_OPEN();
 	int interface;
 	INT_ARG(interface, 0);
 	int r = libusb_kernel_driver_active(self->handle, interface);
 	CHECK_USB(r);
-	return scope.Close(Boolean::New(r));
+	NanReturnValue(NanNew<Boolean>(r));
 }	
-	
-Handle<Value> DetachKernelDriver(const Arguments& args) {
+
+NAN_METHOD(DetachKernelDriver) {
 	ENTER_METHOD(pDevice, 1);
 	CHECK_OPEN();
 	int interface;
 	INT_ARG(interface, 0);
 	CHECK_USB(libusb_detach_kernel_driver(self->handle, interface));
-	return NanUndefined();
+	NanReturnValue(NanUndefined());
 }
 
-Handle<Value> AttachKernelDriver(const Arguments& args) {
+NAN_METHOD(AttachKernelDriver) {
 	ENTER_METHOD(pDevice, 1);
 	CHECK_OPEN();
 	int interface;
 	INT_ARG(interface, 0);
 	CHECK_USB(libusb_attach_kernel_driver(self->handle, interface));
-	return NanUndefined();
+	NanReturnValue(NanUndefined());
 }
 
-Handle<Value> Device_ClaimInterface(const Arguments& args) {
+NAN_METHOD(Device_ClaimInterface) {
 	ENTER_METHOD(pDevice, 1);
 	CHECK_OPEN();
 	int interface;
 	INT_ARG(interface, 0);
 	CHECK_USB(libusb_claim_interface(self->handle, interface));
-	return NanUndefined();
+	NanReturnValue(NanUndefined());
 }
 
 struct Device_ReleaseInterface: Req{
 	int interface;
 
-	static Handle<Value> begin(const Arguments& args){
+	static NAN_METHOD(begin){
 		ENTER_METHOD(pDevice, 1);
 		CHECK_OPEN();
 		int interface;
@@ -291,7 +278,7 @@ struct Device_ReleaseInterface: Req{
 		baton->interface = interface;
 		baton->submit(self, callback, &backend, &default_after);
 
-		return scope.Close(NanUndefined());
+		NanReturnValue(NanUndefined());
 	}
 
 	static void backend(uv_work_t *req){
@@ -304,7 +291,7 @@ struct Device_SetInterface: Req{
 	int interface;
 	int altsetting;
 
-	static Handle<Value> begin(const Arguments& args){
+	static NAN_METHOD(begin){
 		ENTER_METHOD(pDevice, 2);
 		CHECK_OPEN();
 		int interface, altsetting;
@@ -315,7 +302,7 @@ struct Device_SetInterface: Req{
 		baton->interface = interface;
 		baton->altsetting = altsetting;
 		baton->submit(self, callback, &backend, &default_after);
-		return scope.Close(NanUndefined());
+		NanReturnValue(NanUndefined());
 	}
 
 	static void backend(uv_work_t *req){
@@ -325,23 +312,22 @@ struct Device_SetInterface: Req{
 	}
 };
 
-Handle<Value> Device_Destroy(const Arguments& args){
+NAN_METHOD(Device_Destroy) {
 	ENTER_METHOD(pDevice, 0);
 
 	// Remove from pin table
 	Device::unpin(self->device);
 
 	// Kill persistent, so ObjectWrap doesn't complain
-	self->handle_.Dispose();
-	self->handle_.Clear();
+	NanDisposePersistent(self->handle_);
 
 	// Kill internal field (any future method calls will think this is not a Device object)
-	args.This()->SetPointerInInternalField(0, NULL);
+	NanSetInternalFieldPointer(args.This(), 0, NULL);
 
 	// Free the device (which unrefs the libusb_device)
 	delete self;
 
-	return NanUndefined();
+	NanReturnValue(NanUndefined());
 }
 
 static void init(Handle<Object> target){

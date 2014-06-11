@@ -101,7 +101,7 @@ extern "C" void LIBUSB_CALL usbCompletionCb(libusb_transfer *transfer){
 }
 
 void handleCompletion(Transfer* self){
-	HandleScope scope;
+	NanScope();
 	DEBUG_LOG("HandleCompletion %p", self);
 
 	self->device->unref();
