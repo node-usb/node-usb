@@ -43,6 +43,7 @@
             ],
             'xcode_settings': {
               'OTHER_CFLAGS': [ '--std=c++1y' ],
+              'OTHER_LDFLAGS': [ '-framework', 'CoreFoundation', '-framework', 'IOKit' ],
               'SDKROOT': 'macosx',
               'MACOSX_DEPLOYMENT_TARGET': '10.5',
             },
