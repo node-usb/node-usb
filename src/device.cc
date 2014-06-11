@@ -5,13 +5,13 @@
 		TARGET->Set(V8STR(#NAME), NanNew<Uint32>((uint32_t) (STR).NAME), CONST_PROP);
 
 #define CHECK_OPEN() \
-		if (!self->handle){THROW_ERROR("Device is not opened");}
+		if (!self->device_handle){THROW_ERROR("Device is not opened");}
 
 Handle<Object> makeBuffer(const unsigned char* ptr, unsigned length) {
 	return NanNewBufferHandle((char*) ptr, (uint32_t) length);
 }
 
-Device::Device(libusb_device* d): device(d), handle(0) {
+Device::Device(libusb_device* d): device(d), device_handle(0) {
 	libusb_ref_device(device);
 	DEBUG_LOG("Created device %p", this);
 }
@@ -19,7 +19,7 @@ Device::Device(libusb_device* d): device(d), handle(0) {
 
 Device::~Device(){
 	DEBUG_LOG("Freed device %p", this);
-	libusb_close(handle);
+	libusb_close(device_handle);
 	libusb_unref_device(device);
 }
 
@@ -157,8 +157,8 @@ NAN_METHOD(Device_GetConfigDescriptor) {
 
 NAN_METHOD(Device_Open) {
 	ENTER_METHOD(pDevice, 0);
-	if (!self->handle){
-		CHECK_USB(libusb_open(self->device, &self->handle));
+	if (!self->device_handle){
+		CHECK_USB(libusb_open(self->device, &self->device_handle));
 	}
 	NanReturnValue(NanUndefined());
 }
@@ -166,8 +166,8 @@ NAN_METHOD(Device_Open) {
 NAN_METHOD(Device_Close) {
 	ENTER_METHOD(pDevice, 0);
 	if (self->canClose()){
-		libusb_close(self->handle);
-		self->handle = NULL;
+		libusb_close(self->device_handle);
+		self->device_handle = NULL;
 	}else{
 		THROW_ERROR("Can't close device with a pending request");
 	}
@@ -192,7 +192,7 @@ struct Req{
 		NanScope();
 		auto baton = (Req*) req->data;
 
-		auto device = NanNew<Object>(baton->device->handle_);
+		auto device = NanObjectWrapHandle(baton->device);
 		baton->device->unref();
 
 		if (!NanNew(baton->callback).IsEmpty()) {
@@ -224,7 +224,7 @@ struct Device_Reset: Req{
 
 	static void backend(uv_work_t *req){
 		auto baton = (Device_Reset*) req->data;
-		baton->errcode = libusb_reset_device(baton->device->handle);
+		baton->errcode = libusb_reset_device(baton->device->device_handle);
 	}
 };
 
@@ -233,7 +233,7 @@ NAN_METHOD(IsKernelDriverActive) {
 	CHECK_OPEN();
 	int interface;
 	INT_ARG(interface, 0);
-	int r = libusb_kernel_driver_active(self->handle, interface);
+	int r = libusb_kernel_driver_active(self->device_handle, interface);
 	CHECK_USB(r);
 	NanReturnValue(NanNew<Boolean>(r));
 }	
@@ -243,7 +243,7 @@ NAN_METHOD(DetachKernelDriver) {
 	CHECK_OPEN();
 	int interface;
 	INT_ARG(interface, 0);
-	CHECK_USB(libusb_detach_kernel_driver(self->handle, interface));
+	CHECK_USB(libusb_detach_kernel_driver(self->device_handle, interface));
 	NanReturnValue(NanUndefined());
 }
 
@@ -252,7 +252,7 @@ NAN_METHOD(AttachKernelDriver) {
 	CHECK_OPEN();
 	int interface;
 	INT_ARG(interface, 0);
-	CHECK_USB(libusb_attach_kernel_driver(self->handle, interface));
+	CHECK_USB(libusb_attach_kernel_driver(self->device_handle, interface));
 	NanReturnValue(NanUndefined());
 }
 
@@ -261,7 +261,7 @@ NAN_METHOD(Device_ClaimInterface) {
 	CHECK_OPEN();
 	int interface;
 	INT_ARG(interface, 0);
-	CHECK_USB(libusb_claim_interface(self->handle, interface));
+	CHECK_USB(libusb_claim_interface(self->device_handle, interface));
 	NanReturnValue(NanUndefined());
 }
 
@@ -283,7 +283,7 @@ struct Device_ReleaseInterface: Req{
 
 	static void backend(uv_work_t *req){
 		auto baton = (Device_ReleaseInterface*) req->data;
-		baton->errcode = libusb_release_interface(baton->device->handle, baton->interface);
+		baton->errcode = libusb_release_interface(baton->device->device_handle, baton->interface);
 	}
 };
 
@@ -308,7 +308,7 @@ struct Device_SetInterface: Req{
 	static void backend(uv_work_t *req){
 		auto baton = (Device_SetInterface*) req->data;
 		baton->errcode = libusb_set_interface_alt_setting(
-			baton->device->handle, baton->interface, baton->altsetting);
+			baton->device->device_handle, baton->interface, baton->altsetting);
 	}
 };
 
@@ -317,9 +317,6 @@ NAN_METHOD(Device_Destroy) {
 
 	// Remove from pin table
 	Device::unpin(self->device);
-
-	// Kill persistent, so ObjectWrap doesn't complain
-	NanDisposePersistent(self->handle_);
 
 	// Kill internal field (any future method calls will think this is not a Device object)
 	NanSetInternalFieldPointer(args.This(), 0, NULL);

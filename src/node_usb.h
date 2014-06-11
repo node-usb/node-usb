@@ -25,7 +25,7 @@ Local<Value> libusbException(int errorno);
 
 struct Device: public node::ObjectWrap {
 	libusb_device* device;
-	libusb_device_handle* handle;
+	libusb_device_handle* device_handle;
 
 	static Handle<Value> get(libusb_device* handle);
 

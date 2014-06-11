@@ -74,6 +74,12 @@ struct PointerWrap: public ObjectWrap{
 	T* ptr;
 };
 
+#if (NODE_MODULE_VERSION > 0x000B)
+#define EXTERNAL_NEW(x) External::New(Isolate::GetCurrent(), x)
+#else
+#define EXTERNAL_NEW(x) External::New(x)
+#endif
+
 template <class T>
 class Proto : public ProtoBuilder{
 public:
@@ -90,7 +96,7 @@ public:
 
 	Handle<Value> create(T* v, Handle<Value> arg1 = NanUndefined(), Handle<Value> arg2 = NanUndefined()){
 		if (!v) return NanUndefined();
-		Handle<Value> args[3] = {External::New(v), arg1, arg2};
+		Handle<Value> args[3] = {EXTERNAL_NEW(v), arg1, arg2};
 		Handle<Object> o = NanNew<FunctionTemplate>(tpl)->GetFunction()->NewInstance(3, args);
 		return o;
 	}

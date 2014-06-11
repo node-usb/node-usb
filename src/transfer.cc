@@ -56,12 +56,12 @@ Handle<Value> Transfer_Submit(const Arguments& args) {
 		THROW_BAD_ARGS("Buffer arg [0] must be Buffer");
 	}
 	Local<Object> buffer_obj = args[0]->ToObject();
-	if (!self->device->handle){
+	if (!self->device->device_handle){
 		THROW_ERROR("Device is not open");
 	}
 
 	// Can't be cached in constructor as device could be closed and re-opened
-	self->transfer->dev_handle = self->device->handle;
+	self->transfer->dev_handle = self->device->device_handle;
 
 	self->v8buffer = Persistent<Object>::New(buffer_obj);
 	self->transfer->buffer = (unsigned char*) Buffer::Data(buffer_obj);
