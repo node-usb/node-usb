@@ -2,8 +2,8 @@
 
 ProtoBuilder::ProtoList ProtoBuilder::initProto;
 
-Handle<Value> SetDebugLevel(const Arguments& args);
-Handle<Value> GetDeviceList(const Arguments& args);
+NAN_METHOD(SetDebugLevel);
+NAN_METHOD(GetDeviceList);
 void initConstants(Handle<Object> target);
 
 libusb_context* usb_context;
@@ -56,11 +56,11 @@ void USBThreadFn(void*){
 #endif
 
 extern "C" void Initialize(Handle<Object> target) {
-	HandleScope  scope;
+	NanScope();
 
 	// Initialize libusb. On error, halt initialization.
 	int res = libusb_init(&usb_context);
-	target->Set(String::NewSymbol("INIT_ERROR"), Number::New(res));
+	target->Set(NanNew<String>("INIT_ERROR"), NanNew<Number>(res));
 	if (res != 0) {
 		return;
 	}
@@ -89,29 +89,29 @@ extern "C" void Initialize(Handle<Object> target) {
 
 NODE_MODULE(usb_bindings, Initialize)
 
-Handle<Value> SetDebugLevel(const Arguments& args) {
-	HandleScope scope;
+NAN_METHOD(SetDebugLevel) {
+	NanScope();
 	if (args.Length() != 1 || !args[0]->IsUint32() || args[0]->Uint32Value() > 4) {
 		THROW_BAD_ARGS("Usb::SetDebugLevel argument is invalid. [uint:[0-4]]!")
 	}
 	
 	libusb_set_debug(usb_context, args[0]->Uint32Value());
-	return Undefined();
+	NanReturnValue(NanUndefined());
 }
 
-Handle<Value> GetDeviceList(const Arguments& args) {
-	HandleScope scope;
+NAN_METHOD(GetDeviceList) {
+	NanScope();
 	libusb_device **devs;
 	int cnt = libusb_get_device_list(usb_context, &devs);
 	CHECK_USB(cnt);
 
-	Handle<Array> arr = Array::New(cnt);
+	Handle<Array> arr = NanNew<Array>(cnt);
 
 	for(int i = 0; i < cnt; i++) {
 		arr->Set(i, Device::get(devs[i]));
 	}
 	libusb_free_device_list(devs, true);
-	return scope.Close(arr);
+	NanReturnValue(arr);
 }
 
 void initConstants(Handle<Object> target){
@@ -194,7 +194,7 @@ void initConstants(Handle<Object> target){
 
 Local<Value> libusbException(int errorno) {
 	const char* err = libusb_error_name(errorno);	
-	Local<Value> e  = Exception::Error(String::NewSymbol(err));
-	e->ToObject()->Set(V8SYM("errno"), Integer::New(errorno));
+	Local<Value> e  = NanError(err);
+	e->ToObject()->Set(NanNew<String>("errno"), NanNew<Integer>(errorno));
 	return e;
 }

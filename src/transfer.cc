@@ -17,12 +17,12 @@ Transfer::Transfer(){
 
 Transfer::~Transfer(){
 	DEBUG_LOG("Freed Transfer %p", this);
-	v8callback.Dispose();
+	NanDisposePersistent(v8callback);
 	libusb_free_transfer(transfer);
 }
 
 // new Transfer(device, endpointAddr, type, timeout)
-static Handle<Value> Transfer_constructor(const Arguments& args){
+NAN_METHOD(Transfer_constructor) {
 	ENTER_CONSTRUCTOR(5);
 	UNWRAP_ARG(pDevice, device, 0);
 	int endpoint, type, timeout;
@@ -39,13 +39,13 @@ static Handle<Value> Transfer_constructor(const Arguments& args){
 	self->transfer->type = type;
 	self->transfer->timeout = timeout;
 
-	self->v8callback = Persistent<Function>::New(callback);
+	NanAssignPersistent(self->v8callback, callback);
 
-	return scope.Close(args.This());
+	NanReturnValue(args.This());
 }
 
 // Transfer.submit(buffer, callback)
-Handle<Value> Transfer_Submit(const Arguments& args) {
+NAN_METHOD(Transfer_Submit) {
 	ENTER_METHOD(pTransfer, 1);
 
 	if (self->transfer->buffer){
@@ -56,14 +56,14 @@ Handle<Value> Transfer_Submit(const Arguments& args) {
 		THROW_BAD_ARGS("Buffer arg [0] must be Buffer");
 	}
 	Local<Object> buffer_obj = args[0]->ToObject();
-	if (!self->device->handle){
+	if (!self->device->device_handle){
 		THROW_ERROR("Device is not open");
 	}
 
 	// Can't be cached in constructor as device could be closed and re-opened
-	self->transfer->dev_handle = self->device->handle;
+	self->transfer->dev_handle = self->device->device_handle;
 
-	self->v8buffer = Persistent<Object>::New(buffer_obj);
+	NanAssignPersistent(self->v8buffer, buffer_obj);
 	self->transfer->buffer = (unsigned char*) Buffer::Data(buffer_obj);
 	self->transfer->length = Buffer::Length(buffer_obj);
 
@@ -85,7 +85,7 @@ Handle<Value> Transfer_Submit(const Arguments& args) {
 	);
 
 	CHECK_USB(libusb_submit_transfer(self->transfer));
-	return scope.Close(args.This());
+	NanReturnValue(args.This());
 }
 
 extern "C" void LIBUSB_CALL usbCompletionCb(libusb_transfer *transfer){
@@ -101,7 +101,7 @@ extern "C" void LIBUSB_CALL usbCompletionCb(libusb_transfer *transfer){
 }
 
 void handleCompletion(Transfer* self){
-	HandleScope scope;
+	NanScope();
 	DEBUG_LOG("HandleCompletion %p", self);
 
 	self->device->unref();
@@ -111,20 +111,19 @@ void handleCompletion(Transfer* self){
 
 	// The callback may resubmit and overwrite these, so need to clear the
 	// persistent first.
-	Local<Object> buffer = Local<Object>::New(self->v8buffer);
-	self->v8buffer.Dispose();
-	self->v8buffer.Clear();
+	Local<Object> buffer = NanNew<Object>(self->v8buffer);
+	NanDisposePersistent(self->v8buffer);
 	self->transfer->buffer = NULL;
 
 	if (!self->v8callback.IsEmpty()) {
-		Handle<Value> error = Undefined();
+		Handle<Value> error = NanUndefined();
 		if (self->transfer->status != 0){
 			error = libusbException(self->transfer->status);
 		}
 		Handle<Value> argv[] = {error, buffer,
-			Uint32::New(self->transfer->actual_length)};
+			NanNew<Uint32>((uint32_t) self->transfer->actual_length)};
 		TryCatch try_catch;
-		self->v8callback->Call(self->handle_, 3, argv);
+		NanNew(self->v8callback)->Call(NanObjectWrapHandle(self), 3, argv);
 		if (try_catch.HasCaught()) {
 			FatalException(try_catch);
 		}
@@ -133,16 +132,17 @@ void handleCompletion(Transfer* self){
 	self->unref();
 }
 
-Handle<Value> Transfer_Cancel(const Arguments& args) {
+NAN_METHOD(Transfer_Cancel){
 	ENTER_METHOD(pTransfer, 0);
 	DEBUG_LOG("Cancel %p %i", self, !!self->transfer->buffer);
 	int r = libusb_cancel_transfer(self->transfer);
 	if (r == LIBUSB_ERROR_NOT_FOUND){
 		// Not useful to throw an error for this case
-		return False();
+		NanReturnValue(NanFalse());
+	} else {
+		CHECK_USB(r);
+		NanReturnValue(NanTrue());
 	}
-	CHECK_USB(r);
-	return True();
 }
 
 static void init(Handle<Object> target){

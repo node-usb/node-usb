@@ -18,7 +18,8 @@
         '_LARGEFILE_SOURCE',
       ],
       'include_dirs+': [
-        'src/'
+        'src/',
+        "<!(node -e \"require('nan')\")",
       ],
       'conditions' : [
           ['OS=="linux"', {
@@ -41,6 +42,8 @@
               '<!@(pkg-config libusb-1.0 --libs | sed s/-L//g | sed "s/ -l/\/lib/g").a'
             ],
             'xcode_settings': {
+              'OTHER_CFLAGS': [ '--std=c++1y' ],
+              'OTHER_LDFLAGS': [ '-framework', 'CoreFoundation', '-framework', 'IOKit' ],
               'SDKROOT': 'macosx',
               'MACOSX_DEPLOYMENT_TARGET': '10.5',
             },
