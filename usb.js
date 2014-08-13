@@ -97,7 +97,13 @@ function(bmRequestType, bRequest, wValue, wIndex, data_or_length, callback){
 			}
 		}
 	)
-	return transfer.submit(buf)
+
+	try {
+		transfer.submit(buf)
+	} catch (e) {
+		process.nextTick(function() { callback.call(self, e); });
+	}
+	return this;
 }
 
 usb.Device.prototype.getStringDescriptor = function (desc_index, callback) {
@@ -261,7 +267,12 @@ InEndpoint.prototype.transfer = function(length, cb){
 		cb.call(self, error, buffer.slice(0, actual))
 	}
 
-	return this.makeTransfer(this.device.timeout, callback).submit(buffer)
+	try {
+		this.makeTransfer(this.device.timeout, callback).submit(buffer)
+	} catch (e) {
+		process.nextTick(function() { cb.call(self, e); });
+	}
+	return this;
 }
 
 InEndpoint.prototype.startStream = function(nTransfers, transferSize){
@@ -288,7 +299,12 @@ InEndpoint.prototype.startStream = function(nTransfers, transferSize){
 	}
 
 	function startTransfer(t){
-		t.submit(new Buffer(self.streamTransferSize), transferDone)
+		try {
+			t.submit(new Buffer(self.streamTransferSize), transferDone);
+		} catch (e) {
+			self.emit("error", e);
+			self.stopStream();
+		}
 	}
 
 	this.streamTransfers.forEach(startTransfer)
@@ -316,7 +332,13 @@ OutEndpoint.prototype.transfer = function(buffer, cb){
 		if (cb) cb.call(self, error)
 	}
 
-	return this.makeTransfer(this.device.timeout, callback).submit(buffer)
+	try {
+		this.makeTransfer(this.device.timeout, callback).submit(buffer);
+	} catch (e) {
+		process.nextTick(function() { callback(e); });
+	}
+
+	return this;
 }
 
 OutEndpoint.prototype.transferWithZLP = function (buf, cb) {
