@@ -10,7 +10,7 @@ if (usb.INIT_ERROR) {
 // convenience method for finding a device by vendor and product id
 exports.findByIds = function(vid, pid) {
 	var devices = usb.getDeviceList()
-	
+
 	for (var i = 0; i < devices.length; i++) {
 		var deviceDesc = devices[i].deviceDescriptor
 		if ((deviceDesc.idVendor == vid) && (deviceDesc.idProduct == pid)) {
@@ -278,7 +278,7 @@ InEndpoint.prototype.transfer = function(length, cb){
 InEndpoint.prototype.startStream = function(nTransfers, transferSize){
 	var self = this
 	this.streamTransfers = InEndpoint.super_.prototype.startStream.call(this, nTransfers, transferSize, transferDone)
-	
+
 	function transferDone(error, buf, actual){
 		if (!error){
 			self.emit("data", buf.slice(0, actual))
