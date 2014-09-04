@@ -1,0 +1,1 @@
+/* Nothing. Configured by gyp. */
