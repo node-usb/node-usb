@@ -38,7 +38,7 @@ struct Device: public node::ObjectWrap {
 	static void unpin(libusb_device* device);
 
 	protected:
-		static std::map<libusb_device*, Handle<Value> > byPtr;
+		static std::map<libusb_device*, _NanWeakCallbackInfo<Value, libusb_device>*> byPtr;
 		Device(libusb_device* d);
 };
 
@@ -63,14 +63,14 @@ extern Proto<Transfer> pTransfer;
 
 #define CHECK_USB(r) \
 	if (r < LIBUSB_SUCCESS) { \
-		NanThrowError(libusbException(r)); \
+		return NanThrowError(libusbException(r)); \
 	}
 
 #define CALLBACK_ARG(CALLBACK_ARG_IDX) \
 	Local<Function> callback; \
 	if (args.Length() > (CALLBACK_ARG_IDX)) { \
 		if (!args[CALLBACK_ARG_IDX]->IsFunction()) { \
-			NanThrowTypeError("Argument " #CALLBACK_ARG_IDX " must be a function"); \
+			return NanThrowTypeError("Argument " #CALLBACK_ARG_IDX " must be a function"); \
 		} \
 		callback = Local<Function>::Cast(args[CALLBACK_ARG_IDX]); \
 	} \

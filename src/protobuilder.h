@@ -8,9 +8,9 @@ using namespace v8;
 #define V8STR(str) NanNew<String>(str)
 #define V8SYM(str) NanNew<String>(str)
 
-#define THROW_BAD_ARGS(FAIL_MSG) NanThrowError(FAIL_MSG);
-#define THROW_ERROR(FAIL_MSG) NanThrowTypeError(FAIL_MSG);
-#define CHECK_N_ARGS(MIN_ARGS) if (args.Length() < MIN_ARGS) THROW_BAD_ARGS("Expected " #MIN_ARGS " arguments")
+#define THROW_BAD_ARGS(FAIL_MSG) return NanThrowTypeError(FAIL_MSG);
+#define THROW_ERROR(FAIL_MSG) return NanThrowError(FAIL_MSG);
+#define CHECK_N_ARGS(MIN_ARGS) if (args.Length() < MIN_ARGS) { THROW_BAD_ARGS("Expected " #MIN_ARGS " arguments") }
 
 const PropertyAttribute CONST_PROP = static_cast<PropertyAttribute>(ReadOnly|DontDelete);
 
@@ -116,13 +116,13 @@ inline static void setConst(Handle<Object> obj, const char* const name, Handle<V
 
 #define ENTER_CONSTRUCTOR(MIN_ARGS) \
 	NanScope();              \
-	if (!args.IsConstructCall()) THROW_ERROR("Must be called with `new`!"); \
+	if (!args.IsConstructCall()) return NanThrowError("Must be called with `new`!"); \
 	CHECK_N_ARGS(MIN_ARGS);
 
 #define ENTER_CONSTRUCTOR_POINTER(PROTO, MIN_ARGS) \
 	ENTER_CONSTRUCTOR(MIN_ARGS)                    \
 	if (!args.Length() || !args[0]->IsExternal()){ \
-		THROW_BAD_ARGS("This type cannot be created directly!"); \
+		return NanThrowError("This type cannot be created directly!"); \
 	}                                               \
 	auto self = (PROTO)._wrap(args.This(), args[0]); \
 	(void) self
