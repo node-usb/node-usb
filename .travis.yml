@@ -1,6 +1,6 @@
 language: objective-c
 before_install:
-  - brew install libusb node
+  - brew install node
   - npm install -g node-gyp
 script:
   - npm install --ignore-scripts

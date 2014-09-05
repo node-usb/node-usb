@@ -9,20 +9,10 @@ This is a refactoring / rewrite of Christopher Klein's [node-usb](https://github
 
 It's based entirely on libusb's asynchronous API for better efficiency, and provides a stream API for continuously streaming data or events.
 
-Tested with Node 0.10/Fedora and Node 0.10/WinXP.
-
 Installation
 ============
 
-Libusb is required. Older versions of libusb segfault when using bulk or interrupt endpoints.
-Use [libusb](http://libusb.org) or [libusbx](http://libusbx.org) 1.0.9 or greater.
-
-**Ubuntu/Debian:** `sudo apt-get install build-essential pkg-config libusb-1.0-0-dev`  
-**Fedora:** `sudo yum install libusbx-devel`
-
-**OSX:** `brew install libusb pkg-config`
-
-**Windows:** Download a Windows Binary package from http://libusbx.org/ and extract it at `C:\Program Files\libusb`. Use [Zadig](http://sourceforge.net/projects/libwdi/files/zadig/) to install the WinUSB driver for your USB device. Otherwise you will get a `LIBUSB_ERROR_NOT_SUPPORTED` when attempting to open devices.
+Libusb is included as a submodule. On Linux, you'll need libudev to build libusb. On Ubuntu/Debian: `sudo apt-get install build-essential libudev-dev`
 
 Then, just run
 
@@ -30,10 +20,14 @@ Then, just run
 
 to install from npm. See the bottom of this page for instructions for building from a git checkout.
 
+### Windows
+Use [Zadig](http://sourceforge.net/projects/libwdi/files/zadig/) to install the WinUSB driver for your USB device. Otherwise you will get `LIBUSB_ERROR_NOT_SUPPORTED` when attempting to open devices.
+
+
 API
 ===
 
-  var usb = require('usb')
+	var usb = require('usb')
 
 usb
 ---
@@ -277,7 +271,7 @@ Development and testing
 
 To build from git:
 
-	git clone https://github.com/nonolith/node-usb.git
+	git clone --recursive https://github.com/nonolith/node-usb.git
 	cd node-usb
 	npm install
 
@@ -294,3 +288,10 @@ Does not support:
 
   - Configurations other than the default one
   - Isochronous transfers
+
+License
+=======
+
+MIT
+
+Note that the compiled Node extension includes Libusb, and is thus subject to the LGPL.
