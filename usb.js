@@ -230,7 +230,7 @@ Endpoint.prototype.startStream = function(nTransfers, transferSize, callback){
 	}
 
 	nTransfers = nTransfers || 3;
-	this.streamTransferSize = transferSize || this.maxPacketSize;
+	this.streamTransferSize = transferSize || this.descriptor.wMaxPacketSize;
 	this.streamActive = true
 	this.streamPending = 0
 
@@ -353,7 +353,7 @@ OutEndpoint.prototype.transferWithZLP = function (buf, cb) {
 
 OutEndpoint.prototype.startStream = function startStream(n_transfers, transfer_size){
 	n_transfers = n_transfers || 3;
-	transfer_size = transfer_size || this.maxPacketSize;
+	transfer_size = transfer_size || this.descriptor.wMaxPacketSize;
 	this.streamActive = true;
 	this._streamTransfers = n_transfers;
 	this._pendingTransfers = 0;
