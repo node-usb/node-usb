@@ -30,7 +30,7 @@ NAN_WEAK_CALLBACK(DeviceWeakCallback) {
 	Device::unpin(data.GetParameter());
 }
 
-// Get a V8 instance for a libusb_device: either the existing one from the map, 
+// Get a V8 instance for a libusb_device: either the existing one from the map,
 // or create a new one and add it to the map.
 Handle<Value> Device::get(libusb_device* dev){
 	auto it = byPtr.find(dev);
@@ -106,14 +106,14 @@ NAN_METHOD(Device_GetConfigDescriptor) {
 
 	for (int idxInterface = 0; idxInterface < cdesc->bNumInterfaces; idxInterface++) {
 		int numAltSettings = cdesc->interface[idxInterface].num_altsetting;
-		
+
 		Local<Array> v8altsettings = NanNew<Array>(numAltSettings);
 		v8interfaces->Set(idxInterface, v8altsettings);
 
 		for (int idxAltSetting = 0; idxAltSetting < numAltSettings; idxAltSetting++) {
 			const libusb_interface_descriptor& idesc =
 				cdesc->interface[idxInterface].altsetting[idxAltSetting];
-			
+
 			Local<Object> v8idesc = NanNew<Object>();
 			v8altsettings->Set(idxAltSetting, v8idesc);
 
@@ -236,7 +236,7 @@ NAN_METHOD(IsKernelDriverActive) {
 	int r = libusb_kernel_driver_active(self->device_handle, interface);
 	CHECK_USB(r);
 	NanReturnValue(NanNew<Boolean>(r));
-}	
+}
 
 NAN_METHOD(DetachKernelDriver) {
 	ENTER_METHOD(pDevice, 1);
@@ -312,37 +312,20 @@ struct Device_SetInterface: Req{
 	}
 };
 
-NAN_METHOD(Device_Destroy) {
-	ENTER_METHOD(pDevice, 0);
-
-	// Remove from pin table
-	Device::unpin(self->device);
-
-	// Kill internal field (any future method calls will think this is not a Device object)
-	NanSetInternalFieldPointer(args.This(), 0, NULL);
-
-	// Free the device (which unrefs the libusb_device)
-	delete self;
-
-	NanReturnValue(NanUndefined());
-}
-
 static void init(Handle<Object> target){
 	pDevice.init(&deviceConstructor);
 	pDevice.addMethod("__getConfigDescriptor", Device_GetConfigDescriptor);
 	pDevice.addMethod("__open", Device_Open);
 	pDevice.addMethod("__close", Device_Close);
 	pDevice.addMethod("reset", Device_Reset::begin);
-	
+
 	pDevice.addMethod("__claimInterface", Device_ClaimInterface);
 	pDevice.addMethod("__releaseInterface", Device_ReleaseInterface::begin);
 	pDevice.addMethod("__setInterface", Device_SetInterface::begin);
-	
+
 	pDevice.addMethod("__isKernelDriverActive", IsKernelDriverActive);
 	pDevice.addMethod("__detachKernelDriver", DetachKernelDriver);
 	pDevice.addMethod("__attachKernelDriver", AttachKernelDriver);
-
-	pDevice.addMethod("__destroy", Device_Destroy);
 }
 
 Proto<Device> pDevice("Device", &init);
