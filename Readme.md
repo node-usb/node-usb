@@ -175,7 +175,7 @@ Endpoint
 Common base for InEndpoint and OutEndpoint, see below.
 
 ### .direction
-Endpoint direction: `usb.LIBUSB_ENDPOINT_IN` or `usb.LIBUSB_ENDPOINT_OUT`.
+Endpoint direction: `"in"` or `"out"`.
 
 ### .transferType
 Endpoint type: `usb.LIBUSB_TRANSFER_TYPE_BULK`, `usb.LIBUSB_TRANSFER_TYPE_INTERRUPT`, or `usb.LIBUSB_TRANSFER_TYPE_ISOCHRONOUS`.
