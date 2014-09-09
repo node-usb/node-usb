@@ -77,6 +77,11 @@ describe 'Device', ->
 				assert.equal(d.toString(), b.toString())
 				done()
 
+		it 'should signal errors', (done) ->
+			device.controlTransfer 0xc0, 0xff, 0, 0, 64, (e, d) ->
+				assert.ok(e)
+				done()
+
 	describe 'Interface', ->
 		iface = null
 		before ->
