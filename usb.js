@@ -157,11 +157,11 @@ Interface.prototype.release = function(closeEndpoints, cb){
 	} else {
 		var n = self.endpoints.length;
 		self.endpoints.forEach(function (ep, i) {
-			if (ep.streamActive) {
+			if (ep.pollActive) {
 				ep.once('end', function () {
 					if (--n == 0) next();
 				});
-				ep.stopStream();
+				ep.stopPoll();
 			} else {
 				if (--n == 0) next();
 			}
@@ -224,15 +224,15 @@ Endpoint.prototype.makeTransfer = function(timeout, callback){
 	return new usb.Transfer(this.device, this.address, this.transferType, timeout, callback)
 }
 
-Endpoint.prototype.startStream = function(nTransfers, transferSize, callback){
-	if (this.streamTransfers){
-		throw new Error("Stream already active")
+Endpoint.prototype.startPoll = function(nTransfers, transferSize, callback){
+	if (this.pollTransfers){
+		throw new Error("Polling already active")
 	}
 
 	nTransfers = nTransfers || 3;
-	this.streamTransferSize = transferSize || this.descriptor.wMaxPacketSize;
-	this.streamActive = true
-	this.streamPending = 0
+	this.pollTransferSize = transferSize || this.descriptor.wMaxPacketSize;
+	this.pollActive = true
+	this.pollPending = 0
 
 	var transfers = []
 	for (var i=0; i<nTransfers; i++){
@@ -241,14 +241,14 @@ Endpoint.prototype.startStream = function(nTransfers, transferSize, callback){
 	return transfers;
 }
 
-Endpoint.prototype.stopStream = function(){
-	if (!this.streamTransfers) {
-		throw new Error('Stream is not active.');
+Endpoint.prototype.stopPoll = function(){
+	if (!this.pollTransfers) {
+		throw new Error('Polling is not active.');
 	}
-	for (var i=0; i<this.streamTransfers.length; i++){
-		this.streamTransfers[i].cancel()
+	for (var i=0; i<this.pollTransfers.length; i++){
+		this.pollTransfers[i].cancel()
 	}
-	this.streamActive = false
+	this.pollActive = false
 }
 
 function InEndpoint(device, descriptor){
@@ -275,24 +275,24 @@ InEndpoint.prototype.transfer = function(length, cb){
 	return this;
 }
 
-InEndpoint.prototype.startStream = function(nTransfers, transferSize){
+InEndpoint.prototype.startPoll = function(nTransfers, transferSize){
 	var self = this
-	this.streamTransfers = InEndpoint.super_.prototype.startStream.call(this, nTransfers, transferSize, transferDone)
+	this.pollTransfers = InEndpoint.super_.prototype.startPoll.call(this, nTransfers, transferSize, transferDone)
 
 	function transferDone(error, buf, actual){
 		if (!error){
 			self.emit("data", buf.slice(0, actual))
 		}else if (error.errno != usb.LIBUSB_TRANSFER_CANCELLED){
 			self.emit("error", error)
-			self.stopStream()
+			self.stopPoll()
 		}
 
-		if (self.streamActive){
+		if (self.pollActive){
 			startTransfer(this)
 		}else{
-			self.streamPending--
+			self.pollPending--
 
-			if (self.streamPending == 0){
+			if (self.pollPending == 0){
 				self.emit('end')
 			}
 		}
@@ -300,15 +300,15 @@ InEndpoint.prototype.startStream = function(nTransfers, transferSize){
 
 	function startTransfer(t){
 		try {
-			t.submit(new Buffer(self.streamTransferSize), transferDone);
+			t.submit(new Buffer(self.pollTransferSize), transferDone);
 		} catch (e) {
 			self.emit("error", e);
-			self.stopStream();
+			self.stopPoll();
 		}
 	}
 
-	this.streamTransfers.forEach(startTransfer)
-	self.streamPending = this.streamTransfers.length
+	this.pollTransfers.forEach(startTransfer)
+	self.pollPending = this.pollTransfers.length
 }
 
 

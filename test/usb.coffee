@@ -140,16 +140,16 @@ describe 'Device', ->
 					assert.equal e.errno, usb.LIBUSB_TRANSFER_OVERFLOW
 					done()
 
-			it 'should be a readableStream', (done) ->
+			it 'polls the device', (done) ->
 				pkts = 0
 
-				inEndpoint.startStream 8, 64
+				inEndpoint.startPoll 8, 64
 				inEndpoint.on 'data', (d) ->
 					assert.equal d.length, 64
 					pkts++
 
 					if pkts == 100
-						inEndpoint.stopStream()
+						inEndpoint.stopPoll()
 
 				inEndpoint.on 'error', (e) ->
 					throw e

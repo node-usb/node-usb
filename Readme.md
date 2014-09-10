@@ -208,27 +208,27 @@ If length is greater than maxPacketSize, libusb will automatically split the tra
 
 `this` in the callback is the InEndpoint object.
 
-### .startStream(nTransfers=3, transferSize=maxPacketSize)
-Start a streaming transfer from the endpoint.
+### .startPoll(nTransfers=3, transferSize=maxPacketSize)
+Start polling the endpoint.
 
-The library will keep `nTransfers`
-transfers of size `transferSize` pending in the kernel at all times to ensure
-continuous data flow. This is handled by the libusb event thread, so it continues even
-if the Node v8 thread is busy. The `data` and `error` events are emitted as transfers complete.
+The library will keep `nTransfers` transfers of size `transferSize` pending in
+the kernel at all times to ensure continuous data flow. This is handled by the
+libusb event thread, so it continues even if the Node v8 thread is busy. The
+`data` and `error` events are emitted as transfers complete.
 
-### .stopStream()
-Stop the streaming transfer.
+### .stopPoll()
+Stop polling.
 
 Further data may still be received. The `end` event is emitted once all transfers have completed or canceled.
 
 ### Event: data(data : Buffer)
-Emitted with data received by the stream
+Emitted with data received by the polling transfers
 
 ### Event: error(error)
-Emitted when the stream encounters an error.
+Emitted when polling encounters an error.
 
 ### Event: end
-Emitted when the stream has been canceled
+Emitted when polling has been canceled
 
 OutEndpoint
 -----------
