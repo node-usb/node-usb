@@ -220,6 +220,8 @@ function Endpoint(device, descriptor){
 }
 util.inherits(Endpoint, events.EventEmitter)
 
+Endpoint.prototype.timeout = 0
+
 Endpoint.prototype.makeTransfer = function(timeout, callback){
 	return new usb.Transfer(this.device, this.address, this.transferType, timeout, callback)
 }
@@ -268,7 +270,7 @@ InEndpoint.prototype.transfer = function(length, cb){
 	}
 
 	try {
-		this.makeTransfer(this.device.timeout, callback).submit(buffer)
+		this.makeTransfer(this.timeout, callback).submit(buffer)
 	} catch (e) {
 		process.nextTick(function() { cb.call(self, e); });
 	}
@@ -333,7 +335,7 @@ OutEndpoint.prototype.transfer = function(buffer, cb){
 	}
 
 	try {
-		this.makeTransfer(this.device.timeout, callback).submit(buffer);
+		this.makeTransfer(this.timeout, callback).submit(buffer);
 	} catch (e) {
 		process.nextTick(function() { callback(e); });
 	}

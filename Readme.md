@@ -117,7 +117,7 @@ Return the interface with the specified interface number.
 List of Interface objects for the interfaces of the default configuration of the device.
 
 ### .timeout
-Timeout in milliseconds to use for controlTransfer and endpoint transfers.
+Timeout in milliseconds to use for control transfers.
 
 ### .reset(callback(error))
 Performs a reset of the device. Callback is called when complete.
@@ -195,6 +195,9 @@ Object with fields from the endpoint descriptor -- see libusb documentation or U
   - bRefresh
   - bSynchAddress
   - extra (Buffer containing any extra data or additional descriptors)
+
+### .timeout
+Sets the timeout in milliseconds for transfers on this endpoint. The default, `0`, is infinite timeout.
 
 InEndpoint
 ----------
