@@ -178,26 +178,6 @@ describe 'Device', ->
 					assert.ok(e == undefined, e)
 					done()
 
-			it 'should be a writableStream', (done)->
-				pkts = 0
-
-				outEndpoint.startStream 4, 64
-				outEndpoint.on 'drain', ->
-					pkts++
-
-					outEndpoint.write(new Buffer(64));
-
-					if pkts == 100
-						outEndpoint.stopStream()
-						#console.log("Stopping stream")
-
-				outEndpoint.on 'error', (e) ->
-					#console.log("Stream error", e)
-
-				outEndpoint.on 'end', ->
-					#console.log("Stream stopped")
-					done()
-
 		after (cb) ->
 			iface.release(cb)
 

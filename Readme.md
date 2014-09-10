@@ -242,26 +242,6 @@ If length is greater than maxPacketSize, libusb will automatically split the tra
 
 `this` in the callback is the OutEndpoint object.
 
-### .startStream(nTransfers=3, transferSize=maxPacketSize)
-Start a streaming transfer to the endpoint.
-
-The library will help you maintain `nTransfers` transfers pending in the kernel to ensure continuous data flow.
-The `drain` event is emitted when another transfer is necessary. Your `drain` handler should use the .write() method
-to start another transfer.
-
-### .write(data)
-Write `data` to the endpoint with the stream. `data` should be a buffer of length `transferSize` as passed to startStream.
-
-Delegates to .transfer(), but differs in that it updates the stream state tracking the number of requests in flight.
-
-### .stopStream()
-Stop the streaming transfer.
-
-No further `drain` events will be emitted. When all transfers have been completed, the OutEndpoint emits the `end` event.
-
-### Event: drain
-Emitted when the stream requests more data. Use the .write() method to start another transfer.
-
 ### Event: error(error)
 Emitted when the stream encounters an error.
 

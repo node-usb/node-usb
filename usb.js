@@ -349,39 +349,3 @@ OutEndpoint.prototype.transferWithZLP = function (buf, cb) {
 		this.transfer(buf, cb);
 	}
 }
-
-
-OutEndpoint.prototype.startStream = function startStream(n_transfers, transfer_size){
-	n_transfers = n_transfers || 3;
-	transfer_size = transfer_size || this.descriptor.wMaxPacketSize;
-	this.streamActive = true;
-	this._streamTransfers = n_transfers;
-	this._pendingTransfers = 0;
-	var self = this
-	process.nextTick(function(){
-		for (var i=0; i<n_transfers; i++) self.emit('drain')
-	})
-}
-
-function out_ep_callback(err, d){
-	if (err) this.emit('error', err);
-	this._pendingTransfers--;
-	if (this._pendingTransfers < this._streamTransfers){
-		this.emit('drain');
-	}
-	if (this._pendingTransfers <= 0 && this._streamTransfers == 0){
-		this.emit('end');
-	}
-}
-
-usb.OutEndpoint.prototype.write = function write(data){
-	this.transfer(data, out_ep_callback);
-	this._pendingTransfers++;
-}
-
-usb.OutEndpoint.prototype.stopStream = function stopStream(){
-	this._streamTransfers = 0;
-	this.streamActive = false;
-	if (this._pendingTransfers === null) throw new Error('stopStream invoked on non-active stream.');
-	if (this._pendingTransfers == 0) this.emit('end');
-}
