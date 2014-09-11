@@ -36,9 +36,9 @@ usb.Device.prototype.close = function(){
 }
 
 Object.defineProperty(usb.Device.prototype, "configDescriptor", {
-    get: function() {
-        return this.configDescriptor = this.__getConfigDescriptor()
-    }
+	get: function() {
+		return this._configDescriptor || (this._configDescriptor = this.__getConfigDescriptor())
+	}
 });
 
 usb.Device.prototype.interface = function(addr){
