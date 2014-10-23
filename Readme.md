@@ -57,6 +57,9 @@ Integer USB device number
 ### .deviceAddress
 Integer USB device address
 
+### .portNumbers
+Array containing the USB device port numbers
+
 ### .deviceDescriptor
 Object with properties for the fields of the device descriptor:
 
