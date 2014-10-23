@@ -43,7 +43,7 @@ describe 'Device', ->
 		device = usb.findByIds(0x59e3, 0x0a23)
 
 	it 'should have sane properties', ->
-		assert.ok((device.busNumber > 0), "deviceAddress must be larger than 0")
+		assert.ok((device.busNumber > 0), "busNumber must be larger than 0")
 		assert.ok((device.deviceAddress > 0), "deviceAddress must be larger than 0")
 		assert.ok((util.isArray(device.portNumbers)), "portNumbers must be an array")
 
