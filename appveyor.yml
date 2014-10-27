@@ -1,17 +1,17 @@
 install:
-  - cinst nodejs.install -x86
-  - set PATH=%PATH%;"C:\Program Files (x86)\nodejs\"
+  - ps: Update-NodeJsInstallation (Get-NodeJsLatestBuild "0.10")
+  - set PATH=%PATH%;"C:\Program Files (x86)\nodejs\";"C:\Program Files\nodejs\"
   - npm install -g node-gyp
   - npm install -g node-shyp
+
 
 build_script:
   - git submodule update --init
   - npm install --ignore-scripts
-  - node-gyp rebuild
   - node-shyp publish --pack
   - move build\shyp\*.tgz node-usb.tgz
   - appveyor PushArtifact node-usb.tgz
 
-platforms:
-  - x32
+platform:
+  - x86
   - x64
