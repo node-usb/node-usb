@@ -7,6 +7,10 @@ if (usb.INIT_ERROR) {
 	throw new Error('Could not initialize libusb. Check that your system has a usb controller.');
 }
 
+Object.keys(events.EventEmitter.prototype).forEach(function (key) {
+	exports[key] = events.EventEmitter.prototype[key];
+});
+
 // convenience method for finding a device by vendor and product id
 exports.findByIds = function(vid, pid) {
 	var devices = usb.getDeviceList()
@@ -385,3 +389,14 @@ usb.OutEndpoint.prototype.stopStream = function stopStream(){
 	if (this._pendingTransfers === null) throw new Error('stopStream invoked on non-active stream.');
 	if (this._pendingTransfers == 0) this.emit('end');
 }
+
+var hotplugListeners = 0;
+exports.on('newListener', function(name) {
+	if (name !== 'attach' && name !== 'detach') return;
+	if (++hotplugListeners === 1) usb._enableHotplugEvents();
+});
+
+exports.on('removeListener', function(name) {
+	if (name !== 'attach' && name !== 'detach') return;
+	if (--hotplugListeners === 0) usb._disableHotplugEvents();
+});

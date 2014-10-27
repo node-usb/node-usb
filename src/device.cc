@@ -324,21 +324,6 @@ struct Device_SetInterface: Req{
 	}
 };
 
-NAN_METHOD(Device_Destroy) {
-	ENTER_METHOD(pDevice, 0);
-
-	// Remove from pin table
-	Device::unpin(self->device);
-
-	// Kill internal field (any future method calls will think this is not a Device object)
-	NanSetInternalFieldPointer(args.This(), 0, NULL);
-
-	// Free the device (which unrefs the libusb_device)
-	delete self;
-
-	NanReturnValue(NanUndefined());
-}
-
 static void init(Handle<Object> target){
 	pDevice.init(&deviceConstructor);
 	pDevice.addMethod("__getConfigDescriptor", Device_GetConfigDescriptor);
@@ -353,8 +338,6 @@ static void init(Handle<Object> target){
 	pDevice.addMethod("__isKernelDriverActive", IsKernelDriverActive);
 	pDevice.addMethod("__detachKernelDriver", DetachKernelDriver);
 	pDevice.addMethod("__attachKernelDriver", AttachKernelDriver);
-
-	pDevice.addMethod("__destroy", Device_Destroy);
 }
 
 Proto<Device> pDevice("Device", &init);
