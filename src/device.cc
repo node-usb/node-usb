@@ -7,6 +7,8 @@
 #define CHECK_OPEN() \
 		if (!self->device_handle){THROW_ERROR("Device is not opened");}
 
+#define MAX_PORTS 7
+
 Handle<Object> makeBuffer(const unsigned char* ptr, unsigned length) {
 	return NanNewBufferHandle((char*) ptr, (uint32_t) length);
 }
@@ -30,7 +32,7 @@ NAN_WEAK_CALLBACK(DeviceWeakCallback) {
 	Device::unpin(data.GetParameter());
 }
 
-// Get a V8 instance for a libusb_device: either the existing one from the map, 
+// Get a V8 instance for a libusb_device: either the existing one from the map,
 // or create a new one and add it to the map.
 Handle<Value> Device::get(libusb_device* dev){
 	auto it = byPtr.find(dev);
@@ -78,6 +80,16 @@ static NAN_METHOD(deviceConstructor) {
 	STRUCT_TO_V8(v8dd, dd, iSerialNumber)
 	STRUCT_TO_V8(v8dd, dd, bNumConfigurations)
 
+	uint8_t port_numbers[MAX_PORTS];
+	int ret = libusb_get_port_numbers(self->device, &port_numbers[0], MAX_PORTS);
+	CHECK_USB(ret);
+	Local<Array> array = NanNew<Array>(ret);
+	for (int i = 0; i < ret; ++ i) {
+		array->Set(i, NanNew(port_numbers[i]));
+	}
+
+	args.This()->Set(V8SYM("portNumbers"), array, CONST_PROP);
+
 	NanReturnValue(args.This());
 }
 
@@ -106,14 +118,14 @@ NAN_METHOD(Device_GetConfigDescriptor) {
 
 	for (int idxInterface = 0; idxInterface < cdesc->bNumInterfaces; idxInterface++) {
 		int numAltSettings = cdesc->interface[idxInterface].num_altsetting;
-		
+
 		Local<Array> v8altsettings = NanNew<Array>(numAltSettings);
 		v8interfaces->Set(idxInterface, v8altsettings);
 
 		for (int idxAltSetting = 0; idxAltSetting < numAltSettings; idxAltSetting++) {
 			const libusb_interface_descriptor& idesc =
 				cdesc->interface[idxInterface].altsetting[idxAltSetting];
-			
+
 			Local<Object> v8idesc = NanNew<Object>();
 			v8altsettings->Set(idxAltSetting, v8idesc);
 
@@ -236,7 +248,7 @@ NAN_METHOD(IsKernelDriverActive) {
 	int r = libusb_kernel_driver_active(self->device_handle, interface);
 	CHECK_USB(r);
 	NanReturnValue(NanNew<Boolean>(r));
-}	
+}
 
 NAN_METHOD(DetachKernelDriver) {
 	ENTER_METHOD(pDevice, 1);
@@ -333,11 +345,11 @@ static void init(Handle<Object> target){
 	pDevice.addMethod("__open", Device_Open);
 	pDevice.addMethod("__close", Device_Close);
 	pDevice.addMethod("reset", Device_Reset::begin);
-	
+
 	pDevice.addMethod("__claimInterface", Device_ClaimInterface);
 	pDevice.addMethod("__releaseInterface", Device_ReleaseInterface::begin);
 	pDevice.addMethod("__setInterface", Device_SetInterface::begin);
-	
+
 	pDevice.addMethod("__isKernelDriverActive", IsKernelDriverActive);
 	pDevice.addMethod("__detachKernelDriver", DetachKernelDriver);
 	pDevice.addMethod("__attachKernelDriver", AttachKernelDriver);
