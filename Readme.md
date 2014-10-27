@@ -117,7 +117,7 @@ Return the interface with the specified interface number.
 List of Interface objects for the interfaces of the default configuration of the device.
 
 ### .timeout
-Timeout in milliseconds to use for controlTransfer and endpoint transfers.
+Timeout in milliseconds to use for control transfers.
 
 ### .reset(callback(error))
 Performs a reset of the device. Callback is called when complete.
@@ -196,6 +196,9 @@ Object with fields from the endpoint descriptor -- see libusb documentation or U
   - bSynchAddress
   - extra (Buffer containing any extra data or additional descriptors)
 
+### .timeout
+Sets the timeout in milliseconds for transfers on this endpoint. The default, `0`, is infinite timeout.
+
 InEndpoint
 ----------
 
@@ -208,27 +211,27 @@ If length is greater than maxPacketSize, libusb will automatically split the tra
 
 `this` in the callback is the InEndpoint object.
 
-### .startStream(nTransfers=3, transferSize=maxPacketSize)
-Start a streaming transfer from the endpoint.
+### .startPoll(nTransfers=3, transferSize=maxPacketSize)
+Start polling the endpoint.
 
-The library will keep `nTransfers`
-transfers of size `transferSize` pending in the kernel at all times to ensure
-continuous data flow. This is handled by the libusb event thread, so it continues even
-if the Node v8 thread is busy. The `data` and `error` events are emitted as transfers complete.
+The library will keep `nTransfers` transfers of size `transferSize` pending in
+the kernel at all times to ensure continuous data flow. This is handled by the
+libusb event thread, so it continues even if the Node v8 thread is busy. The
+`data` and `error` events are emitted as transfers complete.
 
-### .stopStream()
-Stop the streaming transfer.
+### .stopPoll()
+Stop polling.
 
 Further data may still be received. The `end` event is emitted once all transfers have completed or canceled.
 
 ### Event: data(data : Buffer)
-Emitted with data received by the stream
+Emitted with data received by the polling transfers
 
 ### Event: error(error)
-Emitted when the stream encounters an error.
+Emitted when polling encounters an error.
 
 ### Event: end
-Emitted when the stream has been canceled
+Emitted when polling has been canceled
 
 OutEndpoint
 -----------
@@ -241,26 +244,6 @@ Perform a transfer to write `data` to the endpoint.
 If length is greater than maxPacketSize, libusb will automatically split the transfer in multiple packets, and you will receive one callback once all packets are complete.
 
 `this` in the callback is the OutEndpoint object.
-
-### .startStream(nTransfers=3, transferSize=maxPacketSize)
-Start a streaming transfer to the endpoint.
-
-The library will help you maintain `nTransfers` transfers pending in the kernel to ensure continuous data flow.
-The `drain` event is emitted when another transfer is necessary. Your `drain` handler should use the .write() method
-to start another transfer.
-
-### .write(data)
-Write `data` to the endpoint with the stream. `data` should be a buffer of length `transferSize` as passed to startStream.
-
-Delegates to .transfer(), but differs in that it updates the stream state tracking the number of requests in flight.
-
-### .stopStream()
-Stop the streaming transfer.
-
-No further `drain` events will be emitted. When all transfers have been completed, the OutEndpoint emits the `end` event.
-
-### Event: drain
-Emitted when the stream requests more data. Use the .write() method to start another transfer.
 
 ### Event: error(error)
 Emitted when the stream encounters an error.
