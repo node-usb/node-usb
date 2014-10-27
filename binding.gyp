@@ -3,10 +3,10 @@
     'target_arch%': 'ia32', # built for a 32-bit CPU by default
     'use_udev%': 1,
   },
-  'targets': [  
+  'targets': [
     {
       'target_name': 'usb_bindings',
-      'sources': [ 
+      'sources': [
         './src/node_usb.cc',
         './src/device.cc',
         './src/transfer.cc',
@@ -98,7 +98,15 @@
           'libusb/libusb',
         ],
       },
+      'defines': [
+        'ENABLE_LOGGING=1',
+      ],
       'conditions': [
+        [ 'OS != "win"', {
+          'cflags': [
+            '-Wno-sign-compare',
+          ]
+        }],
         [ 'OS == "linux" or OS == "android" or OS == "mac"', {
           'sources': [
             'libusb/libusb/os/poll_posix.c',
