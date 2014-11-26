@@ -247,7 +247,7 @@ Endpoint.prototype.startPoll = function(nTransfers, transferSize, callback){
 	return transfers;
 }
 
-Endpoint.prototype.stopPoll = function(){
+Endpoint.prototype.stopPoll = function(cb){
 	if (!this.pollTransfers) {
 		throw new Error('Polling is not active.');
 	}
@@ -255,6 +255,7 @@ Endpoint.prototype.stopPoll = function(){
 		this.pollTransfers[i].cancel()
 	}
 	this.pollActive = false
+	if (cb) this.once('end', cb);
 }
 
 function InEndpoint(device, descriptor){

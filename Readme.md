@@ -219,10 +219,11 @@ the kernel at all times to ensure continuous data flow. This is handled by the
 libusb event thread, so it continues even if the Node v8 thread is busy. The
 `data` and `error` events are emitted as transfers complete.
 
-### .stopPoll()
+### .stopPoll(cb)
 Stop polling.
 
-Further data may still be received. The `end` event is emitted once all transfers have completed or canceled.
+Further data may still be received. The `end` event is emitted and the callback
+is called once all transfers have completed or canceled.
 
 ### Event: data(data : Buffer)
 Emitted with data received by the polling transfers
