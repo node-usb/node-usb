@@ -26,9 +26,9 @@
   ],
   "version": "0.3.11",
   "optionalDependencies": {
-    "usb-shyp-win32-x64": "0.3.x",
-    "usb-shyp-win32-ia32": "0.3.x",
-    "usb-shyp-darwin-x64": "0.3.x"
+    "usb-shyp-win32-x64": "1.0.0",
+    "usb-shyp-win32-ia32": "1.0.0",
+    "usb-shyp-darwin-x64": "1.0.0"
   },
   "engines": {
     "node": ">=0.8.x"
