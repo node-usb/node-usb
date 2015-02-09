@@ -24,7 +24,7 @@ Transfer::~Transfer(){
 // new Transfer(device, endpointAddr, type, timeout)
 NAN_METHOD(Transfer_constructor) {
 	ENTER_CONSTRUCTOR(5);
-	UNWRAP_ARG(pDevice, device, 0);
+	UNWRAP_ARG(Device, device, 0);
 	int endpoint, type, timeout;
 	INT_ARG(endpoint, 1);
 	INT_ARG(type, 2);
@@ -46,12 +46,12 @@ NAN_METHOD(Transfer_constructor) {
 
 // Transfer.submit(buffer, callback)
 NAN_METHOD(Transfer_Submit) {
-	ENTER_METHOD(pTransfer, 1);
+	ENTER_METHOD(Transfer, 1);
 
 	if (self->transfer->buffer){
 		THROW_ERROR("Transfer is already active")
 	}
-	
+
 	if (!Buffer::HasInstance(args[0])){
 		THROW_BAD_ARGS("Buffer arg [0] must be Buffer");
 	}
@@ -74,7 +74,7 @@ NAN_METHOD(Transfer_Submit) {
 	completionQueue.ref();
 	#endif
 
-	DEBUG_LOG("Submitting, %p %p %x %i %i %i %p", 
+	DEBUG_LOG("Submitting, %p %p %x %i %i %i %p",
 		self,
 		self->transfer->dev_handle,
 		self->transfer->endpoint,
@@ -133,7 +133,7 @@ void handleCompletion(Transfer* self){
 }
 
 NAN_METHOD(Transfer_Cancel){
-	ENTER_METHOD(pTransfer, 0);
+	ENTER_METHOD(Transfer, 0);
 	DEBUG_LOG("Cancel %p %i", self, !!self->transfer->buffer);
 	int r = libusb_cancel_transfer(self->transfer);
 	if (r == LIBUSB_ERROR_NOT_FOUND){
@@ -145,10 +145,13 @@ NAN_METHOD(Transfer_Cancel){
 	}
 }
 
-static void init(Handle<Object> target){
-	pTransfer.init(&Transfer_constructor);
-	pTransfer.addMethod("submit", Transfer_Submit);
-	pTransfer.addMethod("cancel", Transfer_Cancel);
-}
+void Transfer::Init(Handle<Object> target){
+	Local<FunctionTemplate> tpl = NanNew<FunctionTemplate>(Transfer_constructor);
+	tpl->SetClassName(NanNew("Transfer"));
+	tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
-Proto<Transfer> pTransfer("Transfer", &init);
+	NODE_SET_PROTOTYPE_METHOD(tpl, "submit", Transfer_Submit);
+	NODE_SET_PROTOTYPE_METHOD(tpl, "cancel", Transfer_Cancel);
+
+	target->Set(NanNew("Transfer"), tpl->GetFunction());
+}

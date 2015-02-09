@@ -9,6 +9,8 @@
 
 #define MAX_PORTS 7
 
+static v8::Persistent<v8::FunctionTemplate> device_constructor;
+
 Handle<Object> makeBuffer(const unsigned char* ptr, unsigned length) {
 	return NanNewBufferHandle((char*) ptr, (uint32_t) length);
 }
@@ -39,7 +41,9 @@ Handle<Value> Device::get(libusb_device* dev){
 	if (it != byPtr.end()){
 		return NanNew(it->second->persistent);
 	}else{
-		Handle<Value> v = pDevice.create(new Device(dev));
+		Local<FunctionTemplate> constructorHandle = NanNew<v8::FunctionTemplate>(device_constructor);
+		v8::Handle<v8::Value> argv[1] = { EXTERNAL_NEW(new Device(dev)) };
+		Handle<Value> v = constructorHandle->GetFunction()->NewInstance(1, argv);
 		auto p = NanMakeWeakPersistent(v, dev, DeviceWeakCallback);
 		byPtr.insert(std::make_pair(dev, p));
 		return v;
@@ -52,7 +56,7 @@ void Device::unpin(libusb_device* device) {
 }
 
 static NAN_METHOD(deviceConstructor) {
-	ENTER_CONSTRUCTOR_POINTER(pDevice, 1);
+	ENTER_CONSTRUCTOR_POINTER(Device, 1);
 
 	args.This()->ForceSet(V8SYM("busNumber"),
 		NanNew<Uint32>((uint32_t) libusb_get_bus_number(self->device)), CONST_PROP);
@@ -94,7 +98,7 @@ static NAN_METHOD(deviceConstructor) {
 }
 
 NAN_METHOD(Device_GetConfigDescriptor) {
-	ENTER_METHOD(pDevice, 0);
+	ENTER_METHOD(Device, 0);
 
 	libusb_config_descriptor* cdesc;
 	CHECK_USB(libusb_get_active_config_descriptor(self->device, &cdesc));
@@ -168,7 +172,7 @@ NAN_METHOD(Device_GetConfigDescriptor) {
 }
 
 NAN_METHOD(Device_Open) {
-	ENTER_METHOD(pDevice, 0);
+	ENTER_METHOD(Device, 0);
 	if (!self->device_handle){
 		CHECK_USB(libusb_open(self->device, &self->device_handle));
 	}
@@ -176,7 +180,7 @@ NAN_METHOD(Device_Open) {
 }
 
 NAN_METHOD(Device_Close) {
-	ENTER_METHOD(pDevice, 0);
+	ENTER_METHOD(Device, 0);
 	if (self->canClose()){
 		libusb_close(self->device_handle);
 		self->device_handle = NULL;
@@ -226,7 +230,7 @@ struct Req{
 
 struct Device_Reset: Req{
 	static NAN_METHOD(begin) {
-		ENTER_METHOD(pDevice, 0);
+		ENTER_METHOD(Device, 0);
 		CHECK_OPEN();
 		CALLBACK_ARG(0);
 		auto baton = new Device_Reset;
@@ -241,7 +245,7 @@ struct Device_Reset: Req{
 };
 
 NAN_METHOD(IsKernelDriverActive) {
-	ENTER_METHOD(pDevice, 1);
+	ENTER_METHOD(Device, 1);
 	CHECK_OPEN();
 	int interface;
 	INT_ARG(interface, 0);
@@ -251,7 +255,7 @@ NAN_METHOD(IsKernelDriverActive) {
 }
 
 NAN_METHOD(DetachKernelDriver) {
-	ENTER_METHOD(pDevice, 1);
+	ENTER_METHOD(Device, 1);
 	CHECK_OPEN();
 	int interface;
 	INT_ARG(interface, 0);
@@ -260,7 +264,7 @@ NAN_METHOD(DetachKernelDriver) {
 }
 
 NAN_METHOD(AttachKernelDriver) {
-	ENTER_METHOD(pDevice, 1);
+	ENTER_METHOD(Device, 1);
 	CHECK_OPEN();
 	int interface;
 	INT_ARG(interface, 0);
@@ -269,7 +273,7 @@ NAN_METHOD(AttachKernelDriver) {
 }
 
 NAN_METHOD(Device_ClaimInterface) {
-	ENTER_METHOD(pDevice, 1);
+	ENTER_METHOD(Device, 1);
 	CHECK_OPEN();
 	int interface;
 	INT_ARG(interface, 0);
@@ -281,7 +285,7 @@ struct Device_ReleaseInterface: Req{
 	int interface;
 
 	static NAN_METHOD(begin){
-		ENTER_METHOD(pDevice, 1);
+		ENTER_METHOD(Device, 1);
 		CHECK_OPEN();
 		int interface;
 		INT_ARG(interface, 0);
@@ -304,7 +308,7 @@ struct Device_SetInterface: Req{
 	int altsetting;
 
 	static NAN_METHOD(begin){
-		ENTER_METHOD(pDevice, 2);
+		ENTER_METHOD(Device, 2);
 		CHECK_OPEN();
 		int interface, altsetting;
 		INT_ARG(interface, 0);
@@ -324,20 +328,24 @@ struct Device_SetInterface: Req{
 	}
 };
 
-static void init(Handle<Object> target){
-	pDevice.init(&deviceConstructor);
-	pDevice.addMethod("__getConfigDescriptor", Device_GetConfigDescriptor);
-	pDevice.addMethod("__open", Device_Open);
-	pDevice.addMethod("__close", Device_Close);
-	pDevice.addMethod("reset", Device_Reset::begin);
+void Device::Init(Handle<Object> target){
+	Local<FunctionTemplate> tpl = NanNew<FunctionTemplate>(deviceConstructor);
+	tpl->SetClassName(NanNew("Device"));
+	tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
-	pDevice.addMethod("__claimInterface", Device_ClaimInterface);
-	pDevice.addMethod("__releaseInterface", Device_ReleaseInterface::begin);
-	pDevice.addMethod("__setInterface", Device_SetInterface::begin);
+	NODE_SET_PROTOTYPE_METHOD(tpl, "__getConfigDescriptor", Device_GetConfigDescriptor);
+	NODE_SET_PROTOTYPE_METHOD(tpl, "__open", Device_Open);
+	NODE_SET_PROTOTYPE_METHOD(tpl, "__close", Device_Close);
+	NODE_SET_PROTOTYPE_METHOD(tpl, "reset", Device_Reset::begin);
 
-	pDevice.addMethod("__isKernelDriverActive", IsKernelDriverActive);
-	pDevice.addMethod("__detachKernelDriver", DetachKernelDriver);
-	pDevice.addMethod("__attachKernelDriver", AttachKernelDriver);
+	NODE_SET_PROTOTYPE_METHOD(tpl, "__claimInterface", Device_ClaimInterface);
+	NODE_SET_PROTOTYPE_METHOD(tpl, "__releaseInterface", Device_ReleaseInterface::begin);
+	NODE_SET_PROTOTYPE_METHOD(tpl, "__setInterface", Device_SetInterface::begin);
+
+	NODE_SET_PROTOTYPE_METHOD(tpl, "__isKernelDriverActive", IsKernelDriverActive);
+	NODE_SET_PROTOTYPE_METHOD(tpl, "__detachKernelDriver", DetachKernelDriver);
+	NODE_SET_PROTOTYPE_METHOD(tpl, "__attachKernelDriver", AttachKernelDriver);
+
+	NanAssignPersistent(device_constructor, tpl);
+	target->Set(NanNew("Device"), tpl->GetFunction());
 }
-
-Proto<Device> pDevice("Device", &init);

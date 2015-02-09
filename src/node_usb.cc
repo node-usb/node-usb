@@ -1,8 +1,6 @@
 #include "node_usb.h"
 #include "uv_async_queue.h"
 
-ProtoBuilder::ProtoList ProtoBuilder::initProto;
-
 NAN_METHOD(SetDebugLevel);
 NAN_METHOD(GetDeviceList);
 NAN_METHOD(EnableHotplugEvents);
@@ -83,7 +81,8 @@ extern "C" void Initialize(Handle<Object> target) {
 	uv_thread_create(&usb_thread, USBThreadFn, NULL);
 	#endif
 
-	ProtoBuilder::initAll(target);
+	Device::Init(target);
+	Transfer::Init(target);
 
 	NODE_SET_METHOD(target, "setDebugLevel", SetDebugLevel);
 	NODE_SET_METHOD(target, "getDeviceList", GetDeviceList);
