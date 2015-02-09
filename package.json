@@ -46,7 +46,7 @@
   },
   "dependencies": {
     "bindings-shyp": "~0.2.3",
-    "nan": "^1.2.0"
+    "nan": "^1.6.0"
   },
   "devDependencies": {
     "coffee-script": "~1.6.2",

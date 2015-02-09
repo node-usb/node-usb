@@ -2,7 +2,7 @@
 #include <string.h>
 
 #define STRUCT_TO_V8(TARGET, STR, NAME) \
-		TARGET->Set(V8STR(#NAME), NanNew<Uint32>((uint32_t) (STR).NAME), CONST_PROP);
+		TARGET->ForceSet(V8STR(#NAME), NanNew<Uint32>((uint32_t) (STR).NAME), CONST_PROP);
 
 #define CHECK_OPEN() \
 		if (!self->device_handle){THROW_ERROR("Device is not opened");}
@@ -54,13 +54,13 @@ void Device::unpin(libusb_device* device) {
 static NAN_METHOD(deviceConstructor) {
 	ENTER_CONSTRUCTOR_POINTER(pDevice, 1);
 
-	args.This()->Set(V8SYM("busNumber"),
+	args.This()->ForceSet(V8SYM("busNumber"),
 		NanNew<Uint32>((uint32_t) libusb_get_bus_number(self->device)), CONST_PROP);
-	args.This()->Set(V8SYM("deviceAddress"),
+	args.This()->ForceSet(V8SYM("deviceAddress"),
 		NanNew<Uint32>((uint32_t) libusb_get_device_address(self->device)), CONST_PROP);
 
 	Local<Object> v8dd = NanNew<Object>();
-	args.This()->Set(V8SYM("deviceDescriptor"), v8dd, CONST_PROP);
+	args.This()->ForceSet(V8SYM("deviceDescriptor"), v8dd, CONST_PROP);
 
 	struct libusb_device_descriptor dd;
 	CHECK_USB(libusb_get_device_descriptor(self->device, &dd));
@@ -88,7 +88,7 @@ static NAN_METHOD(deviceConstructor) {
 		array->Set(i, NanNew(port_numbers[i]));
 	}
 
-	args.This()->Set(V8SYM("portNumbers"), array, CONST_PROP);
+	args.This()->ForceSet(V8SYM("portNumbers"), array, CONST_PROP);
 
 	NanReturnValue(args.This());
 }
@@ -109,12 +109,12 @@ NAN_METHOD(Device_GetConfigDescriptor) {
 	STRUCT_TO_V8(v8cdesc, *cdesc, iConfiguration)
 	STRUCT_TO_V8(v8cdesc, *cdesc, bmAttributes)
 	// Libusb 1.0 typo'd bMaxPower as MaxPower
-	v8cdesc->Set(V8STR("bMaxPower"), NanNew<Uint32>((uint32_t) cdesc->MaxPower), CONST_PROP);
+	v8cdesc->ForceSet(V8STR("bMaxPower"), NanNew<Uint32>((uint32_t) cdesc->MaxPower), CONST_PROP);
 
-	v8cdesc->Set(V8SYM("extra"), makeBuffer(cdesc->extra, cdesc->extra_length), CONST_PROP);
+	v8cdesc->ForceSet(V8SYM("extra"), makeBuffer(cdesc->extra, cdesc->extra_length), CONST_PROP);
 
 	Local<Array> v8interfaces = NanNew<Array>(cdesc->bNumInterfaces);
-	v8cdesc->Set(V8SYM("interfaces"), v8interfaces);
+	v8cdesc->ForceSet(V8SYM("interfaces"), v8interfaces);
 
 	for (int idxInterface = 0; idxInterface < cdesc->bNumInterfaces; idxInterface++) {
 		int numAltSettings = cdesc->interface[idxInterface].num_altsetting;
@@ -139,10 +139,10 @@ NAN_METHOD(Device_GetConfigDescriptor) {
 			STRUCT_TO_V8(v8idesc, idesc, bInterfaceProtocol)
 			STRUCT_TO_V8(v8idesc, idesc, iInterface)
 
-			v8idesc->Set(V8SYM("extra"), makeBuffer(idesc.extra, idesc.extra_length), CONST_PROP);
+			v8idesc->ForceSet(V8SYM("extra"), makeBuffer(idesc.extra, idesc.extra_length), CONST_PROP);
 
 			Local<Array> v8endpoints = NanNew<Array>(idesc.bNumEndpoints);
-			v8idesc->Set(V8SYM("endpoints"), v8endpoints, CONST_PROP);
+			v8idesc->ForceSet(V8SYM("endpoints"), v8endpoints, CONST_PROP);
 			for (int idxEndpoint = 0; idxEndpoint < idesc.bNumEndpoints; idxEndpoint++){
 				const libusb_endpoint_descriptor& edesc = idesc.endpoint[idxEndpoint];
 
@@ -158,7 +158,7 @@ NAN_METHOD(Device_GetConfigDescriptor) {
 				STRUCT_TO_V8(v8edesc, edesc, bRefresh)
 				STRUCT_TO_V8(v8edesc, edesc, bSynchAddress)
 
-				v8edesc->Set(V8SYM("extra"), makeBuffer(edesc.extra, edesc.extra_length), CONST_PROP);
+				v8edesc->ForceSet(V8SYM("extra"), makeBuffer(edesc.extra, edesc.extra_length), CONST_PROP);
 			}
 		}
 	}
