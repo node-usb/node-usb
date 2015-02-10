@@ -24,7 +24,7 @@
       "name": "Christopher Klein"
     }
   ],
-  "version": "1.0.0",
+  "version": "1.0.1",
   "optionalDependencies": {
     "usb-shyp-win32-x64": "1.0.0",
     "usb-shyp-win32-ia32": "1.0.0",
