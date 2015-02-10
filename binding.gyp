@@ -26,7 +26,7 @@
       'conditions' : [
           ['use_system_libusb=="false"', {
             'dependencies': [
-              'libusb.gyp:libusb',
+              'libusb.gypi:libusb',
             ],
           }],
           ['use_system_libusb=="true"', {
