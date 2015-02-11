@@ -123,7 +123,7 @@ void handleCompletion(Transfer* self){
 		Handle<Value> argv[] = {error, buffer,
 			NanNew<Uint32>((uint32_t) self->transfer->actual_length)};
 		TryCatch try_catch;
-		NanNew(self->v8callback)->Call(NanObjectWrapHandle(self), 3, argv);
+		NanMakeCallback(NanObjectWrapHandle(self), NanNew(self->v8callback), 3, argv);
 		if (try_catch.HasCaught()) {
 			FatalException(try_catch);
 		}

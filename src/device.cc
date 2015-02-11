@@ -218,7 +218,7 @@ struct Req{
 			}
 			Handle<Value> argv[1] = {error};
 			TryCatch try_catch;
-			NanNew(baton->callback)->Call(device, 1, argv);
+			NanMakeCallback(device, NanNew(baton->callback), 1, argv);
 			if (try_catch.HasCaught()) {
 				FatalException(try_catch);
 			}
