@@ -112,7 +112,7 @@ function(bmRequestType, bRequest, wValue, wIndex, data_or_length, callback){
 
 usb.Device.prototype.getStringDescriptor = function (desc_index, callback) {
 	var langid = 0x0409;
-	var length = 1024;
+	var length = 255;
 	this.controlTransfer(
 		usb.LIBUSB_ENDPOINT_IN,
 		usb.LIBUSB_REQUEST_GET_DESCRIPTOR,
