@@ -65,6 +65,7 @@
           'defines': [
             'OS_LINUX=1',
             '_GNU_SOURCE=1',
+            'USBI_TIMERFD_AVAILABLE=1',
           ],
         }],
         [ 'OS == "linux" and use_udev == 1 or OS == "android"', {

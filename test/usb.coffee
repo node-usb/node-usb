@@ -88,6 +88,7 @@ describe 'Device', ->
 		iface = null
 		before ->
 			iface = device.interfaces[0]
+			iface.claim()
 
 		it 'should have one interface', ->
 			assert.notEqual(iface, undefined)
@@ -104,9 +105,6 @@ describe 'Device', ->
 
 			it "should fail to attach the kernel driver", ->
 				assert.throws -> iface.attachKernelDriver()
-
-		it 'should be able to claim an interface', ->
-			iface.claim()
 
 		describe 'IN endpoint', ->
 			inEndpoint = null
@@ -138,6 +136,12 @@ describe 'Device', ->
 			it 'should signal errors', (done) ->
 				inEndpoint.transfer 1, (e, d) ->
 					assert.equal e.errno, usb.LIBUSB_TRANSFER_OVERFLOW
+					done()
+
+			it 'times out', (done) ->
+				iface.endpoints[2].timeout = 20
+				iface.endpoints[2].transfer 64, (e, d) ->
+					assert.equal e.errno, usb.LIBUSB_TRANSFER_TIMED_OUT
 					done()
 
 			it 'polls the device', (done) ->
@@ -176,6 +180,12 @@ describe 'Device', ->
 			it 'should support write', (done) ->
 				outEndpoint.transfer [1,2,3,4], (e) ->
 					assert.ok(e == undefined, e)
+					done()
+
+			it 'times out', (done) ->
+				iface.endpoints[3].timeout = 20
+				iface.endpoints[3].transfer [1,2,3,4], (e) ->
+					assert.equal e.errno, usb.LIBUSB_TRANSFER_TIMED_OUT
 					done()
 
 		after (cb) ->
