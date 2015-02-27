@@ -81,7 +81,7 @@ describe 'Device', ->
 
 		it 'should signal errors', (done) ->
 			device.controlTransfer 0xc0, 0xff, 0, 0, 64, (e, d) ->
-				assert.ok(e)
+				assert.equal e.errno, usb.LIBUSB_TRANSFER_STALL
 				done()
 
 	describe 'Interface', ->
@@ -131,11 +131,6 @@ describe 'Device', ->
 				inEndpoint.transfer 64, (e, d) ->
 					assert.ok(e == undefined, e)
 					assert.ok(d.length == 64)
-					done()
-
-			it 'should signal errors', (done) ->
-				inEndpoint.transfer 1, (e, d) ->
-					assert.equal e.errno, usb.LIBUSB_TRANSFER_OVERFLOW
 					done()
 
 			it 'times out', (done) ->
