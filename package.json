@@ -25,11 +25,6 @@
     }
   ],
   "version": "1.0.5",
-  "optionalDependencies": {
-    "usb-shyp-win32-x64": "1.0.5",
-    "usb-shyp-win32-ia32": "1.0.5",
-    "usb-shyp-darwin-x64": "1.0.6"
-  },
   "engines": {
     "node": ">=0.8.x"
   },
@@ -39,18 +34,26 @@
     "url": "https://github.com/nonolith/node-usb.git"
   },
   "scripts": {
-    "install": "node shyp-blacklist.js win32-x64 win32-ia32 darwin-x64 || node-gyp rebuild",
+    "install": "node-pre-gyp install --fallback-to-build",
     "test": "mocha --compilers coffee:coffee-script --grep Module",
     "full-test": "mocha --compilers coffee:coffee-script",
     "valgrind": "coffee -c test/usb.coffee; valgrind --leak-check=full --show-possibly-lost=no node --expose-gc --trace-gc node_modules/mocha/bin/_mocha -R spec"
   },
+  "binary": {
+    "module_name": "usb_bindings",
+    "module_path": "./src/binding",
+    "host": "https://tessel-builds.s3-us-west-2.amazonaws.com",
+    "remote_path": "./pre-gyp/{name}/v{version}"
+  },
   "dependencies": {
-    "bindings-shyp": "~0.2.3",
+    "node-pre-gyp": "0.5.x",
     "nan": "^1.6.0"
   },
+  "bundledDependencies":["node-pre-gyp"],
   "devDependencies": {
     "coffee-script": "~1.6.2",
-    "mocha": "~1.8.2"
+    "mocha": "~1.8.2",
+    "aws-sdk": "~2.0.0-rc.15"
   },
   "license": "MIT"
 }
