@@ -1,7 +1,28 @@
 language: objective-c
+
+env:
+  matrix:
+   - NODE_VERSION="0.10.33"
+   - NODE_VERSION="0.12.0"
+   - NODE_VERSION="iojs-1.0.4"
+   - NODE_VERSION="iojs-1.1.0"
+
 before_install:
-  - brew install node
-  - npm install -g node-gyp
+- brew update
+- brew install nvm
+- mkdir ~/.nvm
+- export NVM_DIR=~/.nvm
+- source $(brew --prefix nvm)/nvm.sh
+- nvm install $NODE_VERSION
+- node --version
+- npm --version
+- npm update -g npm
+- npm --version
+
+install:
+# put node-pre-gyp on path
+- export PATH=./node_modules/.bin/:$PATH
+
 script:
-  - npm install --ignore-scripts
-  - node-gyp rebuild
+- npm install --build-from-source
+- ./node_modules/.bin/node-pre-gyp package
