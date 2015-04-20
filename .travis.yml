@@ -16,7 +16,9 @@ before_install:
 - nvm install $NODE_VERSION
 - node --version
 - npm --version
-- npm update -g npm
+- npm install pangyp -g
+- pangyp -v
+- npm install -g npm@^2.8.4
 - npm --version
 
 install:
@@ -24,5 +26,5 @@ install:
 - export PATH=./node_modules/.bin/:$PATH
 
 script:
-- npm install --build-from-source
+- npm install --build-from-source --node-gyp=$(which pangyp)
 - ./node_modules/.bin/node-pre-gyp package

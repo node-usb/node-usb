@@ -46,7 +46,7 @@
     "remote_path": "./pre-gyp/{name}/v{version}"
   },
   "dependencies": {
-    "node-pre-gyp": "0.5.x",
+    "node-pre-gyp": "^0.6.4",
     "nan": "^1.6.0"
   },
   "bundledDependencies":["node-pre-gyp"],
