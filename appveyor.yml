@@ -1,17 +1,21 @@
 environment:
   GYP_MSVS_VERSION: 2013
 
+  matrix:
+    - node_version: 0.10.38
+    - node_version: 0
+    - node_version: 1.0.4
+    - node_version: 1
+
 install:
-  - ps: Install-Product node 0.10 $env:platform
+  - ps: Install-Product node $env:node_version $env:platform
   - npm install -g node-gyp
-  - npm install -g node-shyp
 
 build_script:
   - git submodule update --init
-  - npm install --ignore-scripts
-  - node-shyp publish --pack
-  - move build\shyp\*.tgz node-usb.tgz
-  - appveyor PushArtifact node-usb.tgz
+  - npm install --build-from-source
+  - ./node_modules/.bin/node-pre-gyp package
+  #- ./node_modules/.bin/node-pre-gyp publish
 
 platform:
   - x86
