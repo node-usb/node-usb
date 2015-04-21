@@ -29,6 +29,6 @@ script:
 - npm install --build-from-source --node-gyp=$(which pangyp)
 - "./node_modules/.bin/node-pre-gyp package"
 - > 
-    (test "$TRAVIS_BRANCH" = master &&
+    ([[ "$TRAVIS_TAG" =~ "^v[0-9]" ]] &&
     test "$TRAVIS_PULL_REQUEST" = false &&
     ./node_modules/.bin/node-pre-gyp publish) || true
