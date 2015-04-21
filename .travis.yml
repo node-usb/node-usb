@@ -1,11 +1,12 @@
 language: objective-c
-
 env:
   matrix:
-   - NODE_VERSION="0.10.33"
-   - NODE_VERSION="0.12.0"
-   - NODE_VERSION="iojs-1.0.4"
-   - NODE_VERSION="iojs-1.1.0"
+  - NODE_VERSION="0.10.33"
+  - NODE_VERSION="0.12.0"
+  - NODE_VERSION="iojs-1.0.4"
+  - NODE_VERSION="iojs-1.1.0"
+  global:
+    secure: VwwHS3ZYxu5WudTcWRw588aekYZrTHMDvziNWLhPnadVs+ami6EF7CMHFZenkvSehmmaunKaH0vcNuxDXqLjrZN8Qt6aOuVVq9o/N6+8OG6/E2D0lDRFF9OZdAKetzS7EtoZfVJpqe009leg9V5mjx3uo1WRlc6SqmeKynaUDaY=
 
 before_install:
 - brew update
@@ -22,9 +23,10 @@ before_install:
 - npm --version
 
 install:
-# put node-pre-gyp on path
 - export PATH=./node_modules/.bin/:$PATH
 
 script:
 - npm install --build-from-source --node-gyp=$(which pangyp)
-- ./node_modules/.bin/node-pre-gyp package
+- "./node_modules/.bin/node-pre-gyp package"
+- > 
+    ./node_modules/.bin/node-pre-gyp publish
