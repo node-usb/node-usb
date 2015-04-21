@@ -18,7 +18,7 @@ before_install:
 - npm --version
 - npm install pangyp -g
 - pangyp -v
-- npm install -g npm@^2.8.4
+- npm update -g npm
 - npm --version
 
 install:

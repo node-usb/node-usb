@@ -46,7 +46,7 @@
     "remote_path": "./pre-gyp/{name}/v{version}"
   },
   "dependencies": {
-    "node-pre-gyp": "^0.6.4",
+    "node-pre-gyp": "git+https://github.com/mapbox/node-pre-gyp.git#c88d6a04",
     "nan": "^1.6.0"
   },
   "bundledDependencies":["node-pre-gyp"],
