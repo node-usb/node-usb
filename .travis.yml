@@ -1,7 +1,34 @@
 language: objective-c
+env:
+  matrix:
+  - NODE_VERSION="0.10.33"
+  - NODE_VERSION="0.12.0"
+  - NODE_VERSION="iojs-1.0.4"
+  - NODE_VERSION="iojs-1.1.0"
+  global:
+    secure: VwwHS3ZYxu5WudTcWRw588aekYZrTHMDvziNWLhPnadVs+ami6EF7CMHFZenkvSehmmaunKaH0vcNuxDXqLjrZN8Qt6aOuVVq9o/N6+8OG6/E2D0lDRFF9OZdAKetzS7EtoZfVJpqe009leg9V5mjx3uo1WRlc6SqmeKynaUDaY=
+
 before_install:
-  - brew install node
-  - npm install -g node-gyp
+- brew update
+- brew install nvm
+- mkdir ~/.nvm
+- export NVM_DIR=~/.nvm
+- source $(brew --prefix nvm)/nvm.sh
+- nvm install $NODE_VERSION
+- node --version
+- npm --version
+- npm install pangyp -g
+- pangyp -v
+- npm update -g npm
+- npm --version
+
+install:
+- export PATH=./node_modules/.bin/:$PATH
+
 script:
-  - npm install --ignore-scripts
-  - node-gyp rebuild
+- npm install --build-from-source --node-gyp=$(which pangyp)
+- "./node_modules/.bin/node-pre-gyp package"
+- > 
+    ([[ "$TRAVIS_TAG" =~ "^v[0-9]" ]] &&
+    test "$TRAVIS_PULL_REQUEST" = false &&
+    ./node_modules/.bin/node-pre-gyp publish) || true
