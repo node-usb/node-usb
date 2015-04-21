@@ -28,6 +28,13 @@ install:
 script:
 - npm install --build-from-source --node-gyp=$(which pangyp)
 - "./node_modules/.bin/node-pre-gyp package"
+- echo $TRAVIS_TAG
+- echo $TRAVIS_PULL_REQUEST
+- test "$TRAVIS_PULL_REQUEST" = false; echo $?
+- >
+    [[ "$TRAVIS_TAG" =~ "^tcr" ]]; echo $?
+- >
+    [[ "$TRAVIS_TAG" =~ "^v[0-9]" ]] && test "$TRAVIS_PULL_REQUEST" = false; echo $?
 - > 
     ([[ "$TRAVIS_TAG" =~ "^v[0-9]" ]] &&
     test "$TRAVIS_PULL_REQUEST" = false &&

@@ -15,17 +15,18 @@ environment:
 install:
   - ps: Install-Product node $env:node_version $env:platform
   - ps: npm install -g node-gyp
-  - ps: $PUBLISH_BINARY=0
-  - ps: if ($env:appveyor_repo_tag -and $env:appveyor_repo_tag_name -match '^v[0-9]') { $PUBLISH_BINARY=1; }
+  - ps: $publish_binary=0
+  - ps: if ($env:appveyor_repo_tag -match "true" -and $env:appveyor_repo_tag_name -match '^v[0-9]') { $publish_binary=1; }
 
 build_script:
+  - ps: echo $publish_binary
   - ps: >
       & {      
         $ErrorActionPreference = 'SilentlyContinue'
         git submodule update --init 2>&1 | write-host
         npm install --build-from-source 2>&1 | write-host
         ./node_modules/.bin/node-pre-gyp package 2>&1 | write-host
-        if ($env:PUBLISH_BINARY) { ./node_modules/.bin/node-pre-gyp publish 2>&1 | write-host; }
+        if ($publish_binary) { ./node_modules/.bin/node-pre-gyp publish 2>&1 | write-host; }
       }
 
 platform:
