@@ -16,7 +16,7 @@ install:
   - ps: Install-Product node $env:node_version $env:platform
   - ps: npm install -g node-gyp
   - ps: $PUBLISH_BINARY=0
-  - ps: if ($env:appveyor_repo_branch -eq 'master') { $PUBLISH_BINARY=1; }
+  - ps: if ($env:appveyor_repo_tag -and $env:appveyor_repo_tag_name -match '^v[0-9]') { $PUBLISH_BINARY=1; }
 
 build_script:
   - ps: >
