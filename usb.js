@@ -256,7 +256,11 @@ Endpoint.prototype.stopPoll = function(cb){
 		throw new Error('Polling is not active.');
 	}
 	for (var i=0; i<this.pollTransfers.length; i++){
-		this.pollTransfers[i].cancel()
+		try {
+			this.pollTransfers[i].cancel()
+		} catch (err) {
+			this.emit('error', err);
+		}
 	}
 	this.pollActive = false
 	if (cb) this.once('end', cb);
