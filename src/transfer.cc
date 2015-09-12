@@ -41,7 +41,7 @@ NAN_METHOD(Transfer_constructor) {
 
 	NanAssignPersistent(self->v8callback, callback);
 
-	NanReturnValue(args.This());
+	info.GetReturnValue().Set(args.This());
 }
 
 // Transfer.submit(buffer, callback)
@@ -85,7 +85,7 @@ NAN_METHOD(Transfer_Submit) {
 	);
 
 	CHECK_USB(libusb_submit_transfer(self->transfer));
-	NanReturnValue(args.This());
+	info.GetReturnValue().Set(args.This());
 }
 
 extern "C" void LIBUSB_CALL usbCompletionCb(libusb_transfer *transfer){
@@ -101,7 +101,7 @@ extern "C" void LIBUSB_CALL usbCompletionCb(libusb_transfer *transfer){
 }
 
 void handleCompletion(Transfer* self){
-	NanScope();
+	Nan::HandleScope scope;
 	DEBUG_LOG("HandleCompletion %p", self);
 
 	self->device->unref();
@@ -123,7 +123,7 @@ void handleCompletion(Transfer* self){
 		Handle<Value> argv[] = {error, buffer,
 			NanNew<Uint32>((uint32_t) self->transfer->actual_length)};
 		TryCatch try_catch;
-		NanMakeCallback(NanObjectWrapHandle(self), NanNew(self->v8callback), 3, argv);
+		Nan::MakeCallback(NanObjectWrapHandle(self), NanNew(self->v8callback), 3, argv);
 		if (try_catch.HasCaught()) {
 			FatalException(try_catch);
 		}
@@ -138,10 +138,10 @@ NAN_METHOD(Transfer_Cancel){
 	int r = libusb_cancel_transfer(self->transfer);
 	if (r == LIBUSB_ERROR_NOT_FOUND){
 		// Not useful to throw an error for this case
-		NanReturnValue(NanFalse());
+		info.GetReturnValue().Set(Nan::False());
 	} else {
 		CHECK_USB(r);
-		NanReturnValue(NanTrue());
+		info.GetReturnValue().Set(Nan::True());
 	}
 }
 

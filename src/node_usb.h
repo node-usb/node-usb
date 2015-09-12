@@ -28,7 +28,7 @@ struct Device: public node::ObjectWrap {
 	libusb_device_handle* device_handle;
 
 	static void Init(Handle<Object> exports);
-	static Handle<Value> get(libusb_device* handle);
+	static Local<Value> get(libusb_device* handle);
 
 	inline void ref(){Ref();}
 	inline void unref(){Unref();}
@@ -39,7 +39,7 @@ struct Device: public node::ObjectWrap {
 	static void unpin(libusb_device* device);
 
 	protected:
-		static std::map<libusb_device*, _NanWeakCallbackInfo<Value, libusb_device>*> byPtr;
+		static std::map<libusb_device*, Nan::WeakCallbackInfo<std::pair<Value, libusb_device*>>*> byPtr;
 		Device(libusb_device* d);
 };
 
@@ -64,7 +64,7 @@ struct Transfer: public node::ObjectWrap {
 
 #define CHECK_USB(r) \
 	if (r < LIBUSB_SUCCESS) { \
-		return NanThrowError(libusbException(r)); \
+		return Nan::ThrowError(libusbException(r)); \
 	}
 
 #define CALLBACK_ARG(CALLBACK_ARG_IDX) \
