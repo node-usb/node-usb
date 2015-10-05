@@ -5,7 +5,7 @@ NAN_METHOD(SetDebugLevel);
 NAN_METHOD(GetDeviceList);
 NAN_METHOD(EnableHotplugEvents);
 NAN_METHOD(DisableHotplugEvents);
-void initConstants(Handle<Object> target);
+void initConstants(Local<Object> target);
 
 libusb_context* usb_context;
 
@@ -56,12 +56,12 @@ void USBThreadFn(void*){
 }
 #endif
 
-extern "C" void Initialize(Handle<Object> target) {
-	NanScope();
+extern "C" void Initialize(Local<Object> target) {
+	Nan::HandleScope scope;
 
 	// Initialize libusb. On error, halt initialization.
 	int res = libusb_init(&usb_context);
-	target->Set(NanNew<String>("INIT_ERROR"), NanNew<Number>(res));
+	target->Set(Nan::New<String>("INIT_ERROR").ToLocalChecked(), Nan::New<Number>(res));
 	if (res != 0) {
 		return;
 	}
@@ -84,70 +84,70 @@ extern "C" void Initialize(Handle<Object> target) {
 	Device::Init(target);
 	Transfer::Init(target);
 
-	NODE_SET_METHOD(target, "setDebugLevel", SetDebugLevel);
-	NODE_SET_METHOD(target, "getDeviceList", GetDeviceList);
-	NODE_SET_METHOD(target, "_enableHotplugEvents", EnableHotplugEvents);
-	NODE_SET_METHOD(target, "_disableHotplugEvents", DisableHotplugEvents);
+	Nan::SetMethod(target, "setDebugLevel", SetDebugLevel);
+	Nan::SetMethod(target, "getDeviceList", GetDeviceList);
+	Nan::SetMethod(target, "_enableHotplugEvents", EnableHotplugEvents);
+	Nan::SetMethod(target, "_disableHotplugEvents", DisableHotplugEvents);
 	initConstants(target);
 }
 
 NODE_MODULE(usb_bindings, Initialize)
 
 NAN_METHOD(SetDebugLevel) {
-	NanScope();
-	if (args.Length() != 1 || !args[0]->IsUint32() || args[0]->Uint32Value() > 4) {
+	Nan::HandleScope scope;
+	if (info.Length() != 1 || !info[0]->IsUint32() || info[0]->Uint32Value() > 4) {
 		THROW_BAD_ARGS("Usb::SetDebugLevel argument is invalid. [uint:[0-4]]!")
 	}
 
-	libusb_set_debug(usb_context, args[0]->Uint32Value());
-	NanReturnValue(NanUndefined());
+	libusb_set_debug(usb_context, info[0]->Uint32Value());
+	info.GetReturnValue().Set(Nan::Undefined());
 }
 
 NAN_METHOD(GetDeviceList) {
-	NanScope();
+	Nan::HandleScope scope;
 	libusb_device **devs;
 	int cnt = libusb_get_device_list(usb_context, &devs);
 	CHECK_USB(cnt);
 
-	Handle<Array> arr = NanNew<Array>(cnt);
+	Local<Array> arr = Nan::New<Array>(cnt);
 
 	for(int i = 0; i < cnt; i++) {
 		arr->Set(i, Device::get(devs[i]));
 	}
 	libusb_free_device_list(devs, true);
-	NanReturnValue(arr);
+	info.GetReturnValue().Set(arr);
 }
 
-Persistent<Object> hotplugThis;
+Nan::Persistent<Object> hotplugThis;
 
-void handleHotplug(std::pair<libusb_device*, libusb_hotplug_event> args){
-	NanScope();
+void handleHotplug(std::pair<libusb_device*, libusb_hotplug_event> info){
+	Nan::HandleScope scope;
 
-	libusb_device* dev = args.first;
-	libusb_hotplug_event event = args.second;
+	libusb_device* dev = info.first;
+	libusb_hotplug_event event = info.second;
 
 	DEBUG_LOG("HandleHotplug %p %i", dev, event);
 
-	Handle<Value> v8dev = Device::get(dev);
+	Local<Value> v8dev = Device::get(dev);
 	libusb_unref_device(dev);
 
-	Handle<String> eventName;
+	Local<String> eventName;
 
 	if (LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED == event) {
 		DEBUG_LOG("Device arrived");
-		eventName = NanNew("attach");
+		eventName = Nan::New("attach").ToLocalChecked();
 
 	} else if (LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT == event) {
 		DEBUG_LOG("Device left");
-		eventName = NanNew("detach");
+		eventName = Nan::New("detach").ToLocalChecked();
 
 	} else {
 		DEBUG_LOG("Unhandled hotplug event %d\n", event);
 		return;
 	}
 
-	Handle<Value> argv[] = {eventName, v8dev};
-	NanMakeCallback(NanNew(hotplugThis), "emit", 2, argv);
+	Local<Value> argv[] = {eventName, v8dev};
+	Nan::MakeCallback(Nan::New(hotplugThis), "emit", 2, argv);
 }
 
 bool hotplugEnabled = 0;
@@ -162,10 +162,10 @@ int LIBUSB_CALL hotplug_callback(libusb_context *ctx, libusb_device *dev,
 }
 
 NAN_METHOD(EnableHotplugEvents) {
-	NanScope();
+	Nan::HandleScope scope;
 
 	if (!hotplugEnabled) {
-		NanAssignPersistent(hotplugThis, args.This());
+		hotplugThis.Reset(info.This());
 		CHECK_USB(libusb_hotplug_register_callback(usb_context,
 			(libusb_hotplug_event)(LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT),
 			(libusb_hotplug_flag)0, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY,
@@ -173,20 +173,20 @@ NAN_METHOD(EnableHotplugEvents) {
 		hotplugQueue.ref();
 		hotplugEnabled = true;
 	}
-	NanReturnValue(NanUndefined());
+	info.GetReturnValue().Set(Nan::Undefined());
 }
 
 NAN_METHOD(DisableHotplugEvents) {
-	NanScope();
+	Nan::HandleScope scope;
 	if (hotplugEnabled) {
 		libusb_hotplug_deregister_callback(usb_context, hotplugHandle);
 		hotplugQueue.unref();
 		hotplugEnabled = false;
 	}
-	NanReturnValue(NanUndefined());
+	info.GetReturnValue().Set(Nan::Undefined());
 }
 
-void initConstants(Handle<Object> target){
+void initConstants(Local<Object> target){
 	NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_PER_INTERFACE);
 	NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_AUDIO);
 	NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_COMM);
@@ -266,7 +266,7 @@ void initConstants(Handle<Object> target){
 
 Local<Value> libusbException(int errorno) {
 	const char* err = libusb_error_name(errorno);
-	Local<Value> e  = NanError(err);
-	e->ToObject()->Set(NanNew<String>("errno"), NanNew<Integer>(errorno));
+	Local<Value> e  = Nan::Error(err);
+	e->ToObject()->Set(Nan::New<String>("errno").ToLocalChecked(), Nan::New<Integer>(errorno));
 	return e;
 }
