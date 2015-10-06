@@ -262,6 +262,34 @@ void initConstants(Local<Object> target){
 	NODE_DEFINE_CONSTANT(target, LIBUSB_RECIPIENT_OTHER);
 
 	NODE_DEFINE_CONSTANT(target, LIBUSB_CONTROL_SETUP_SIZE);
+
+	// libusb_error
+	// Input/output error
+	NODE_DEFINE_CONSTANT(target, LIBUSB_ERROR_IO);
+	// Invalid parameter
+	NODE_DEFINE_CONSTANT(target, LIBUSB_ERROR_INVALID_PARAM);
+	// Access denied (insufficient permissions)
+	NODE_DEFINE_CONSTANT(target, LIBUSB_ERROR_ACCESS);
+	// No such device (it may have been disconnected)
+	NODE_DEFINE_CONSTANT(target, LIBUSB_ERROR_NO_DEVICE);
+	// Entity not found
+	NODE_DEFINE_CONSTANT(target, LIBUSB_ERROR_NOT_FOUND);
+	// Resource busy
+	NODE_DEFINE_CONSTANT(target, LIBUSB_ERROR_BUSY);
+	// Operation timed out
+	NODE_DEFINE_CONSTANT(target, LIBUSB_ERROR_TIMEOUT);
+	// Overflow
+	NODE_DEFINE_CONSTANT(target, LIBUSB_ERROR_OVERFLOW);
+	// Pipe error
+	NODE_DEFINE_CONSTANT(target, LIBUSB_ERROR_PIPE);
+	// System call interrupted (perhaps due to signal)
+	NODE_DEFINE_CONSTANT(target, LIBUSB_ERROR_INTERRUPTED);
+	// Insufficient memory
+	NODE_DEFINE_CONSTANT(target, LIBUSB_ERROR_NO_MEM);
+	// Operation not supported or unimplemented on this platform
+	NODE_DEFINE_CONSTANT(target, LIBUSB_ERROR_NOT_SUPPORTED);
+	// Other error
+	NODE_DEFINE_CONSTANT(target, LIBUSB_ERROR_OTHER);
 }
 
 Local<Value> libusbException(int errorno) {
