@@ -331,6 +331,28 @@ struct Device_SetInterface: Req{
 	}
 };
 
+struct Device_SetConfiguration: Req{
+	int desired;
+
+	static NAN_METHOD(begin){
+		ENTER_METHOD(Device, 1);
+		CHECK_OPEN();
+		int desired;
+		INT_ARG(desired, 0);
+		CALLBACK_ARG(1);
+		auto baton = new Device_SetConfiguration;
+		baton->desired = desired;
+		baton->submit(self, callback, &backend, &default_after);
+		info.GetReturnValue().Set(Nan::Undefined());
+	}
+
+	static void backend(uv_work_t *req){
+		auto baton = (Device_SetConfiguration*) req->data;
+		baton->errcode = libusb_set_configuration(
+			baton->device->device_handle, baton->desired);
+	}
+};
+
 void Device::Init(Local<Object> target){
 	Local<FunctionTemplate> tpl = Nan::New<FunctionTemplate>(deviceConstructor);
 	tpl->SetClassName(Nan::New("Device").ToLocalChecked());
@@ -344,6 +366,7 @@ void Device::Init(Local<Object> target){
 	Nan::SetPrototypeMethod(tpl, "__claimInterface", Device_ClaimInterface);
 	Nan::SetPrototypeMethod(tpl, "__releaseInterface", Device_ReleaseInterface::begin);
 	Nan::SetPrototypeMethod(tpl, "__setInterface", Device_SetInterface::begin);
+	Nan::SetPrototypeMethod(tpl, "__setConfiguration", Device_SetConfiguration::begin);
 
 	Nan::SetPrototypeMethod(tpl, "__isKernelDriverActive", IsKernelDriverActive);
 	Nan::SetPrototypeMethod(tpl, "__detachKernelDriver", DetachKernelDriver);
