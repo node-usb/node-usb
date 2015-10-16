@@ -165,7 +165,7 @@ NAN_METHOD(EnableHotplugEvents) {
 	NanScope();
 
 	if (!hotplugEnabled) {
-		Nan::pers(hotplugThis, info.This());
+		NanAssignPersistent(hotplugThis, info.This());
 		CHECK_USB(libusb_hotplug_register_callback(usb_context,
 			(libusb_hotplug_event)(LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT),
 			(libusb_hotplug_flag)0, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY,
@@ -267,6 +267,6 @@ void initConstants(Handle<Object> target){
 Local<Value> libusbException(int errorno) {
 	const char* err = libusb_error_name(errorno);
 	Local<Value> e  = NanError(err);
-	e->ToObject()->Set(NanNew<String>("errno"), NanNew<Integer>(errorno));
+	e->ToObject()->Set(V8STR("errno"), NanNew<Integer>(errorno));
 	return e;
 }

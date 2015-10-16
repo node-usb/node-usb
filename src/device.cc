@@ -12,7 +12,7 @@
 static v8::Persistent<v8::FunctionTemplate> device_constructor;
 
 Handle<Object> makeBuffer(const unsigned char* ptr, unsigned length) {
-	return NanNewBufferHandle((char*) ptr, (uint32_t) length);
+	return Nan::NewBuffer((char*) ptr, (uint32_t) length).ToLocalChecked();
 }
 
 Device::Device(libusb_device* d): device(d), device_handle(0) {
@@ -28,7 +28,7 @@ Device::~Device(){
 }
 
 // Map pinning each libusb_device to a particular V8 instance
-std::map<libusb_device*, _NanWeakCallbackInfo<Value, libusb_device>*> Device::byPtr;
+std::map<libusb_device*, _NanWeakCallbackData<Value,libusb_device>*> Device::byPtr;
 
 NAN_WEAK_CALLBACK(DeviceWeakCallback) {
 	Device::unpin(data.GetParameter());
@@ -39,12 +39,13 @@ NAN_WEAK_CALLBACK(DeviceWeakCallback) {
 Handle<Value> Device::get(libusb_device* dev){
 	auto it = byPtr.find(dev);
 	if (it != byPtr.end()){
-		return NanNew(it->second->persistent);
+		return NanNew(it->second);
 	}else{
 		Local<FunctionTemplate> constructorHandle = NanNew<v8::FunctionTemplate>(device_constructor);
 		v8::Handle<v8::Value> argv[1] = { EXTERNAL_NEW(new Device(dev)) };
 		Handle<Value> v = constructorHandle->GetFunction()->NewInstance(1, argv);
-		auto p = NanMakeWeakPersistent(v, dev, DeviceWeakCallback);
+
+		auto p = new WeakCallbackData<Value, libusb_device>( nullptr,dev,v);	
 		byPtr.insert(std::make_pair(dev, p));
 		return v;
 	}
@@ -94,7 +95,7 @@ static NAN_METHOD(deviceConstructor) {
 
 	args.This()->ForceSet(V8SYM("portNumbers"), array, CONST_PROP);
 
-	NanReturnValue(args.This());
+	NanReturnValue(info.This());
 }
 
 NAN_METHOD(Device_GetConfigDescriptor) {
@@ -330,22 +331,22 @@ struct Device_SetInterface: Req{
 
 void Device::Init(Handle<Object> target){
 	Local<FunctionTemplate> tpl = NanNew<FunctionTemplate>(deviceConstructor);
-	tpl->SetClassName(NanNew("Device"));
+	tpl->SetClassName(V8STR("Device"));
 	tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
-	NODE_SET_PROTOTYPE_METHOD(tpl, "__getConfigDescriptor", Device_GetConfigDescriptor);
-	NODE_SET_PROTOTYPE_METHOD(tpl, "__open", Device_Open);
-	NODE_SET_PROTOTYPE_METHOD(tpl, "__close", Device_Close);
-	NODE_SET_PROTOTYPE_METHOD(tpl, "reset", Device_Reset::begin);
+	NanSetPrototypeMethod(tpl, "__getConfigDescriptor", Device_GetConfigDescriptor);
+	NanSetPrototypeMethod(tpl, "__open", Device_Open);
+	NanSetPrototypeMethod(tpl, "__close", Device_Close);
+	NanSetPrototypeMethod(tpl, "reset", Device_Reset::begin);
 
-	NODE_SET_PROTOTYPE_METHOD(tpl, "__claimInterface", Device_ClaimInterface);
-	NODE_SET_PROTOTYPE_METHOD(tpl, "__releaseInterface", Device_ReleaseInterface::begin);
-	NODE_SET_PROTOTYPE_METHOD(tpl, "__setInterface", Device_SetInterface::begin);
+	NanSetPrototypeMethod(tpl, "__claimInterface", Device_ClaimInterface);
+	NanSetPrototypeMethod(tpl, "__releaseInterface", Device_ReleaseInterface::begin);
+	NanSetPrototypeMethod(tpl, "__setInterface", Device_SetInterface::begin);
 
-	NODE_SET_PROTOTYPE_METHOD(tpl, "__isKernelDriverActive", IsKernelDriverActive);
-	NODE_SET_PROTOTYPE_METHOD(tpl, "__detachKernelDriver", DetachKernelDriver);
-	NODE_SET_PROTOTYPE_METHOD(tpl, "__attachKernelDriver", AttachKernelDriver);
+	NanSetPrototypeMethod(tpl, "__isKernelDriverActive", IsKernelDriverActive);
+	NanSetPrototypeMethod(tpl, "__detachKernelDriver", DetachKernelDriver);
+	NanSetPrototypeMethod(tpl, "__attachKernelDriver", AttachKernelDriver);
 
 	NanAssignPersistent(device_constructor, tpl);
-	target->Set(NanNew("Device"), tpl->GetFunction());
+	target->Set(V8STR("Device"), tpl->GetFunction());
 }

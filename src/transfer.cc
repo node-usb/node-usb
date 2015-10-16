@@ -147,11 +147,11 @@ NAN_METHOD(Transfer_Cancel){
 
 void Transfer::Init(Handle<Object> target){
 	Local<FunctionTemplate> tpl = NanNew<FunctionTemplate>(Transfer_constructor);
-	tpl->SetClassName(NanNew("Transfer"));
+	tpl->SetClassName(V8STR("Transfer"));
 	tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
-	NODE_SET_PROTOTYPE_METHOD(tpl, "submit", Transfer_Submit);
-	NODE_SET_PROTOTYPE_METHOD(tpl, "cancel", Transfer_Cancel);
+	NanSetPrototypeMethod(tpl, "submit", Transfer_Submit);
+	NanSetPrototypeMethod(tpl, "cancel", Transfer_Cancel);
 
-	target->Set(NanNew("Transfer"), tpl->GetFunction());
+	target->Set(V8STR("Transfer"), tpl->GetFunction());
 }
