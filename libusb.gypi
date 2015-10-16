@@ -124,6 +124,9 @@
           ],
           'include_dirs': [
             'libusb/msvc',
+          ], 
+	  'defines': [
+            'HAVE_STRUCT_TIMESPEC=1',
           ],
           'msvs_disabled_warnings': [ 4267 ],
         }],

@@ -5,8 +5,19 @@
 
 using namespace v8;
 
-#define V8STR(str) NanNew<String>(str)
-#define V8SYM(str) NanNew<String>(str)
+#define V8STR(str) NanNew<String>(str).ToLocalChecked()
+#define V8SYM(str) NanNew<String>(str).ToLocalChecked()
+#define NanNew Nan::New
+#define NanFalse Nan::False
+#define NanTrue Nan::True
+#define NanThrowTypeError Nan::ThrowTypeError
+#define NanThrowError Nan::ThrowError
+#define NanReturnValue(x) info.GetReturnValue().Set(x);
+#define NanMakeCallback Nan::MakeCallback
+#define NanScope() 
+#define NanUndefined Nan::Undefined
+#define NanSetMethod Nan::SetMethod
+#define NanError Nan::Error
 
 #define THROW_BAD_ARGS(FAIL_MSG) return NanThrowTypeError(FAIL_MSG);
 #define THROW_ERROR(FAIL_MSG) return NanThrowError(FAIL_MSG);
@@ -15,7 +26,7 @@ using namespace v8;
 const PropertyAttribute CONST_PROP = static_cast<PropertyAttribute>(ReadOnly|DontDelete);
 
 inline static void setConst(Handle<Object> obj, const char* const name, Handle<Value> value){
-	obj->ForceSet(NanNew<String>(name), value, CONST_PROP);
+	obj->ForceSet(V8STR(name), value, CONST_PROP);
 }
 
 #define ENTER_CONSTRUCTOR(MIN_ARGS) \
