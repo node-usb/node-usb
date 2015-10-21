@@ -39,7 +39,7 @@ struct Device: public node::ObjectWrap {
 	static void unpin(libusb_device* device);
 
 	protected:
-		static std::map<libusb_device*, _NanWeakCallbackInfo<Value, libusb_device>*> byPtr;
+		static std::map<libusb_device*, _NanWeakCallbackData<Value,libusb_device>*> byPtr;
 		Device(libusb_device* d);
 };
 

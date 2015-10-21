@@ -5,8 +5,52 @@
 
 using namespace v8;
 
-#define V8STR(str) NanNew<String>(str)
-#define V8SYM(str) NanNew<String>(str)
+#define V8STR(str) NanNew<String>(str).ToLocalChecked()
+#define V8SYM(str) NanNew<String>(str).ToLocalChecked()
+#define NanNew Nan::New
+#define NanFalse Nan::False
+#define NanTrue Nan::True
+#define NanThrowTypeError Nan::ThrowTypeError
+#define NanThrowError Nan::ThrowError
+#define NanReturnValue(x) info.GetReturnValue().Set(x);
+#define NanMakeCallback Nan::MakeCallback
+#define NanScope() 
+#define NanUndefined Nan::Undefined
+#define NanSetMethod Nan::SetMethod
+#define NanSetPrototypeMethod Nan::SetPrototypeMethod
+#define NanError Nan::Error
+#define args info
+
+template<typename T>
+NAN_INLINE void NanAssignPersistent(
+	v8::Persistent<T>& handle
+	, v8::Handle<T> obj) {
+	handle.Reset(v8::Isolate::GetCurrent(), obj);
+}
+
+#define _NanWeakCallbackInfo v8::WeakCallbackInfo
+#define _NanWeakCallbackData v8::WeakCallbackData
+# define NAN_WEAK_CALLBACK(name)                                               \
+    template<typename T, typename P>                                           \
+    static void name(const v8::WeakCallbackData<T, P> &data)
+
+// template<typename T, typename P>
+// NAN_INLINE _NanWeakCallbackData<T,P>* NanMakeWeakPersistent(
+// 	v8::Handle<T> handle
+// 	, P* parameter
+// 	, typename _NanWeakCallbackData<T, P>::Callback callback) {
+// 	_NanWeakCallbackData<T, P> *cbinfo =
+// 		new _NanWeakCallbackData<T, P>(handle, parameter, callback);
+// 	cbinfo->persistent.SetWeak(cbinfo, &_NanWeakCallbackDispatcher<T, P>);
+// 	return cbinfo;
+// }
+template<typename T> NAN_INLINE void NanDisposePersistent(
+	v8::Persistent<T> &handle
+	) {
+	handle.Reset();
+}
+# define NanObjectWrapHandle(obj) obj->handle()
+
 
 #define THROW_BAD_ARGS(FAIL_MSG) return NanThrowTypeError(FAIL_MSG);
 #define THROW_ERROR(FAIL_MSG) return NanThrowError(FAIL_MSG);
@@ -15,7 +59,7 @@ using namespace v8;
 const PropertyAttribute CONST_PROP = static_cast<PropertyAttribute>(ReadOnly|DontDelete);
 
 inline static void setConst(Handle<Object> obj, const char* const name, Handle<Value> value){
-	obj->ForceSet(NanNew<String>(name), value, CONST_PROP);
+	obj->ForceSet(V8STR(name), value, CONST_PROP);
 }
 
 #define ENTER_CONSTRUCTOR(MIN_ARGS) \

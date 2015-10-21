@@ -4,7 +4,7 @@
     'use_system_libusb%': 'false',
   },
   'targets': [
-    {
+     {
       "target_name": "action_after_build",
       "type": "none",
       "dependencies": [ "<(module_name)" ],

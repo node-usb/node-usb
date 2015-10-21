@@ -47,7 +47,7 @@
   },
   "dependencies": {
     "node-pre-gyp": "git+https://github.com/mapbox/node-pre-gyp.git#c88d6a04",
-    "nan": "^1.6.0"
+    "nan": ">=2.0.0"
   },
   "bundledDependencies": [
     "node-pre-gyp"
