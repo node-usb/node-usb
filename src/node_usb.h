@@ -22,10 +22,6 @@ using namespace node;
 
 Local<Value> libusbException(int errorno);
 
-struct DeviceObject {
-	Nan::Persistent<Object> obj;
-};
-
 struct Device: public Nan::ObjectWrap {
 	libusb_device* device;
 	libusb_device_handle* device_handle;
@@ -42,7 +38,7 @@ struct Device: public Nan::ObjectWrap {
 	static void unpin(libusb_device* device);
 
 	protected:
-		static std::map<libusb_device*, DeviceObject*> byPtr;
+		static std::map<libusb_device*, Nan::Persistent<Object>> byPtr;
 		Device(libusb_device* d);
 };
 

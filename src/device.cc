@@ -28,7 +28,7 @@ Device::~Device(){
 }
 
 // Map pinning each libusb_device to a particular V8 instance
-std::map<libusb_device*, DeviceObject*> Device::byPtr;
+std::map<libusb_device*, Nan::Persistent<Object>> Device::byPtr;
 
 void DeviceWeakCallback(const Nan::WeakCallbackInfo<libusb_device> &data)  {
 	Device::unpin(data.GetParameter());
@@ -39,16 +39,13 @@ void DeviceWeakCallback(const Nan::WeakCallbackInfo<libusb_device> &data)  {
 Local<Object> Device::get(libusb_device* dev){
 	auto it = byPtr.find(dev);
 	if (it != byPtr.end()){
-		return Nan::New(it->second->obj);
+		return Nan::New(it->second);
 	} else {
 		Local<FunctionTemplate> constructorHandle = Nan::New<v8::FunctionTemplate>(device_constructor);
 		Local<Value> argv[1] = { EXTERNAL_NEW(new Device(dev)) };
 		Local<Object> obj = constructorHandle->GetFunction()->NewInstance(1, argv);
-		Nan::Persistent<Object> p(obj);
-		DeviceObject* dd = new DeviceObject;
-		dd->obj.Reset(p);
-		p.SetWeak(dev, DeviceWeakCallback, Nan::WeakCallbackType::kParameter);
-		byPtr.insert(std::make_pair(dev, dd));
+		auto it = byPtr.emplace(dev, obj).first;
+		it->second.SetWeak(dev, DeviceWeakCallback, Nan::WeakCallbackType::kParameter);
 		return obj;
 	}
 }
