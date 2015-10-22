@@ -22,39 +22,38 @@ using namespace node;
 
 Local<Value> libusbException(int errorno);
 
-
-struct Device: public node::ObjectWrap {
+struct Device: public Nan::ObjectWrap {
 	libusb_device* device;
 	libusb_device_handle* device_handle;
 
-	static void Init(Handle<Object> exports);
-	static Handle<Value> get(libusb_device* handle);
+	static void Init(Local<Object> exports);
+	static Local<Object> get(libusb_device* handle);
 
 	inline void ref(){Ref();}
 	inline void unref(){Unref();}
 	inline bool canClose(){return refs_ == 0;}
-	inline void attach(Handle<Object> o){Wrap(o);}
+	inline void attach(Local<Object> o){Wrap(o);}
 
 	~Device();
 	static void unpin(libusb_device* device);
 
 	protected:
-		static std::map<libusb_device*, _NanWeakCallbackInfo<Value, libusb_device>*> byPtr;
+		static std::map<libusb_device*, Nan::Persistent<Object>> byPtr;
 		Device(libusb_device* d);
 };
 
 
-struct Transfer: public node::ObjectWrap {
+struct Transfer: public Nan::ObjectWrap {
 	libusb_transfer* transfer;
 	Device* device;
-	Persistent<Object> v8buffer;
-	Persistent<Function> v8callback;
+	Nan::Persistent<Object> v8buffer;
+	Nan::Persistent<Function> v8callback;
 
-	static void Init(Handle<Object> exports);
+	static void Init(Local<Object> exports);
 
 	inline void ref(){Ref();}
 	inline void unref(){Unref();}
-	inline void attach(Handle<Object> o){Wrap(o);}
+	inline void attach(Local<Object> o){Wrap(o);}
 
 	Transfer();
 	~Transfer();
@@ -64,16 +63,16 @@ struct Transfer: public node::ObjectWrap {
 
 #define CHECK_USB(r) \
 	if (r < LIBUSB_SUCCESS) { \
-		return NanThrowError(libusbException(r)); \
+		return Nan::ThrowError(libusbException(r)); \
 	}
 
 #define CALLBACK_ARG(CALLBACK_ARG_IDX) \
 	Local<Function> callback; \
-	if (args.Length() > (CALLBACK_ARG_IDX)) { \
-		if (!args[CALLBACK_ARG_IDX]->IsFunction()) { \
-			return NanThrowTypeError("Argument " #CALLBACK_ARG_IDX " must be a function"); \
+	if (info.Length() > (CALLBACK_ARG_IDX)) { \
+		if (!info[CALLBACK_ARG_IDX]->IsFunction()) { \
+			return Nan::ThrowTypeError("Argument " #CALLBACK_ARG_IDX " must be a function"); \
 		} \
-		callback = Local<Function>::Cast(args[CALLBACK_ARG_IDX]); \
+		callback = Local<Function>::Cast(info[CALLBACK_ARG_IDX]); \
 	} \
 
 #ifdef DEBUG
