@@ -42,8 +42,6 @@ struct Device: public Nan::ObjectWrap {
 	static void unpin(libusb_device* device);
 
 	protected:
-		// static std::map<libusb_device*, WeakCallbackInfo<libusb_device>*> byPtr;
-		// static std::map<libusb_device*, Persistent<Value>*> byPtr;
 		static std::map<libusb_device*, DeviceObject*> byPtr;
 		Device(libusb_device* d);
 };
