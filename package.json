@@ -34,7 +34,7 @@
     "url": "https://github.com/nonolith/node-usb.git"
   },
   "scripts": {
-    "install": "node-pre-gyp install --fallback-to-build",
+    "install": "./install.sh",
     "test": "mocha --compilers coffee:coffee-script --grep Module",
     "full-test": "mocha --compilers coffee:coffee-script",
     "valgrind": "coffee -c test/usb.coffee; valgrind --leak-check=full --show-possibly-lost=no node --expose-gc --trace-gc node_modules/mocha/bin/_mocha -R spec"
@@ -46,8 +46,8 @@
     "remote_path": "./pre-gyp/{name}/v{version}"
   },
   "dependencies": {
-    "nan": "^2.0.9",
-    "node-pre-gyp": "git+https://github.com/mapbox/node-pre-gyp.git#c88d6a04"
+    "nan": "^2.1.0",
+    "node-pre-gyp": "^0.6.13"
   },
   "bundledDependencies": [
     "node-pre-gyp"
