@@ -50,10 +50,10 @@
           }],
           ['OS=="mac"', {
             'xcode_settings': {
-              'OTHER_CFLAGS': [ '--std=c++1y' ],
+              'OTHER_CFLAGS': [ '-std=c++1y', '-stdlib=libc++' ],
               'OTHER_LDFLAGS': [ '-framework', 'CoreFoundation', '-framework', 'IOKit' ],
               'SDKROOT': 'macosx',
-              'MACOSX_DEPLOYMENT_TARGET': '10.5',
+              'MACOSX_DEPLOYMENT_TARGET': '10.7',
             },
           }],
           ['OS=="win"', {

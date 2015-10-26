@@ -24,9 +24,9 @@
       "name": "Christopher Klein"
     }
   ],
-  "version": "1.0.6",
+  "version": "1.1.0",
   "engines": {
-    "node": ">=0.8.x"
+    "node": ">=0.12.x"
   },
   "main": "./usb",
   "repository": {
