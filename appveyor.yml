@@ -7,10 +7,10 @@ environment:
     secure: yRw0LuKh8Q/BORVLbBMaZXyGIvpIYuxYzGSherheoYTEMONUYfgj49x8b/FUm4s1
 
   matrix:
-    - node_version: 0.10.38
     - node_version: 0
     - node_version: 1.0.4
     - node_version: 1
+    - node_version: 4
 
 install:
   - ps: Install-Product node $env:node_version $env:platform
