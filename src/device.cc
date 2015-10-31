@@ -11,10 +11,6 @@
 
 static Nan::Persistent<v8::FunctionTemplate> device_constructor;
 
-Local<Object> makeBuffer(const unsigned char* ptr, unsigned length) {
-	return Nan::NewBuffer((char*) ptr, (uint32_t) length).ToLocalChecked();
-}
-
 Device::Device(libusb_device* d): device(d), device_handle(0) {
 	libusb_ref_device(device);
 	DEBUG_LOG("Created device %p", this);
@@ -115,7 +111,9 @@ NAN_METHOD(Device_GetConfigDescriptor) {
 	// Libusb 1.0 typo'd bMaxPower as MaxPower
 	v8cdesc->ForceSet(V8STR("bMaxPower"), Nan::New<Uint32>((uint32_t) cdesc->MaxPower), CONST_PROP);
 
-	v8cdesc->ForceSet(V8SYM("extra"), makeBuffer(cdesc->extra, cdesc->extra_length), CONST_PROP);
+	v8cdesc->ForceSet(V8SYM("extra"),
+		Nan::CopyBuffer((const char*) cdesc->extra, cdesc->extra_length).ToLocalChecked(),
+		CONST_PROP);
 
 	Local<Array> v8interfaces = Nan::New<Array>(cdesc->bNumInterfaces);
 	v8cdesc->ForceSet(V8SYM("interfaces"), v8interfaces);
@@ -143,7 +141,9 @@ NAN_METHOD(Device_GetConfigDescriptor) {
 			STRUCT_TO_V8(v8idesc, idesc, bInterfaceProtocol)
 			STRUCT_TO_V8(v8idesc, idesc, iInterface)
 
-			v8idesc->ForceSet(V8SYM("extra"), makeBuffer(idesc.extra, idesc.extra_length), CONST_PROP);
+			v8idesc->ForceSet(V8SYM("extra"),
+				Nan::CopyBuffer((const char*)idesc.extra, idesc.extra_length).ToLocalChecked(),
+				CONST_PROP);
 
 			Local<Array> v8endpoints = Nan::New<Array>(idesc.bNumEndpoints);
 			v8idesc->ForceSet(V8SYM("endpoints"), v8endpoints, CONST_PROP);
@@ -162,7 +162,9 @@ NAN_METHOD(Device_GetConfigDescriptor) {
 				STRUCT_TO_V8(v8edesc, edesc, bRefresh)
 				STRUCT_TO_V8(v8edesc, edesc, bSynchAddress)
 
-				v8edesc->ForceSet(V8SYM("extra"), makeBuffer(edesc.extra, edesc.extra_length), CONST_PROP);
+				v8edesc->ForceSet(V8SYM("extra"),
+					Nan::CopyBuffer((const char*) edesc.extra, edesc.extra_length).ToLocalChecked(),
+					CONST_PROP);
 			}
 		}
 	}
