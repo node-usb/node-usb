@@ -40,7 +40,7 @@ Local<Object> Device::get(libusb_device* dev){
 		Local<FunctionTemplate> constructorHandle = Nan::New<v8::FunctionTemplate>(device_constructor);
 		Local<Value> argv[1] = { EXTERNAL_NEW(new Device(dev)) };
 		Local<Object> obj = constructorHandle->GetFunction()->NewInstance(1, argv);
-		auto it = byPtr.emplace(dev, obj).first;
+		auto it = byPtr.insert(std::make_pair(dev, std::move(obj))).first;
 		it->second.SetWeak(dev, DeviceWeakCallback, Nan::WeakCallbackType::kParameter);
 		return obj;
 	}
