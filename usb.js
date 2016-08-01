@@ -50,6 +50,12 @@ Object.defineProperty(usb.Device.prototype, "configDescriptor", {
 	}
 });
 
+Object.defineProperty(usb.Device.prototype, "allConfigDescriptors", {
+	get: function() {
+		return this._allConfigDescriptors || (this._allConfigDescriptors = this.__getAllConfigDescriptors())
+	}
+});
+
 usb.Device.prototype.interface = function(addr){
 	if (!this.interfaces){
 		throw new Error("Device must be open before searching for interfaces")

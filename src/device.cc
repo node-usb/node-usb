@@ -93,12 +93,7 @@ static NAN_METHOD(deviceConstructor) {
 	info.GetReturnValue().Set(info.This());
 }
 
-NAN_METHOD(Device_GetConfigDescriptor) {
-	ENTER_METHOD(Device, 0);
-
-	libusb_config_descriptor* cdesc;
-	CHECK_USB(libusb_get_active_config_descriptor(self->device, &cdesc));
-
+Local<Object> Device::cdesc2V8(libusb_config_descriptor * cdesc){
 	Local<Object> v8cdesc = Nan::New<Object>();
 
 	STRUCT_TO_V8(v8cdesc, *cdesc, bLength)
@@ -168,9 +163,30 @@ NAN_METHOD(Device_GetConfigDescriptor) {
 			}
 		}
 	}
+	return v8cdesc;
+}
 
+NAN_METHOD(Device_GetConfigDescriptor) {
+	ENTER_METHOD(Device, 0);
+	libusb_config_descriptor* cdesc;
+	CHECK_USB(libusb_get_active_config_descriptor(self->device, &cdesc));
+	Local<Object> v8cdesc = Device::cdesc2V8(cdesc);
 	libusb_free_config_descriptor(cdesc);
 	info.GetReturnValue().Set(v8cdesc);
+}
+
+NAN_METHOD(Device_GetAllConfigDescriptors){
+	ENTER_METHOD(Device, 0);
+	libusb_config_descriptor * cdesc;
+	struct libusb_device_descriptor dd;
+	libusb_get_device_descriptor(self->device, &dd);
+	Local<Array> v8cdescriptors = Nan::New<Array>(dd.bNumConfigurations);
+	for(uint8_t i = 0; i < dd.bNumConfigurations; i++){
+		libusb_get_config_descriptor(self->device, i, &cdesc);
+		v8cdescriptors->Set(i, Device::cdesc2V8(cdesc));
+		libusb_free_config_descriptor(cdesc);
+	}
+	info.GetReturnValue().Set(v8cdescriptors);
 }
 
 NAN_METHOD(Device_Open) {
@@ -358,6 +374,7 @@ void Device::Init(Local<Object> target){
 	tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
 	Nan::SetPrototypeMethod(tpl, "__getConfigDescriptor", Device_GetConfigDescriptor);
+	Nan::SetPrototypeMethod(tpl, "__getAllConfigDescriptors", Device_GetAllConfigDescriptors);
 	Nan::SetPrototypeMethod(tpl, "__open", Device_Open);
 	Nan::SetPrototypeMethod(tpl, "__close", Device_Close);
 	Nan::SetPrototypeMethod(tpl, "reset", Device_Reset::begin);
