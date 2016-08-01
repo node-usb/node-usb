@@ -37,6 +37,8 @@ struct Device: public Nan::ObjectWrap {
 	~Device();
 	static void unpin(libusb_device* device);
 
+	static Local<Object> cdesc2V8(libusb_config_descriptor * cdesc);
+
 	protected:
 		static std::map<libusb_device*, Nan::Persistent<Object>> byPtr;
 		Device(libusb_device* d);
