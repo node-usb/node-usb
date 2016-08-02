@@ -93,6 +93,9 @@ Object with properties for the fields of the configuration descriptor:
 
 ### .allConfigDescriptors
 	Contains all config descriptors of the device (same structure as .configDescriptor above)
+	
+### .parent
+	Contains the parent of the device, e.g. an USB Hub, if there is no parent this property is set to null.
   
 ### .open()
 
