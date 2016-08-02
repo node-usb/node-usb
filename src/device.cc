@@ -188,6 +188,15 @@ NAN_METHOD(Device_GetAllConfigDescriptors){
 	info.GetReturnValue().Set(v8cdescriptors);
 }
 
+NAN_METHOD(Device_GetParent){
+	ENTER_METHOD(Device, 0);
+	libusb_device* dev = libusb_get_parent(self->device);
+	if(dev)
+		info.GetReturnValue().Set(Device::get(dev));
+	else
+		info.GetReturnValue().Set(Nan::Null());
+}
+
 NAN_METHOD(Device_Open) {
 	ENTER_METHOD(Device, 0);
 	if (!self->device_handle){
@@ -372,6 +381,7 @@ void Device::Init(Local<Object> target){
 	tpl->SetClassName(Nan::New("Device").ToLocalChecked());
 	tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
+	Nan::SetPrototypeMethod(tpl, "__getParent", Device_GetParent);
 	Nan::SetPrototypeMethod(tpl, "__getConfigDescriptor", Device_GetConfigDescriptor);
 	Nan::SetPrototypeMethod(tpl, "__getAllConfigDescriptors", Device_GetAllConfigDescriptors);
 	Nan::SetPrototypeMethod(tpl, "__open", Device_Open);
