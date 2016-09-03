@@ -1,36 +1,40 @@
+branches:
+  only:
+    - master
+    - /^v?[0-9]/
+
 environment:
   GYP_MSVS_VERSION: 2013
 
-  node_pre_gyp_accessKeyId:
-    secure: lYXAEyCIM03tC8M9oS4U1JXWbo+g9u+AnayYjekgqBQ=
-  node_pre_gyp_secretAccessKey:
-    secure: yRw0LuKh8Q/BORVLbBMaZXyGIvpIYuxYzGSherheoYTEMONUYfgj49x8b/FUm4s1
-
   matrix:
-    - node_version: '0.12.7'
-    - node_version: '1.0'
-    - node_version: '1.8'
-    - node_version: '2.5'
-    - node_version: '3.3'
-    - node_version: '4.1'
-    - node_version: '5.0'
+    - node_version: '0.12'
+    - node_version: '4'
+    - node_version: '5'
+    - node_version: '6'
 
 install:
   - ps: Install-Product node $env:node_version $env:platform
-  - ps: npm install -g node-gyp
-  - ps: $publish_binary=0
-  - ps: if ($env:appveyor_repo_tag -match "true" -and $env:appveyor_repo_tag_name -match '^v[0-9]') { $publish_binary=1; }
+  - ps: npm install -g node-gyp node-pre-gyp-github
+  # This fixes an issue with Node 4.x on x86. If it builds without this line
+  # needing to be set, we can remove it.
+  - ps: npm config -g set node-gyp "$(npm config -g get prefix)\node_modules\node-gyp\bin\node-gyp.js"
+
+  - ps: if ($env:appveyor_repo_tag -match "true" -and $env:appveyor_repo_tag_name -match '^v?[0-9]') { $publish_binary=1; }
 
 build_script:
   - ps: echo $publish_binary
-  - ps: >
-      & {      
-        $ErrorActionPreference = 'SilentlyContinue'
-        git submodule update --init 2>&1 | write-host
-        npm install --build-from-source 2>&1 | write-host
-        ./node_modules/.bin/node-pre-gyp package 2>&1 | write-host
-        if ($publish_binary) { ./node_modules/.bin/node-pre-gyp publish 2>&1 | write-host; }
+  - ps: |
+      $ErrorActionPreference = 'Continue'
+      git submodule update --init 2>&1 | write-host
+      npm install --build-from-source 2>&1 | write-host
+      ./node_modules/.bin/node-pre-gyp package 2>&1 | write-host
+      if ($publish_binary -Eq "1") {
+        node-pre-gyp-github publish 2>&1 | write-host
+        if (-Not ($?)) {
+          throw "Failed publishing";
+        }
       }
+      echo "done."
 
 platform:
   - x86
