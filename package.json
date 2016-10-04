@@ -1,7 +1,7 @@
 {
   "name": "usb",
   "description": "Library to access USB devices",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "engines": {
     "node": ">=0.12.x"
   },
@@ -37,11 +37,12 @@
   },
   "binary": {
     "module_name": "usb_bindings",
-    "module_path": "./src/binding",
+    "module_path": "build/bindings",
     "host": "https://github.com/tessel/node-usb/releases/download/",
     "remote_path": "{version}"
   },
   "dependencies": {
+    "bindings": "^1.2.1",
     "nan": "^2.4.0",
     "node-pre-gyp": "^0.6.30"
   },
