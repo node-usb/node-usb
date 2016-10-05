@@ -45,9 +45,6 @@
     "nan": "^2.4.0",
     "node-pre-gyp": "^0.6.30"
   },
-  "bundledDependencies": [
-    "node-pre-gyp"
-  ],
   "devDependencies": {
     "coffee-script": "~1.6.2",
     "mocha": "~1.8.2",
