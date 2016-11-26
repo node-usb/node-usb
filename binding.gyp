@@ -35,12 +35,12 @@
       ],
 
       'conditions' : [
-          ['use_system_libusb=="false"', {
+          ['use_system_libusb=="false" and OS!="freebsd"', {
             'dependencies': [
               'libusb.gypi:libusb',
             ],
           }],
-          ['use_system_libusb=="true"', {
+          ['use_system_libusb=="true" or OS=="freebsd"', {
             'include_dirs+': [
               '<!@(pkg-config libusb-1.0 --cflags-only-I | sed s/-I//g)'
             ],
