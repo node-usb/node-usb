@@ -26,10 +26,10 @@ install:
 build_script:
   - ps: echo $publish_binary
   - ps: |
-      $ErrorActionPreference = 'Continue'
       git submodule update --init 2>&1 | write-host
       npm install --build-from-source 2>&1 | write-host
       ./node_modules/.bin/node-pre-gyp package 2>&1 | write-host
+      $ErrorActionPreference = 'Continue'
       if ($publish_binary -Eq "1") {
         node-pre-gyp-github publish 2>&1 | write-host
         if (-Not ($?)) {
