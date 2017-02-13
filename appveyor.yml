@@ -11,6 +11,7 @@ environment:
     - node_version: '4'
     - node_version: '5'
     - node_version: '6'
+    - node_version: '7'
 
 install:
   - ps: Install-Product node $env:node_version $env:platform
