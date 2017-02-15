@@ -11,6 +11,7 @@ env:
   - NODE_VERSION="4"
   - NODE_VERSION="5"
   - NODE_VERSION="6"
+  - NODE_VERSION="7"
 
 before_install:
 - brew update
