@@ -58,7 +58,7 @@ Integer USB device number
 Integer USB device address
 
 ### .portNumbers
-Array containing the USB device port numbers
+Array containing the USB device port numbers, or `undefined` if not supported on this platform.
 
 ### .deviceDescriptor
 Object with properties for the fields of the device descriptor:

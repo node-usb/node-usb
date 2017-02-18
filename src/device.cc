@@ -82,23 +82,12 @@ static NAN_METHOD(deviceConstructor) {
 
 	uint8_t port_numbers[MAX_PORTS];
 	int ret = libusb_get_port_numbers(self->device, &port_numbers[0], MAX_PORTS);
-	if (ret >= 0) {
+	if (ret > 0) {
 		Local<Array> array = Nan::New<Array>(ret);
 		for (int i = 0; i < ret; ++ i) {
 			array->Set(i, Nan::New(port_numbers[i]));
 		}
 		info.This()->ForceSet(V8SYM("portNumbers"), array, CONST_PROP);
-	} else {
-		// FreeBSD workarounds based on https://sourceforge.net/p/sigrok/mailman/attachment/54C11DD2.10002%40uffe.org/1/
-#ifdef __FreeBSD__
-		struct libusb_device_handle* dh;
-		CHECK_USB(libusb_open(self->device, &dh));
-		Local<Array> array = Nan::New<Array>(1);
-		array->Set(0, Nan::New(libusb_get_device_address(self->device)));
-		info.This()->ForceSet(V8SYM("portNumbers"), array, CONST_PROP);
-		libusb_close(dh);
-#endif
-		// If get_port_numbers fails on other platforms, just don't set the property
 	}
 	info.GetReturnValue().Set(info.This());
 }
