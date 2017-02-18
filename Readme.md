@@ -91,6 +91,9 @@ Object with properties for the fields of the configuration descriptor:
   - bMaxPower
   - extra (Buffer containing any extra data or additional descriptors)
 
+### .allConfigDescriptors
+	Contains all config descriptors of the device (same structure as .configDescriptor above)
+  
 ### .open()
 
 Open the device. All methods below require the device to be open before use.
