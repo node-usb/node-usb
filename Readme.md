@@ -12,7 +12,7 @@ It's based entirely on libusb's asynchronous API for better efficiency, and prov
 Installation
 ============
 
-Libusb is included as a submodule. On Linux, you'll need libudev to build libusb. On Ubuntu/Debian: `sudo apt-get install build-essential libudev-dev`
+Libusb is included as a submodule. On Linux, you'll need libudev to build libusb. With Kernel v4+, symlink `/dev/bus` to its new location, `/sys/bus` to work with libusb. On Ubuntu/Debian: `sudo apt-get install build-essential libudev-dev`
 
 Then, just run
 
