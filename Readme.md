@@ -44,7 +44,7 @@ Convenience method to get the first device with the specified VID and PID, or `u
 Constant properties from libusb
 
 ### usb.setDebugLevel(level : int)
-Set the libusb debug level (between 0 and 4)
+Set the libusb debug level (between 0 and 3)
 
 Device
 ------
