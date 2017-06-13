@@ -12,10 +12,12 @@ environment:
     - node_version: '4'
     - node_version: '5'
     - node_version: '6'
-    - node_version: '6'
+    - node_version: '7'
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       GYP_MSVS_VERSION: 2015
-    - node_version: '7'
+    - node_version: '8'
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      GYP_MSVS_VERSION: 2015
 
 install:
   - ps: Install-Product node $env:node_version $env:platform
