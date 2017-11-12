@@ -178,7 +178,7 @@ Local<Object> Device::bdesc2V8(libusb_bos_descriptor * bdesc){
 		STRUCT_TO_V8(v8capdesc, *capdesc, bDevCapabilityType)
 
 		v8capdesc->ForceSet(V8SYM("data"),
-			Nan::CopyBuffer((const char*) (*capdesc).dev_capability_data, capdesc->bLength-3).ToLocalChecked(),
+			Nan::CopyBuffer((const char*) capdesc->dev_capability_data, capdesc->bLength-3).ToLocalChecked(),
 			CONST_PROP);
 	}
 	return v8bdesc;
@@ -193,16 +193,6 @@ NAN_METHOD(Device_GetConfigDescriptor) {
 	info.GetReturnValue().Set(v8cdesc);
 }
 
-NAN_METHOD(Device_BosConfigDescriptor) {
-	ENTER_METHOD(Device, 0);
-	CHECK_OPEN();
-	libusb_bos_descriptor* bdesc;
-	CHECK_USB(libusb_get_bos_descriptor(self->device_handle, &bdesc));
-	Local<Object> v8bdesc = Device::bdesc2V8(bdesc);
-	libusb_free_bos_descriptor(bdesc);
-	info.GetReturnValue().Set(v8bdesc);
-}
-
 NAN_METHOD(Device_GetAllConfigDescriptors){
 	ENTER_METHOD(Device, 0);
 	libusb_config_descriptor * cdesc;
@@ -215,6 +205,16 @@ NAN_METHOD(Device_GetAllConfigDescriptors){
 		libusb_free_config_descriptor(cdesc);
 	}
 	info.GetReturnValue().Set(v8cdescriptors);
+}
+
+NAN_METHOD(Device_GetBosDescriptor) {
+	ENTER_METHOD(Device, 0);
+	CHECK_OPEN();
+	libusb_bos_descriptor* bdesc;
+	CHECK_USB(libusb_get_bos_descriptor(self->device_handle, &bdesc));
+	Local<Object> v8bdesc = Device::bdesc2V8(bdesc);
+	libusb_free_bos_descriptor(bdesc);
+	info.GetReturnValue().Set(v8bdesc);
 }
 
 NAN_METHOD(Device_GetParent){
@@ -412,8 +412,8 @@ void Device::Init(Local<Object> target){
 
 	Nan::SetPrototypeMethod(tpl, "__getParent", Device_GetParent);
 	Nan::SetPrototypeMethod(tpl, "__getConfigDescriptor", Device_GetConfigDescriptor);
-	Nan::SetPrototypeMethod(tpl, "__getBosDescriptor", Device_BosConfigDescriptor);
 	Nan::SetPrototypeMethod(tpl, "__getAllConfigDescriptors", Device_GetAllConfigDescriptors);
+	Nan::SetPrototypeMethod(tpl, "__getBosDescriptor", Device_GetBosDescriptor);
 	Nan::SetPrototypeMethod(tpl, "__open", Device_Open);
 	Nan::SetPrototypeMethod(tpl, "__close", Device_Close);
 	Nan::SetPrototypeMethod(tpl, "reset", Device_Reset::begin);
