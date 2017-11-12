@@ -50,6 +50,12 @@ Object.defineProperty(usb.Device.prototype, "configDescriptor", {
 	}
 });
 
+Object.defineProperty(usb.Device.prototype, "bosDescriptor", {
+	get: function() {
+		return this._bosDescriptor || (this._bosDescriptor = this.__getBosDescriptor())
+	}
+});
+
 Object.defineProperty(usb.Device.prototype, "allConfigDescriptors", {
 	get: function() {
 		return this._allConfigDescriptors || (this._allConfigDescriptors = this.__getAllConfigDescriptors())
