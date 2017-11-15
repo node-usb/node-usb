@@ -37,11 +37,17 @@ usb.Device.prototype.open = function(defaultConfig){
 	for (var i=0; i<len; i++){
 		this.interfaces[i] = new Interface(this, i)
 	}
+	this.capabilities = [];
+	len = this.bosDescriptor ? this.bosDescriptor.capabilities.length : 0
+	for (var i=0; i<len; i++){
+		this.capabilities[i] = new Capability(this, i)
+	}
 }
 
 usb.Device.prototype.close = function(){
 	this.__close()
 	this.interfaces = null
+	this.capabilities = null;
 }
 
 Object.defineProperty(usb.Device.prototype, "configDescriptor", {
@@ -158,6 +164,11 @@ usb.Device.prototype.setConfiguration = function(desired, cb) {
 			for (var i=0; i<len; i++) {
 				this.interfaces[i] = new Interface(this, i)
 			}
+			this.capabilities = [];
+			len = this.bosDescriptor ? this.bosDescriptor.capabilities.length : 0
+			for (var i=0; i<len; i++){
+				this.capabilities[i] = new Capability(this, i)
+			}
 		}
 		cb.call(self, err)
 	});
@@ -251,6 +262,18 @@ Interface.prototype.endpoint = function(addr){
 			return this.endpoints[i]
 		}
 	}
+}
+
+function Capability(device, id){
+	this.device = device
+	this.id = id
+	this.__refresh()
+}
+
+Capability.prototype.__refresh = function(){
+	this.descriptor = this.device.bosDescriptor.capabilities[this.id]
+	this.type = this.descriptor.bDevCapabilityType
+	this.data = this.descriptor.data
 }
 
 function Endpoint(device, descriptor){
