@@ -33,7 +33,7 @@ usb.Device.prototype.open = function(defaultConfig){
 	this.__open()
 	if (defaultConfig === false) return
 	this.interfaces = []
-	var len = this.configDescriptor.interfaces.length
+	var len = this.configDescriptor ? this.configDescriptor.interfaces.length : 0
 	for (var i=0; i<len; i++){
 		this.interfaces[i] = new Interface(this, i)
 	}
@@ -52,19 +52,31 @@ usb.Device.prototype.close = function(){
 
 Object.defineProperty(usb.Device.prototype, "configDescriptor", {
 	get: function() {
-		return this._configDescriptor || (this._configDescriptor = this.__getConfigDescriptor())
+		try {
+			return this._configDescriptor || (this._configDescriptor = this.__getConfigDescriptor())
+		} catch(e) {
+			return null;
+		}
 	}
 });
 
 Object.defineProperty(usb.Device.prototype, "bosDescriptor", {
 	get: function() {
-		return this._bosDescriptor || (this._bosDescriptor = this.__getBosDescriptor())
+		try {
+			return this._bosDescriptor || (this._bosDescriptor = this.__getBosDescriptor())
+		} catch(e) {
+			return null;
+		}
 	}
 });
 
 Object.defineProperty(usb.Device.prototype, "allConfigDescriptors", {
 	get: function() {
-		return this._allConfigDescriptors || (this._allConfigDescriptors = this.__getAllConfigDescriptors())
+		try {
+			return this._allConfigDescriptors || (this._allConfigDescriptors = this.__getAllConfigDescriptors())
+		} catch(e) {
+			return null;
+		}
 	}
 });
 
@@ -160,7 +172,7 @@ usb.Device.prototype.setConfiguration = function(desired, cb) {
 	this.__setConfiguration(desired, function(err) {
 		if (!err) {
 			this.interfaces = []
-			var len = this.configDescriptor.interfaces.length
+			var len = this.configDescriptor ? this.configDescriptor.interfaces.length : 0
 			for (var i=0; i<len; i++) {
 				this.interfaces[i] = new Interface(this, i)
 			}
