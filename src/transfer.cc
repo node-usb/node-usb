@@ -31,7 +31,7 @@ NAN_METHOD(Transfer_constructor) {
 	INT_ARG(timeout, 3);
 	CALLBACK_ARG(4);
 
-	setConst(info.This(), "device", info[0]);
+	//setConst(info.This(), "device", info[0]);
 	auto self = new Transfer();
 	self->attach(info.This());
 	self->device = device;
