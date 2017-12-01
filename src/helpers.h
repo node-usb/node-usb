@@ -15,7 +15,7 @@ using namespace v8;
 const PropertyAttribute CONST_PROP = static_cast<PropertyAttribute>(ReadOnly|DontDelete);
 
 inline static void setConst(Local<Object> obj, const char* const name, Local<Value> value){
-	obj->ForceSet(Nan::New<String>(name).ToLocalChecked(), value, CONST_PROP);
+	Nan::DefineOwnProperty(obj, Nan::New<String>(name).ToLocalChecked(), value, CONST_PROP);
 }
 
 #define ENTER_CONSTRUCTOR(MIN_ARGS) \
