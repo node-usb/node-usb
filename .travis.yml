@@ -7,12 +7,12 @@ language: objective-c
 
 env:
   matrix:
-  - NODE_VERSION="0.12"
   - NODE_VERSION="4"
   - NODE_VERSION="5"
   - NODE_VERSION="6"
   - NODE_VERSION="7"
   - NODE_VERSION="8"
+  - NODE_VERSION="9"
 
 before_install:
 - brew update

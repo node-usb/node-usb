@@ -15,7 +15,7 @@ using namespace v8;
 const PropertyAttribute CONST_PROP = static_cast<PropertyAttribute>(ReadOnly|DontDelete);
 
 inline static void setConst(Local<Object> obj, const char* const name, Local<Value> value){
-	obj->ForceSet(Nan::New<String>(name).ToLocalChecked(), value, CONST_PROP);
+	Nan::DefineOwnProperty(obj, Nan::New<String>(name).ToLocalChecked(), value, CONST_PROP);
 }
 
 #define ENTER_CONSTRUCTOR(MIN_ARGS) \
@@ -63,7 +63,7 @@ inline static void setConst(Local<Object> obj, const char* const name, Local<Val
 #define INT_ARG(NAME, N) \
 	if (!info[N]->IsNumber()) \
 		THROW_BAD_ARGS("Parameter " #NAME " (" #N ") should be number"); \
-	NAME = info[N]->ToInt32()->Value();
+	NAME = Nan::To<int32_t>(info[N]).FromJust();
 
 #define BOOL_ARG(NAME, N) \
 	NAME = false;    \

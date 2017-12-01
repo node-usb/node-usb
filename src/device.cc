@@ -2,7 +2,7 @@
 #include <string.h>
 
 #define STRUCT_TO_V8(TARGET, STR, NAME) \
-		TARGET->ForceSet(V8STR(#NAME), Nan::New<Uint32>((uint32_t) (STR).NAME), CONST_PROP);
+  Nan::DefineOwnProperty(TARGET, V8STR(#NAME), Nan::New<Uint32>((uint32_t) (STR).NAME), CONST_PROP);
 
 #define CHECK_OPEN() \
 		if (!self->device_handle){THROW_ERROR("Device is not opened");}
@@ -36,7 +36,7 @@ Local<Object> Device::get(libusb_device* dev){
 	} else {
 		Local<FunctionTemplate> constructorHandle = Nan::New<v8::FunctionTemplate>(device_constructor);
 		Local<Value> argv[1] = { EXTERNAL_NEW(new Device(dev)) };
-		Local<Object> obj = constructorHandle->GetFunction()->NewInstance(1, argv);
+		Local<Object> obj = Nan::NewInstance(constructorHandle->GetFunction(), 1, argv).ToLocalChecked();
 		return obj;
 	}
 }
@@ -44,13 +44,13 @@ Local<Object> Device::get(libusb_device* dev){
 static NAN_METHOD(deviceConstructor) {
 	ENTER_CONSTRUCTOR_POINTER(Device, 1);
 
-	info.This()->ForceSet(V8SYM("busNumber"),
+	Nan::DefineOwnProperty(info.This(), V8SYM("busNumber"),
 		Nan::New<Uint32>((uint32_t) libusb_get_bus_number(self->device)), CONST_PROP);
-	info.This()->ForceSet(V8SYM("deviceAddress"),
+  Nan::DefineOwnProperty(info.This(), V8SYM("deviceAddress"),
 		Nan::New<Uint32>((uint32_t) libusb_get_device_address(self->device)), CONST_PROP);
 
 	Local<Object> v8dd = Nan::New<Object>();
-	info.This()->ForceSet(V8SYM("deviceDescriptor"), v8dd, CONST_PROP);
+  Nan::DefineOwnProperty(info.This(), V8SYM("deviceDescriptor"), v8dd, CONST_PROP);
 
 	struct libusb_device_descriptor dd;
 	CHECK_USB(libusb_get_device_descriptor(self->device, &dd));
@@ -77,7 +77,7 @@ static NAN_METHOD(deviceConstructor) {
 		for (int i = 0; i < ret; ++ i) {
 			array->Set(i, Nan::New(port_numbers[i]));
 		}
-		info.This()->ForceSet(V8SYM("portNumbers"), array, CONST_PROP);
+    Nan::DefineOwnProperty(info.This(), V8SYM("portNumbers"), array, CONST_PROP);
 	}
 	info.GetReturnValue().Set(info.This());
 }
@@ -93,14 +93,14 @@ Local<Object> Device::cdesc2V8(libusb_config_descriptor * cdesc){
 	STRUCT_TO_V8(v8cdesc, *cdesc, iConfiguration)
 	STRUCT_TO_V8(v8cdesc, *cdesc, bmAttributes)
 	// Libusb 1.0 typo'd bMaxPower as MaxPower
-	v8cdesc->ForceSet(V8STR("bMaxPower"), Nan::New<Uint32>((uint32_t) cdesc->MaxPower), CONST_PROP);
+	Nan::DefineOwnProperty(v8cdesc, V8STR("bMaxPower"), Nan::New<Uint32>((uint32_t) cdesc->MaxPower), CONST_PROP);
 
-	v8cdesc->ForceSet(V8SYM("extra"),
+	Nan::DefineOwnProperty(v8cdesc, V8SYM("extra"),
 		Nan::CopyBuffer((const char*) cdesc->extra, cdesc->extra_length).ToLocalChecked(),
 		CONST_PROP);
 
 	Local<Array> v8interfaces = Nan::New<Array>(cdesc->bNumInterfaces);
-	v8cdesc->ForceSet(V8SYM("interfaces"), v8interfaces);
+	Nan::DefineOwnProperty(v8cdesc, V8SYM("interfaces"), v8interfaces);
 
 	for (int idxInterface = 0; idxInterface < cdesc->bNumInterfaces; idxInterface++) {
 		int numAltSettings = cdesc->interface[idxInterface].num_altsetting;
@@ -125,12 +125,12 @@ Local<Object> Device::cdesc2V8(libusb_config_descriptor * cdesc){
 			STRUCT_TO_V8(v8idesc, idesc, bInterfaceProtocol)
 			STRUCT_TO_V8(v8idesc, idesc, iInterface)
 
-			v8idesc->ForceSet(V8SYM("extra"),
+			Nan::DefineOwnProperty(v8idesc, V8SYM("extra"),
 				Nan::CopyBuffer((const char*)idesc.extra, idesc.extra_length).ToLocalChecked(),
 				CONST_PROP);
 
 			Local<Array> v8endpoints = Nan::New<Array>(idesc.bNumEndpoints);
-			v8idesc->ForceSet(V8SYM("endpoints"), v8endpoints, CONST_PROP);
+			Nan::DefineOwnProperty(v8idesc, V8SYM("endpoints"), v8endpoints, CONST_PROP);
 			for (int idxEndpoint = 0; idxEndpoint < idesc.bNumEndpoints; idxEndpoint++){
 				const libusb_endpoint_descriptor& edesc = idesc.endpoint[idxEndpoint];
 
@@ -146,7 +146,7 @@ Local<Object> Device::cdesc2V8(libusb_config_descriptor * cdesc){
 				STRUCT_TO_V8(v8edesc, edesc, bRefresh)
 				STRUCT_TO_V8(v8edesc, edesc, bSynchAddress)
 
-				v8edesc->ForceSet(V8SYM("extra"),
+				Nan::DefineOwnProperty(v8edesc, V8SYM("extra"),
 					Nan::CopyBuffer((const char*) edesc.extra, edesc.extra_length).ToLocalChecked(),
 					CONST_PROP);
 			}
