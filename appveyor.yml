@@ -8,7 +8,6 @@ environment:
   GYP_MSVS_VERSION: 2013
 
   matrix:
-    - node_version: '0.12'
     - node_version: '4'
     - node_version: '5'
     - node_version: '6'
@@ -18,11 +17,13 @@ environment:
     - node_version: '8'
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       GYP_MSVS_VERSION: 2015
+    - node_version: '9'
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
+      GYP_MSVS_VERSION: 2015
 
 install:
   - ps: Install-Product node $env:node_version $env:platform
-  # request@2.75.0 for 0.12 compatibility
-  - npm install -g request@2.75.0 node-gyp node-pre-gyp-github
+  - npm install -g node-gyp node-pre-gyp-github
   # This fixes an issue with Node 4.x on x86. If it builds without this line
   # needing to be set, we can remove it.
   - ps: npm config -g set node-gyp "$(npm config -g get prefix)\node_modules\node-gyp\bin\node-gyp.js"
