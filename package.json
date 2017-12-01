@@ -42,7 +42,7 @@
     "remote_path": "{version}"
   },
   "dependencies": {
-    "nan": "^2.4.0",
+    "nan": "^2.8.0",
     "node-pre-gyp": "^0.6.30"
   },
   "devDependencies": {
