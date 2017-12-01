@@ -63,7 +63,7 @@ inline static void setConst(Local<Object> obj, const char* const name, Local<Val
 #define INT_ARG(NAME, N) \
 	if (!info[N]->IsNumber()) \
 		THROW_BAD_ARGS("Parameter " #NAME " (" #N ") should be number"); \
-	NAME = info[N]->ToInt32()->Value();
+	NAME = Nan::To<int32_t>(info[N]).FromJust();
 
 #define BOOL_ARG(NAME, N) \
 	NAME = false;    \

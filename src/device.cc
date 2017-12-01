@@ -36,7 +36,7 @@ Local<Object> Device::get(libusb_device* dev){
 	} else {
 		Local<FunctionTemplate> constructorHandle = Nan::New<v8::FunctionTemplate>(device_constructor);
 		Local<Value> argv[1] = { EXTERNAL_NEW(new Device(dev)) };
-		Local<Object> obj = constructorHandle->GetFunction()->NewInstance(1, argv);
+		Local<Object> obj = Nan::NewInstance(constructorHandle->GetFunction(), 1, argv).ToLocalChecked();
 		return obj;
 	}
 }
