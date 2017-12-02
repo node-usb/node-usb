@@ -164,7 +164,7 @@ Local<Object> Device::bdesc2V8(libusb_bos_descriptor * bdesc){
 	STRUCT_TO_V8(v8bdesc, *bdesc, bNumDeviceCaps)
 
 	Local<Array> v8capabilities = Nan::New<Array>(bdesc->bNumDeviceCaps);
-	v8bdesc->ForceSet(V8SYM("capabilities"), v8capabilities);
+	Nan::DefineOwnProperty(v8bdesc, V8SYM("capabilities"), v8capabilities);
 
 	for (int idxCapability = 0; idxCapability < bdesc->bNumDeviceCaps; idxCapability++) {
 		struct libusb_bos_dev_capability_descriptor *capdesc =
@@ -177,7 +177,7 @@ Local<Object> Device::bdesc2V8(libusb_bos_descriptor * bdesc){
 		STRUCT_TO_V8(v8capdesc, *capdesc, bDescriptorType)
 		STRUCT_TO_V8(v8capdesc, *capdesc, bDevCapabilityType)
 
-		v8capdesc->ForceSet(V8SYM("data"),
+		Nan::DefineOwnProperty(v8capdesc, V8SYM("data"),
 			Nan::CopyBuffer((const char*) capdesc->dev_capability_data, capdesc->bLength-3).ToLocalChecked(),
 			CONST_PROP);
 	}
