@@ -265,7 +265,6 @@ Interface.prototype.setAltSetting = function(altSetting, cb){
 		}
 		cb.call(self, err)
 	})
-
 }
 
 Interface.prototype.endpoint = function(addr){
