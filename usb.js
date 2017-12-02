@@ -122,7 +122,9 @@ function(bmRequestType, bRequest, wValue, wIndex, data_or_length, callback){
 	try {
 		transfer.submit(buf)
 	} catch (e) {
-		process.nextTick(function() { callback.call(self, e); });
+		if (callback){
+			process.nextTick(function() { callback.call(self, e); });
+		}
 	}
 	return this;
 }
