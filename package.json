@@ -22,6 +22,10 @@
     },
     {
       "name": "Christopher Klein"
+    },
+    {
+      "name": "Rob Moran",
+      "email": "rob@thegecko.org"
     }
   ],
   "main": "./usb",
