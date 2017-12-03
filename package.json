@@ -1,7 +1,7 @@
 {
   "name": "usb",
   "description": "Library to access USB devices",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "engines": {
     "node": ">=0.12.x"
   },
