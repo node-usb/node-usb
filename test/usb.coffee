@@ -56,6 +56,9 @@ describe 'Device', ->
 	it 'should open', ->
 		device.open()
 
+	it 'should have a bosDescriptor property', ->
+		assert.ok(device.bosDescriptor != undefined)
+
 	it 'gets string descriptors', (done) ->
 		device.getStringDescriptor device.deviceDescriptor.iManufacturer, (e, s) ->
 			assert.ok(e == undefined, e)

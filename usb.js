@@ -33,26 +33,50 @@ usb.Device.prototype.open = function(defaultConfig){
 	this.__open()
 	if (defaultConfig === false) return
 	this.interfaces = []
-	var len = this.configDescriptor.interfaces.length
+	var len = this.configDescriptor ? this.configDescriptor.interfaces.length : 0
 	for (var i=0; i<len; i++){
 		this.interfaces[i] = new Interface(this, i)
+	}
+	this.capabilities = [];
+	len = this.bosDescriptor ? this.bosDescriptor.capabilities.length : 0
+	for (var i=0; i<len; i++){
+		this.capabilities[i] = new Capability(this, i)
 	}
 }
 
 usb.Device.prototype.close = function(){
 	this.__close()
 	this.interfaces = null
+	this.capabilities = null;
 }
 
 Object.defineProperty(usb.Device.prototype, "configDescriptor", {
 	get: function() {
-		return this._configDescriptor || (this._configDescriptor = this.__getConfigDescriptor())
+		try {
+			return this._configDescriptor || (this._configDescriptor = this.__getConfigDescriptor())
+		} catch(e) {
+			return null;
+		}
+	}
+});
+
+Object.defineProperty(usb.Device.prototype, "bosDescriptor", {
+	get: function() {
+		try {
+			return this._bosDescriptor || (this._bosDescriptor = this.__getBosDescriptor())
+		} catch(e) {
+			return null;
+		}
 	}
 });
 
 Object.defineProperty(usb.Device.prototype, "allConfigDescriptors", {
 	get: function() {
-		return this._allConfigDescriptors || (this._allConfigDescriptors = this.__getAllConfigDescriptors())
+		try {
+			return this._allConfigDescriptors || (this._allConfigDescriptors = this.__getAllConfigDescriptors())
+		} catch(e) {
+			return null;
+		}
 	}
 });
 
@@ -150,9 +174,14 @@ usb.Device.prototype.setConfiguration = function(desired, cb) {
 	this.__setConfiguration(desired, function(err) {
 		if (!err) {
 			this.interfaces = []
-			var len = this.configDescriptor.interfaces.length
+			var len = this.configDescriptor ? this.configDescriptor.interfaces.length : 0
 			for (var i=0; i<len; i++) {
 				this.interfaces[i] = new Interface(this, i)
+			}
+			this.capabilities = [];
+			len = this.bosDescriptor ? this.bosDescriptor.capabilities.length : 0
+			for (var i=0; i<len; i++){
+				this.capabilities[i] = new Capability(this, i)
 			}
 		}
 		cb.call(self, err)
@@ -238,7 +267,6 @@ Interface.prototype.setAltSetting = function(altSetting, cb){
 		}
 		cb.call(self, err)
 	})
-
 }
 
 Interface.prototype.endpoint = function(addr){
@@ -247,6 +275,18 @@ Interface.prototype.endpoint = function(addr){
 			return this.endpoints[i]
 		}
 	}
+}
+
+function Capability(device, id){
+	this.device = device
+	this.id = id
+	this.__refresh()
+}
+
+Capability.prototype.__refresh = function(){
+	this.descriptor = this.device.bosDescriptor.capabilities[this.id]
+	this.type = this.descriptor.bDevCapabilityType
+	this.data = this.descriptor.data
 }
 
 function Endpoint(device, descriptor){
