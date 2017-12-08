@@ -62,6 +62,9 @@ Object.defineProperty(usb.Device.prototype, "configDescriptor", {
 
 Object.defineProperty(usb.Device.prototype, "bosDescriptor", {
 	get: function() {
+		if (this.deviceDescriptor.bcdUSB < 0x201){
+			return null;
+		}
 		try {
 			return this._bosDescriptor || (this._bosDescriptor = this.__getBosDescriptor())
 		} catch(e) {
