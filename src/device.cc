@@ -155,35 +155,6 @@ Local<Object> Device::cdesc2V8(libusb_config_descriptor * cdesc){
 	return v8cdesc;
 }
 
-Local<Object> Device::bdesc2V8(libusb_bos_descriptor * bdesc){
-	Local<Object> v8bdesc = Nan::New<Object>();
-
-	STRUCT_TO_V8(v8bdesc, *bdesc, bLength)
-	STRUCT_TO_V8(v8bdesc, *bdesc, bDescriptorType)
-	STRUCT_TO_V8(v8bdesc, *bdesc, wTotalLength)
-	STRUCT_TO_V8(v8bdesc, *bdesc, bNumDeviceCaps)
-
-	Local<Array> v8capabilities = Nan::New<Array>(bdesc->bNumDeviceCaps);
-	Nan::DefineOwnProperty(v8bdesc, V8SYM("capabilities"), v8capabilities);
-
-	for (int idxCapability = 0; idxCapability < bdesc->bNumDeviceCaps; idxCapability++) {
-		struct libusb_bos_dev_capability_descriptor *capdesc =
-			bdesc->dev_capability[idxCapability];
-
-		Local<Object> v8capdesc = Nan::New<Object>();
-		v8capabilities->Set(idxCapability, v8capdesc);
-
-		STRUCT_TO_V8(v8capdesc, *capdesc, bLength)
-		STRUCT_TO_V8(v8capdesc, *capdesc, bDescriptorType)
-		STRUCT_TO_V8(v8capdesc, *capdesc, bDevCapabilityType)
-
-		Nan::DefineOwnProperty(v8capdesc, V8SYM("data"),
-			Nan::CopyBuffer((const char*) capdesc->dev_capability_data, capdesc->bLength-3).ToLocalChecked(),
-			CONST_PROP);
-	}
-	return v8bdesc;
-}
-
 NAN_METHOD(Device_GetConfigDescriptor) {
 	ENTER_METHOD(Device, 0);
 	libusb_config_descriptor* cdesc;
@@ -205,16 +176,6 @@ NAN_METHOD(Device_GetAllConfigDescriptors){
 		libusb_free_config_descriptor(cdesc);
 	}
 	info.GetReturnValue().Set(v8cdescriptors);
-}
-
-NAN_METHOD(Device_GetBosDescriptor) {
-	ENTER_METHOD(Device, 0);
-	CHECK_OPEN();
-	libusb_bos_descriptor* bdesc;
-	CHECK_USB(libusb_get_bos_descriptor(self->device_handle, &bdesc));
-	Local<Object> v8bdesc = Device::bdesc2V8(bdesc);
-	libusb_free_bos_descriptor(bdesc);
-	info.GetReturnValue().Set(v8bdesc);
 }
 
 NAN_METHOD(Device_GetParent){
@@ -413,7 +374,6 @@ void Device::Init(Local<Object> target){
 	Nan::SetPrototypeMethod(tpl, "__getParent", Device_GetParent);
 	Nan::SetPrototypeMethod(tpl, "__getConfigDescriptor", Device_GetConfigDescriptor);
 	Nan::SetPrototypeMethod(tpl, "__getAllConfigDescriptors", Device_GetAllConfigDescriptors);
-	Nan::SetPrototypeMethod(tpl, "__getBosDescriptor", Device_GetBosDescriptor);
 	Nan::SetPrototypeMethod(tpl, "__open", Device_Open);
 	Nan::SetPrototypeMethod(tpl, "__close", Device_Close);
 	Nan::SetPrototypeMethod(tpl, "reset", Device_Reset::begin);

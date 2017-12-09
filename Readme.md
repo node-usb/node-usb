@@ -91,14 +91,6 @@ Object with properties for the fields of the configuration descriptor:
   - bMaxPower
   - extra (Buffer containing any extra data or additional descriptors)
 
-### .bosDescriptor
-Object with properties for the fields of the Binary Object Store descriptor:
-
-  - bLength
-  - bDescriptorType
-  - wTotalLength
-  - bNumDeviceCaps
-
 ### .allConfigDescriptors
 	Contains all config descriptors of the device (same structure as .configDescriptor above)
 
@@ -132,9 +124,6 @@ Return the interface with the specified interface number.
 
 ### .interfaces
 List of Interface objects for the interfaces of the default configuration of the device.
-
-### .capabilities
-List of Capability objects for the Binary Object Store capabilities of the device.
 
 ### .timeout
 Timeout in milliseconds to use for control transfers.
@@ -191,22 +180,6 @@ Object with fields from the interface descriptor -- see libusb documentation or 
   - bInterfaceProtocol
   - iInterface
   - extra (Buffer containing any extra data or additional descriptors)
-
-Capability
----------
-
-### .type
-Integer capability type.
-
-### .data
-Buffer capability data.
-
-### .descriptor
-Object with fields from the capability descriptor -- see libusb documentation or USB spec.
-
-  - bLength
-  - bDescriptorType
-  - bDevCapabilityType
 
 Endpoint
 --------
