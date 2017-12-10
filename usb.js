@@ -49,7 +49,8 @@ Object.defineProperty(usb.Device.prototype, "configDescriptor", {
 		try {
 			return this._configDescriptor || (this._configDescriptor = this.__getConfigDescriptor())
 		} catch(e) {
-			return null;
+			if (e.errno == usb.LIBUSB_ERROR_NOT_FOUND) return null;
+			throw e;
 		}
 	}
 });
@@ -59,7 +60,8 @@ Object.defineProperty(usb.Device.prototype, "allConfigDescriptors", {
 		try {
 			return this._allConfigDescriptors || (this._allConfigDescriptors = this.__getAllConfigDescriptors())
 		} catch(e) {
-			return null;
+			if (e.errno == usb.LIBUSB_ERROR_NOT_FOUND) return [];
+			throw e;
 		}
 	}
 });
@@ -151,6 +153,88 @@ usb.Device.prototype.getStringDescriptor = function (desc_index, callback) {
 			callback(undefined, buf.toString('utf16le', 2));
 		}
 	);
+}
+
+usb.Device.prototype.getBosDescriptor = function (callback) {
+
+	if (this.deviceDescriptor.bcdDevice < 0x201) {
+		return callback(undefined, null);
+	}
+
+	this.open();
+	if (!this.configDescriptor) {
+		this.close();
+		return callback(undefined, null);
+	}
+
+	this.controlTransfer(
+		usb.LIBUSB_ENDPOINT_IN,
+		usb.LIBUSB_REQUEST_GET_DESCRIPTOR,
+		(usb.LIBUSB_DT_BOS << 8),
+		0,
+		usb.LIBUSB_DT_BOS_SIZE,
+		function (error, buffer) {
+			if (error) {
+				this.close();
+				return callback(undefined, null);
+			}
+
+			var totalLength = buffer.readUInt16LE(2);
+			this.controlTransfer(
+				usb.LIBUSB_ENDPOINT_IN,
+				usb.LIBUSB_REQUEST_GET_DESCRIPTOR,
+				(usb.LIBUSB_DT_BOS << 8),
+				0,
+				totalLength,
+				function (error, buffer) {
+					this.close();
+					if (error) return callback(undefined, null);
+
+					var descriptor = {
+						bLength: buffer.readUInt8(0),
+						bDescriptorType: buffer.readUInt8(1),
+						wTotalLength: buffer.readUInt16LE(2),
+						bNumDeviceCaps: buffer.readUInt8(4),
+						capabilities: []
+					};
+
+					var i = usb.LIBUSB_DT_BOS_SIZE;
+					while (i < descriptor.wTotalLength) {
+						var capability = {
+							bLength: buffer.readUInt8(i + 0),
+							bDescriptorType: buffer.readUInt8(i + 1),
+							bDevCapabilityType: buffer.readUInt8(i + 2)
+						};
+
+						capability.dev_capability_data = buffer.slice(i + 3, i + capability.bLength);
+						descriptor.capabilities.push(capability);
+						i += capability.bLength;
+					}
+
+					callback(undefined, descriptor);
+				}
+			);
+		}
+	);
+}
+
+usb.Device.prototype.getCapabilities = function (callback) {
+	var capabilities = [];
+
+	this.getBosDescriptor(function(error, descriptor) {
+		if (error) return callback(error, null);
+		if (descriptor && descriptor.capabilities) {
+			for (var i = 0; i < descriptor.capabilities.length; i++) {
+				capabilities.push({
+					descriptor: descriptor.capabilities[i],
+					type: descriptor.capabilities[i].bDevCapabilityType,
+					data: descriptor.capabilities[i].dev_capability_data
+				});
+			}
+		}
+
+		callback(undefined, capabilities);
+	});
 }
 
 usb.Device.prototype.setConfiguration = function(desired, cb) {
