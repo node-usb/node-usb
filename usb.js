@@ -164,7 +164,7 @@ usb.Device.prototype.getBosDescriptor = function (callback) {
 		return callback(undefined, this._bosDescriptor);
 	}
 
-	if (this.deviceDescriptor.bcdDevice < 0x201) {
+	if (this.deviceDescriptor.bcdUSB < 0x201) {
 		// BOS is only supported from USB 2.0.1
 		return callback(undefined, null);
 	}
