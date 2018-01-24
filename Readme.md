@@ -159,13 +159,13 @@ Releases the interface and resets the alternate setting. Calls callback when com
 It is an error to release an interface with pending transfers. If the optional closeEndpoints parameter is true, any active endpoint streams are stopped (see `Endpoint.stopStream`), and the interface is released after the stream transfers are cancelled. Transfers submitted individually with `Endpoint.transfer` are not affected by this parameter.
 
 ### .isKernelDriverActive()
-Returns `false` if a kernel driver is not active; `true` if active.
+Returns `false` if a kernel driver is not active; `true` if active. In Windows systems, this will always be `false`.
 
 ### .detachKernelDriver()
-Detaches the kernel driver from the interface.
+Detaches the kernel driver from the interface. Ignored in Windows systems.
 
 ### .attachKernelDriver()
-Re-attaches the kernel driver for the interface.
+Re-attaches the kernel driver for the interface. Ignored in Windows systems.
 
 ### .descriptor
 Object with fields from the interface descriptor -- see libusb documentation or USB spec.

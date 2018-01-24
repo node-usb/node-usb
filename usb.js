@@ -216,16 +216,18 @@ Interface.prototype.release = function(closeEndpoints, cb){
 	}
 }
 
+var isNotWindows = (process.platform !== 'win32');
+
 Interface.prototype.isKernelDriverActive = function(){
-	return this.device.__isKernelDriverActive(this.id)
+	return isNotWindows && this.device.__isKernelDriverActive(this.id)
 }
 
 Interface.prototype.detachKernelDriver = function() {
-	return this.device.__detachKernelDriver(this.id)
+	return isNotWindows && this.device.__detachKernelDriver(this.id)
 };
 
 Interface.prototype.attachKernelDriver = function() {
-	return this.device.__attachKernelDriver(this.id)
+	return isNotWindows && this.device.__attachKernelDriver(this.id)
 };
 
 
