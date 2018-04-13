@@ -208,6 +208,10 @@ Object with fields from the endpoint descriptor -- see libusb documentation or U
 ### .timeout
 Sets the timeout in milliseconds for transfers on this endpoint. The default, `0`, is infinite timeout.
 
+### .clearHalt()
+Perform a clear feature endpoint halt requests. It resets the data toggle bits or sequence number 
+in host and device to 0.
+
 InEndpoint
 ----------
 

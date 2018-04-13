@@ -263,6 +263,10 @@ Endpoint.prototype.makeTransfer = function(timeout, callback){
 	return new usb.Transfer(this.device, this.address, this.transferType, timeout, callback)
 }
 
+Endpoint.prototype.clearHalt = function() {
+  this.device.__clearHalt(this.address)
+}
+
 Endpoint.prototype.startPoll = function(nTransfers, transferSize, callback){
 	if (this.pollTransfers){
 		throw new Error("Polling already active")
