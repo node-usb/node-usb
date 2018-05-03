@@ -67,13 +67,6 @@ NAN_METHOD(Transfer_Submit) {
 	self->transfer->buffer = (unsigned char*) Buffer::Data(buffer_obj);
 	self->transfer->length = Buffer::Length(buffer_obj);
 
-	self->ref();
-	self->device->ref();
-
-	#ifndef USE_POLL
-	completionQueue.ref();
-	#endif
-
 	DEBUG_LOG("Submitting, %p %p %x %i %i %i %p",
 		self,
 		self->transfer->dev_handle,
@@ -85,6 +78,13 @@ NAN_METHOD(Transfer_Submit) {
 	);
 
 	CHECK_USB(libusb_submit_transfer(self->transfer));
+	self->ref();
+	self->device->ref();
+
+	#ifndef USE_POLL
+	completionQueue.ref();
+	#endif
+
 	info.GetReturnValue().Set(info.This());
 }
 
