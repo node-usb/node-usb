@@ -21,7 +21,7 @@ Then, just run
 to install from npm. See the bottom of this page for instructions for building from a git checkout.
 
 ### Windows
-Use [Zadig](http://sourceforge.net/projects/libwdi/files/zadig/) to install the WinUSB driver for your USB device. Otherwise you will get `LIBUSB_ERROR_NOT_SUPPORTED` when attempting to open devices.
+Use [Zadig](http://zadig.akeo.ie/) to install the WinUSB driver for your USB device. Otherwise you will get `LIBUSB_ERROR_NOT_SUPPORTED` when attempting to open devices.
 
 
 API
