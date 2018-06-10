@@ -13,6 +13,7 @@ env:
   - NODE_VERSION="7"
   - NODE_VERSION="8"
   - NODE_VERSION="9"
+  - NODE_VERSION="10"
 
 before_install:
 - brew update
