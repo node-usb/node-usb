@@ -6,11 +6,6 @@ var usb = exports = module.exports = require(binding_path);
 var events = require('events')
 var util = require('util')
 
-// Check that libusb was initialized.
-if (usb.INIT_ERROR) {
-	throw new Error('Could not initialize libusb. Check that your system has a usb controller.');
-}
-
 Object.keys(events.EventEmitter.prototype).forEach(function (key) {
 	exports[key] = events.EventEmitter.prototype[key];
 });
