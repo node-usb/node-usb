@@ -6,9 +6,11 @@ var usb = exports = module.exports = require(binding_path);
 var events = require('events')
 var util = require('util')
 
-// Check that libusb was initialized.
-if (usb.INIT_ERROR) {
-	throw new Error('Could not initialize libusb. Check that your system has a usb controller.');
+function ensureLibusbInitialized() {
+	// Check that libusb was initialized.
+	if (usb.INIT_ERROR) {
+		throw new Error('Could not initialize libusb. Check that your system has a usb controller.');
+	}
 }
 
 Object.keys(events.EventEmitter.prototype).forEach(function (key) {
@@ -17,6 +19,7 @@ Object.keys(events.EventEmitter.prototype).forEach(function (key) {
 
 // convenience method for finding a device by vendor and product id
 exports.findByIds = function(vid, pid) {
+	ensureLibusbInitialized()
 	var devices = usb.getDeviceList()
 
 	for (var i = 0; i < devices.length; i++) {
@@ -30,6 +33,7 @@ exports.findByIds = function(vid, pid) {
 usb.Device.prototype.timeout = 1000
 
 usb.Device.prototype.open = function(defaultConfig){
+	ensureLibusbInitialized()
 	this.__open()
 	if (defaultConfig === false) return
 	this.interfaces = []
@@ -160,6 +164,7 @@ usb.Device.prototype.setConfiguration = function(desired, cb) {
 }
 
 function Interface(device, id){
+	ensureLibusbInitialized()
 	this.device = device
 	this.id = id
 	this.altSetting = 0;
@@ -250,6 +255,7 @@ Interface.prototype.endpoint = function(addr){
 }
 
 function Endpoint(device, descriptor){
+	ensureLibusbInitialized()
 	this.device = device
 	this.descriptor = descriptor
 	this.address = descriptor.bEndpointAddress
