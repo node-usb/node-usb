@@ -17,6 +17,14 @@ Object.keys(events.EventEmitter.prototype).forEach(function (key) {
 	exports[key] = events.EventEmitter.prototype[key];
 });
 
+exports.setDebugLevel = function(level) {
+	return usb._setDebugLevel(level);
+}
+
+exports.getDeviceList = function() {
+	return usb._getDeviceList();
+}
+
 // convenience method for finding a device by vendor and product id
 exports.findByIds = function(vid, pid) {
 	ensureLibusbInitialized()
