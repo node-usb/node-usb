@@ -18,16 +18,17 @@ Object.keys(events.EventEmitter.prototype).forEach(function (key) {
 });
 
 exports.setDebugLevel = function(level) {
+	ensureLibusbInitialized();
 	return usb._setDebugLevel(level);
 }
 
 exports.getDeviceList = function() {
+	ensureLibusbInitialized();
 	return usb._getDeviceList();
 }
 
 // convenience method for finding a device by vendor and product id
 exports.findByIds = function(vid, pid) {
-	ensureLibusbInitialized()
 	var devices = usb.getDeviceList()
 
 	for (var i = 0; i < devices.length; i++) {
@@ -41,7 +42,6 @@ exports.findByIds = function(vid, pid) {
 usb.Device.prototype.timeout = 1000
 
 usb.Device.prototype.open = function(defaultConfig){
-	ensureLibusbInitialized()
 	this.__open()
 	if (defaultConfig === false) return
 	this.interfaces = []
@@ -172,7 +172,6 @@ usb.Device.prototype.setConfiguration = function(desired, cb) {
 }
 
 function Interface(device, id){
-	ensureLibusbInitialized()
 	this.device = device
 	this.id = id
 	this.altSetting = 0;
@@ -263,7 +262,6 @@ Interface.prototype.endpoint = function(addr){
 }
 
 function Endpoint(device, descriptor){
-	ensureLibusbInitialized()
 	this.device = device
 	this.descriptor = descriptor
 	this.address = descriptor.bEndpointAddress
@@ -411,10 +409,16 @@ OutEndpoint.prototype.transferWithZLP = function (buf, cb) {
 var hotplugListeners = 0;
 exports.on('newListener', function(name) {
 	if (name !== 'attach' && name !== 'detach') return;
-	if (++hotplugListeners === 1) usb._enableHotplugEvents();
+	if (++hotplugListeners === 1) {
+		ensureLibusbInitialized();
+		usb._enableHotplugEvents();
+	}
 });
 
 exports.on('removeListener', function(name) {
 	if (name !== 'attach' && name !== 'detach') return;
-	if (--hotplugListeners === 0) usb._disableHotplugEvents();
+	if (--hotplugListeners === 0) {
+		ensureLibusbInitialized();
+		usb._disableHotplugEvents();
+	}
 });
