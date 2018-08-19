@@ -84,8 +84,8 @@ extern "C" void Initialize(Local<Object> target) {
 	Device::Init(target);
 	Transfer::Init(target);
 
-	Nan::SetMethod(target, "setDebugLevel", SetDebugLevel);
-	Nan::SetMethod(target, "getDeviceList", GetDeviceList);
+	Nan::SetMethod(target, "_setDebugLevel", SetDebugLevel);
+	Nan::SetMethod(target, "_getDeviceList", GetDeviceList);
 	Nan::SetMethod(target, "_enableHotplugEvents", EnableHotplugEvents);
 	Nan::SetMethod(target, "_disableHotplugEvents", DisableHotplugEvents);
 	initConstants(target);
