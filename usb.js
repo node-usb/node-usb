@@ -6,26 +6,19 @@ var usb = exports = module.exports = require(binding_path);
 var events = require('events')
 var util = require('util')
 
-function ensureLibusbInitialized() {
-	// Check that libusb was initialized.
-	if (usb.INIT_ERROR) {
-		throw new Error('Could not initialize libusb. Check that your system has a usb controller.');
-	}
+if (usb.INIT_ERROR) {
+	console.warn("Failed to initialize libusb.")
+	usb.Device = function () { throw new Error("Device cannot be instantiated directly.") };
+	usb.Transfer = function () { throw new Error("Transfer cannot be instantiated directly.") };
+	usb.setDebugLevel = function () { };
+	usb.getDeviceList = function () { return []; };
+	usb._enableHotplugEvents = function () { };
+	usb._disableHotplugEvents = function () { };
 }
 
 Object.keys(events.EventEmitter.prototype).forEach(function (key) {
 	exports[key] = events.EventEmitter.prototype[key];
 });
-
-exports.setDebugLevel = function(level) {
-	ensureLibusbInitialized();
-	return usb._setDebugLevel(level);
-}
-
-exports.getDeviceList = function() {
-	ensureLibusbInitialized();
-	return usb._getDeviceList();
-}
 
 // convenience method for finding a device by vendor and product id
 exports.findByIds = function(vid, pid) {
@@ -410,7 +403,6 @@ var hotplugListeners = 0;
 exports.on('newListener', function(name) {
 	if (name !== 'attach' && name !== 'detach') return;
 	if (++hotplugListeners === 1) {
-		ensureLibusbInitialized();
 		usb._enableHotplugEvents();
 	}
 });
@@ -418,7 +410,6 @@ exports.on('newListener', function(name) {
 exports.on('removeListener', function(name) {
 	if (name !== 'attach' && name !== 'detach') return;
 	if (--hotplugListeners === 0) {
-		ensureLibusbInitialized();
 		usb._disableHotplugEvents();
 	}
 });
