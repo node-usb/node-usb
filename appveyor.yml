@@ -26,7 +26,7 @@ environment:
 
 install:
   - ps: Install-Product node $env:node_version $env:platform
-  - npm install -g node-gyp node-pre-gyp-github
+  - npm install -g node-gyp node-pre-gyp-github@1.3.1
   # This fixes an issue with Node 4.x on x86. If it builds without this line
   # needing to be set, we can remove it.
   - ps: npm config -g set node-gyp "$(npm config -g get prefix)\node_modules\node-gyp\bin\node-gyp.js"
