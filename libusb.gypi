@@ -141,7 +141,6 @@
           },
           'msvs_disabled_warnings': [ 4267 ],
         }],
-        }],
       ],
     },
   ]
