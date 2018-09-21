@@ -22,14 +22,11 @@
         './src/device.cc',
         './src/transfer.cc',
       ],
-      'cflags_cc': [
-        '-std=c++0x'
-      ],
+      'cflags': ['-std=c++14', '-stdlib=libc++'],
       'defines': [
         '_FILE_OFFSET_BITS=64',
         '_LARGEFILE_SOURCE',
-        'HAVE_STRUCT_TIMESPEC=1',
-        '_TIMESPEC_DEFINED=1'
+        'DEBUG_ENABLED',
       ],
       'include_dirs+': [
         'src/',

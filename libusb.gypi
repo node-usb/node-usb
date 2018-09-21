@@ -129,7 +129,18 @@
           'include_dirs': [
             'libusb/msvc',
           ],
+          'msvs_settings': {
+            'VCCLCompilerTool': {
+              'ExceptionHandling': '2',  # /EHsc
+            },
+            'VCLinkerTool': {
+              'AdditionalDependencies': [
+                'setupapi.lib',
+              ]
+            }
+          },
           'msvs_disabled_warnings': [ 4267 ],
+        }],
         }],
       ],
     },
