@@ -30,7 +30,13 @@
     "url": "https://github.com/tessel/node-usb.git"
   },
   "scripts": {
-    "install": "node-pre-gyp install --fallback-to-build",
+    "build": "prebuildify --strip --target=node@7.10.0 --target=node@8.9.4 --target=electron@1.8.2 --target=electron@3.0.0",
+    "build_debug": "prebuildify --target=node@8.9.4 --debug",
+    "configure_osx": "node-gyp configure -- -f xcode",
+    "install": "node-gyp-build",
+    "install_released_version": "node install.js",
+    "release": "node release.js",
+    "release-current-platform": "node release-current-platform.js",
     "test": "mocha --compilers coffee:coffee-script --grep Module",
     "full-test": "mocha --compilers coffee:coffee-script",
     "valgrind": "coffee -c test/usb.coffee; valgrind --leak-check=full --show-possibly-lost=no node --expose-gc --trace-gc node_modules/mocha/bin/_mocha -R spec"
@@ -38,17 +44,45 @@
   "binary": {
     "module_name": "usb_bindings",
     "module_path": "./src/binding",
-    "host": "https://github.com/tessel/node-usb/releases/download/",
-    "remote_path": "{version}"
+    "remote_path": "{version}",
+    "builtVersions": {
+      "node": [
+        "7.10.0",
+        "8.9.4"
+      ],
+      "electron": [
+        "1.8.2",
+        "3.0.0"
+      ]
+    },
+    "builtABIs": {
+      "node": [
+        "51",
+        "57"
+      ],
+      "electron": [
+        "57",
+        "64"
+      ]
+    },
+    "host": "https://huddlysoftware.blob.core.windows.net/node-usb/"
   },
   "dependencies": {
-    "nan": "^2.8.0",
-    "node-pre-gyp": "^0.11.0"
+    "node-gyp-build": "^3.4.0"
   },
   "devDependencies": {
+    "azure-storage": "^1.3.0",
+    "bindings": "^1.3.0",
+    "dotenv": "^2.0.0",
+    "msgpack-lite": "^0.1.26",
+    "nan": "2.10.0",
+    "npm-run": "^4.1.0",
+    "prebuildify": "^2.7.0",
+    "rimraf": "^2.5.4",
+    "segfault-handler": "^1.0.1",
+    "tar.gz": "^1.0.5",
     "coffee-script": "~1.6.2",
-    "mocha": "~1.8.2",
-    "aws-sdk": "~2.0.0-rc.15"
+    "mocha": "~1.8.2"
   },
   "license": "MIT"
 }

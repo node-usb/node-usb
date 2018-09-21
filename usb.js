@@ -1,8 +1,9 @@
-var binary = require('node-pre-gyp');
-var path = require('path');
-var binding_path = binary.find(path.resolve(path.join(__dirname,'./package.json')));
+var usb = exports = module.exports = require('node-gyp-build')(__dirname);
 
-var usb = exports = module.exports = require(binding_path);
+var path = require('path');
+//var binding_path = binary.find(path.resolve(path.join(__dirname,'./package.json')));
+
+//var usb = exports = module.exports = require(binding_path);
 var events = require('events')
 var util = require('util')
 
