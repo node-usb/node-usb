@@ -28,6 +28,8 @@
       'defines': [
         '_FILE_OFFSET_BITS=64',
         '_LARGEFILE_SOURCE',
+        'HAVE_STRUCT_TIMESPEC=1',
+        '_TIMESPEC_DEFINED=1'
       ],
       'include_dirs+': [
         'src/',
@@ -84,6 +86,7 @@
                 'AdditionalOptions': [ '/EHsc' ],
               },
             },
+            'msvs_disabled_warnings': [ 4267 ],
           }]
       ]
     },
