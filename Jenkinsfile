@@ -7,7 +7,7 @@ nvm use 8.9.4"""
 
 def jobs = [
   [
-    label: "win10-ci2",
+    label: "win10",
     nodeName: "",
     commands: [ 
       'npm i',
@@ -16,7 +16,7 @@ def jobs = [
     release: "npm run release-current-platform"
   ],
   [
-    label: "linux && rev6",
+    label: "linux",
     nodeName: "",
     commands: [
       """$unixNVMUse
@@ -28,7 +28,7 @@ def jobs = [
     npm run release-current-platform"""
   ],
   [
-    label: "mac && iosBuild",
+    label: "iosBuild",
     nodeName: "",
     commands: [
       """$unixNVMUse
