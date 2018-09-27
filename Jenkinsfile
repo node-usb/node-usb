@@ -7,7 +7,7 @@ nvm use 8.9.4"""
 
 def jobs = [
   [
-    label: "win10",
+    label: "win10-ci3",
     nodeName: "",
     commands: [ 
       'npm i',
