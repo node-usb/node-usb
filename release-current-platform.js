@@ -96,7 +96,7 @@ function prepareDistPackage() {
   delete pkg.optionalDependencies;
   delete pkg.bundledDependencies;
   pkg.scripts = {
-    install: pkg.scripts.install,
+    install: pkg.scripts.install_released_version,
   };
   delete pkg.bin;
 
