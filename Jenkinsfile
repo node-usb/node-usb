@@ -16,7 +16,7 @@ def jobs = [
     release: "npm run release-current-platform"
   ],
   [
-    label: "linux",
+    label: "linux-workstation-oslo",
     nodeName: "",
     commands: [
       """$unixNVMUse
