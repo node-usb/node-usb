@@ -260,6 +260,29 @@ struct Device_Reset: Req{
 	}
 };
 
+struct Device_Clear_Halt: Req{
+	int endpoint;
+
+        static NAN_METHOD(begin) {
+		int endpoint;
+		ENTER_METHOD(Device, 1);
+		CHECK_OPEN();
+		INT_ARG(endpoint, 0);
+		CALLBACK_ARG(1);
+		auto baton = new Device_Clear_Halt;
+		baton->endpoint = endpoint;
+                baton->submit(self, callback, &backend, &default_after);
+                info.GetReturnValue().Set(Nan::Undefined());
+        }
+
+        static void backend(uv_work_t *req){
+                auto baton = (Device_Clear_Halt*) req->data;
+                baton->errcode = libusb_clear_halt(baton->device->device_handle, baton->endpoint);
+        }
+};
+
+
+
 NAN_METHOD(IsKernelDriverActive) {
 	ENTER_METHOD(Device, 1);
 	CHECK_OPEN();
@@ -376,6 +399,7 @@ void Device::Init(Local<Object> target){
 	Nan::SetPrototypeMethod(tpl, "__getAllConfigDescriptors", Device_GetAllConfigDescriptors);
 	Nan::SetPrototypeMethod(tpl, "__open", Device_Open);
 	Nan::SetPrototypeMethod(tpl, "__close", Device_Close);
+	Nan::SetPrototypeMethod(tpl, "__clearHalt", Device_Clear_Halt::begin);
 	Nan::SetPrototypeMethod(tpl, "reset", Device_Reset::begin);
 
 	Nan::SetPrototypeMethod(tpl, "__claimInterface", Device_ClaimInterface);

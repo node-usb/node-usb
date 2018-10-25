@@ -264,6 +264,10 @@ util.inherits(Endpoint, events.EventEmitter)
 
 Endpoint.prototype.timeout = 0
 
+Endpoint.prototype.clearHalt = function(callback){
+	return this.device.__clearHalt(this.address, callback);
+}
+
 Endpoint.prototype.makeTransfer = function(timeout, callback){
 	return new usb.Transfer(this.device, this.address, this.transferType, timeout, callback)
 }
