@@ -208,6 +208,9 @@ Object with fields from the endpoint descriptor -- see libusb documentation or U
 ### .timeout
 Sets the timeout in milliseconds for transfers on this endpoint. The default, `0`, is infinite timeout.
 
+### .clearHalt(callback(error))
+Clear the halt/stall condition for this endpoint.
+
 InEndpoint
 ----------
 
