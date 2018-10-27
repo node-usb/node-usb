@@ -33,7 +33,7 @@ script:
 - "./node_modules/.bin/node-pre-gyp package"
 - echo $TRAVIS_TAG
 - echo $TRAVIS_PULL_REQUEST
-- >
-    ([[ "$TRAVIS_TAG" =~ ^v?[0-9] ]] &&
-    test "$TRAVIS_PULL_REQUEST" = false &&
-    node-pre-gyp-github publish) || true
+- |
+    if [[ "$TRAVIS_TAG" =~ ^v?[0-9] ]] && [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then
+      node-pre-gyp-github publish
+    fi
