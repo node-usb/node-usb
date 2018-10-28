@@ -242,7 +242,7 @@ is called once all transfers have completed or canceled.
 Emitted with data received by the polling transfers
 
 ### Event: error(error)
-Emitted when polling encounters an error.
+Emitted when polling encounters an error. All in flight transfers will be automatically canceled and no further polling will be done. You have to wait for the `end` event before you can start polling again.
 
 ### Event: end
 Emitted when polling has been canceled
