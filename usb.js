@@ -342,6 +342,7 @@ InEndpoint.prototype.startPoll = function(nTransfers, transferSize){
 			self.pollPending--
 
 			if (self.pollPending == 0){
+				delete self.pollTransfers;
 				self.emit('end')
 			}
 		}
