@@ -101,7 +101,7 @@ function(bmRequestType, bRequest, wValue, wIndex, data_or_length, callback){
 
 	// Buffer for the setup packet
 	// http://libusbx.sourceforge.net/api-1.0/structlibusb__control__setup.html
-	var buf = new Buffer(wLength + SETUP_SIZE)
+	var buf = Buffer.alloc(wLength + SETUP_SIZE)
 	buf.writeUInt8(   bmRequestType, 0)
 	buf.writeUInt8(   bRequest,      1)
 	buf.writeUInt16LE(wValue,        2)
@@ -314,7 +314,7 @@ InEndpoint.prototype.direction = "in"
 
 InEndpoint.prototype.transfer = function(length, cb){
 	var self = this
-	var buffer = new Buffer(length)
+	var buffer = Buffer.alloc(length)
 
 	function callback(error, buf, actual){
 		cb.call(self, error, buffer.slice(0, actual))
@@ -354,7 +354,7 @@ InEndpoint.prototype.startPoll = function(nTransfers, transferSize){
 
 	function startTransfer(t){
 		try {
-			t.submit(new Buffer(self.pollTransferSize), transferDone);
+			t.submit(Buffer.alloc(self.pollTransferSize), transferDone);
 		} catch (e) {
 			self.emit("error", e);
 			self.stopPoll();
@@ -377,9 +377,9 @@ OutEndpoint.prototype.direction = "out"
 OutEndpoint.prototype.transfer = function(buffer, cb){
 	var self = this
 	if (!buffer){
-		buffer = new Buffer(0)
+		buffer = Buffer.alloc(0)
 	}else if (!Buffer.isBuffer(buffer)){
-		buffer = new Buffer(buffer)
+		buffer = Buffer.from(buffer)
 	}
 
 	function callback(error, buf, actual){
@@ -398,7 +398,7 @@ OutEndpoint.prototype.transfer = function(buffer, cb){
 OutEndpoint.prototype.transferWithZLP = function (buf, cb) {
 	if (buf.length % this.descriptor.wMaxPacketSize == 0) {
 		this.transfer(buf);
-		this.transfer(new Buffer(0), cb);
+		this.transfer(Buffer.alloc(0), cb);
 	} else {
 		this.transfer(buf, cb);
 	}
