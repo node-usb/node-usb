@@ -120,6 +120,17 @@ Set the device configuration to something other than the default (0). To use thi
 ### .getStringDescriptor(index, callback(error, data))
 Perform a control transfer to retrieve a string descriptor
 
+### .getBosDescriptor(callback(error, bosDescriptor))
+Perform a control transfer to retrieve an object with properties for the fields of the Binary Object Store descriptor:
+
+  - bLength
+  - bDescriptorType
+  - wTotalLength
+  - bNumDeviceCaps
+
+### .getCapabilities(callback(error, capabilities))
+Retrieve a list of Capability objects for the Binary Object Store capabilities of the device.
+
 ### .interface(interface)
 Return the interface with the specified interface number.
 
@@ -181,6 +192,23 @@ Object with fields from the interface descriptor -- see libusb documentation or 
   - bInterfaceProtocol
   - iInterface
   - extra (Buffer containing any extra data or additional descriptors)
+
+
+Capability
+---------
+
+### .type
+Integer capability type.
+
+### .data
+Buffer capability data.
+
+### .descriptor
+Object with fields from the capability descriptor -- see libusb documentation or USB spec.
+  - bLength
+  - bDescriptorType
+  - bDevCapabilityType
+
 
 Endpoint
 --------
