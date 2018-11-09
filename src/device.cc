@@ -2,10 +2,10 @@
 #include <string.h>
 
 #define STRUCT_TO_V8(TARGET, STR, NAME) \
-  Nan::DefineOwnProperty(TARGET, V8STR(#NAME), Nan::New<Uint32>((uint32_t) (STR).NAME), CONST_PROP);
+	Nan::DefineOwnProperty(TARGET, V8STR(#NAME), Nan::New<Uint32>((uint32_t) (STR).NAME), CONST_PROP);
 
 #define CHECK_OPEN() \
-		if (!self->device_handle){THROW_ERROR("Device is not opened");}
+	if (!self->device_handle){THROW_ERROR("Device is not opened");}
 
 #define MAX_PORTS 7
 
@@ -46,11 +46,11 @@ static NAN_METHOD(deviceConstructor) {
 
 	Nan::DefineOwnProperty(info.This(), V8SYM("busNumber"),
 		Nan::New<Uint32>((uint32_t) libusb_get_bus_number(self->device)), CONST_PROP);
-  Nan::DefineOwnProperty(info.This(), V8SYM("deviceAddress"),
+	Nan::DefineOwnProperty(info.This(), V8SYM("deviceAddress"),
 		Nan::New<Uint32>((uint32_t) libusb_get_device_address(self->device)), CONST_PROP);
 
 	Local<Object> v8dd = Nan::New<Object>();
-  Nan::DefineOwnProperty(info.This(), V8SYM("deviceDescriptor"), v8dd, CONST_PROP);
+	Nan::DefineOwnProperty(info.This(), V8SYM("deviceDescriptor"), v8dd, CONST_PROP);
 
 	struct libusb_device_descriptor dd;
 	CHECK_USB(libusb_get_device_descriptor(self->device, &dd));
@@ -77,7 +77,7 @@ static NAN_METHOD(deviceConstructor) {
 		for (int i = 0; i < ret; ++ i) {
 			array->Set(i, Nan::New(port_numbers[i]));
 		}
-    Nan::DefineOwnProperty(info.This(), V8SYM("portNumbers"), array, CONST_PROP);
+		Nan::DefineOwnProperty(info.This(), V8SYM("portNumbers"), array, CONST_PROP);
 	}
 	info.GetReturnValue().Set(info.This());
 }
@@ -260,6 +260,29 @@ struct Device_Reset: Req{
 	}
 };
 
+struct Device_Clear_Halt: Req{
+	int endpoint;
+
+        static NAN_METHOD(begin) {
+		int endpoint;
+		ENTER_METHOD(Device, 1);
+		CHECK_OPEN();
+		INT_ARG(endpoint, 0);
+		CALLBACK_ARG(1);
+		auto baton = new Device_Clear_Halt;
+		baton->endpoint = endpoint;
+                baton->submit(self, callback, &backend, &default_after);
+                info.GetReturnValue().Set(Nan::Undefined());
+        }
+
+        static void backend(uv_work_t *req){
+                auto baton = (Device_Clear_Halt*) req->data;
+                baton->errcode = libusb_clear_halt(baton->device->device_handle, baton->endpoint);
+        }
+};
+
+
+
 NAN_METHOD(IsKernelDriverActive) {
 	ENTER_METHOD(Device, 1);
 	CHECK_OPEN();
@@ -376,6 +399,7 @@ void Device::Init(Local<Object> target){
 	Nan::SetPrototypeMethod(tpl, "__getAllConfigDescriptors", Device_GetAllConfigDescriptors);
 	Nan::SetPrototypeMethod(tpl, "__open", Device_Open);
 	Nan::SetPrototypeMethod(tpl, "__close", Device_Close);
+	Nan::SetPrototypeMethod(tpl, "__clearHalt", Device_Clear_Halt::begin);
 	Nan::SetPrototypeMethod(tpl, "reset", Device_Reset::begin);
 
 	Nan::SetPrototypeMethod(tpl, "__claimInterface", Device_ClaimInterface);

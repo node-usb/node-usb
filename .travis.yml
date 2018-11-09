@@ -7,13 +7,10 @@ language: objective-c
 
 env:
   matrix:
-  - NODE_VERSION="4"
-  - NODE_VERSION="5"
   - NODE_VERSION="6"
-  - NODE_VERSION="7"
   - NODE_VERSION="8"
-  - NODE_VERSION="9"
   - NODE_VERSION="10"
+  - NODE_VERSION="11"
 
 before_install:
 - brew update
@@ -33,7 +30,7 @@ script:
 - "./node_modules/.bin/node-pre-gyp package"
 - echo $TRAVIS_TAG
 - echo $TRAVIS_PULL_REQUEST
-- >
-    ([[ "$TRAVIS_TAG" =~ ^v?[0-9] ]] &&
-    test "$TRAVIS_PULL_REQUEST" = false &&
-    node-pre-gyp-github publish) || true
+- |
+    if [[ "$TRAVIS_TAG" =~ ^v?[0-9] ]] && [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then
+      node-pre-gyp-github publish
+    fi

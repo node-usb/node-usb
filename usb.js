@@ -39,7 +39,7 @@ usb.Device.prototype.open = function(defaultConfig){
 	this.__open()
 	if (defaultConfig === false) return
 	this.interfaces = []
-	var len = this.configDescriptor.interfaces.length
+	var len = this.configDescriptor ? this.configDescriptor.interfaces.length : 0
 	for (var i=0; i<len; i++){
 		this.interfaces[i] = new Interface(this, i)
 	}
@@ -52,13 +52,25 @@ usb.Device.prototype.close = function(){
 
 Object.defineProperty(usb.Device.prototype, "configDescriptor", {
 	get: function() {
-		return this._configDescriptor || (this._configDescriptor = this.__getConfigDescriptor())
+		try {
+			return this._configDescriptor || (this._configDescriptor = this.__getConfigDescriptor())
+		} catch(e) {
+			// Check descriptor exists
+			if (e.errno == usb.LIBUSB_ERROR_NOT_FOUND) return null;
+			throw e;
+		}
 	}
 });
 
 Object.defineProperty(usb.Device.prototype, "allConfigDescriptors", {
 	get: function() {
-		return this._allConfigDescriptors || (this._allConfigDescriptors = this.__getAllConfigDescriptors())
+		try {
+			return this._allConfigDescriptors || (this._allConfigDescriptors = this.__getAllConfigDescriptors())
+		} catch(e) {
+			// Check descriptors exist
+			if (e.errno == usb.LIBUSB_ERROR_NOT_FOUND) return [];
+			throw e;
+		}
 	}
 });
 
@@ -102,7 +114,7 @@ function(bmRequestType, bRequest, wValue, wIndex, data_or_length, callback){
 
 	// Buffer for the setup packet
 	// http://libusbx.sourceforge.net/api-1.0/structlibusb__control__setup.html
-	var buf = new Buffer(wLength + SETUP_SIZE)
+	var buf = Buffer.alloc(wLength + SETUP_SIZE)
 	buf.writeUInt8(   bmRequestType, 0)
 	buf.writeUInt8(   bRequest,      1)
 	buf.writeUInt16LE(wValue,        2)
@@ -151,12 +163,97 @@ usb.Device.prototype.getStringDescriptor = function (desc_index, callback) {
 	);
 }
 
+usb.Device.prototype.getBosDescriptor = function (callback) {
+
+	if (this._bosDescriptor) {
+		// Cached descriptor
+		return callback(undefined, this._bosDescriptor);
+	}
+
+	if (this.deviceDescriptor.bcdUSB < 0x201) {
+		// BOS is only supported from USB 2.0.1
+		return callback(undefined, null);
+	}
+
+	this.controlTransfer(
+		usb.LIBUSB_ENDPOINT_IN,
+		usb.LIBUSB_REQUEST_GET_DESCRIPTOR,
+		(usb.LIBUSB_DT_BOS << 8),
+		0,
+		usb.LIBUSB_DT_BOS_SIZE,
+		function (error, buffer) {
+			if (error) {
+				// Check BOS descriptor exists
+				if (error.errno == usb.LIBUSB_TRANSFER_STALL) return callback(undefined, null);
+				return callback(error, null);
+			}
+
+			var totalLength = buffer.readUInt16LE(2);
+			this.controlTransfer(
+				usb.LIBUSB_ENDPOINT_IN,
+				usb.LIBUSB_REQUEST_GET_DESCRIPTOR,
+				(usb.LIBUSB_DT_BOS << 8),
+				0,
+				totalLength,
+				function (error, buffer) {
+					if (error) {
+						// Check BOS descriptor exists
+						if (error.errno == usb.LIBUSB_TRANSFER_STALL) return callback(undefined, null);
+						return callback(error, null);
+					}
+
+					var descriptor = {
+						bLength: buffer.readUInt8(0),
+						bDescriptorType: buffer.readUInt8(1),
+						wTotalLength: buffer.readUInt16LE(2),
+						bNumDeviceCaps: buffer.readUInt8(4),
+						capabilities: []
+					};
+
+					var i = usb.LIBUSB_DT_BOS_SIZE;
+					while (i < descriptor.wTotalLength) {
+						var capability = {
+							bLength: buffer.readUInt8(i + 0),
+							bDescriptorType: buffer.readUInt8(i + 1),
+							bDevCapabilityType: buffer.readUInt8(i + 2)
+						};
+
+						capability.dev_capability_data = buffer.slice(i + 3, i + capability.bLength);
+						descriptor.capabilities.push(capability);
+						i += capability.bLength;
+					}
+
+					// Cache descriptor
+					this._bosDescriptor = descriptor;
+					callback(undefined, this._bosDescriptor);
+				}
+			);
+		}
+	);
+}
+
+usb.Device.prototype.getCapabilities = function (callback) {
+	var capabilities = [];
+	var self = this;
+
+	this.getBosDescriptor(function(error, descriptor) {
+		if (error) return callback(error, null);
+
+		var len = descriptor ? descriptor.capabilities.length : 0
+		for (var i=0; i<len; i++){
+			capabilities.push(new Capability(self, i))
+		}
+
+		callback(undefined, capabilities);
+	});
+}
+
 usb.Device.prototype.setConfiguration = function(desired, cb) {
 	var self = this;
 	this.__setConfiguration(desired, function(err) {
 		if (!err) {
 			this.interfaces = []
-			var len = this.configDescriptor.interfaces.length
+			var len = this.configDescriptor ? this.configDescriptor.interfaces.length : 0
 			for (var i=0; i<len; i++) {
 				this.interfaces[i] = new Interface(this, i)
 			}
@@ -244,7 +341,6 @@ Interface.prototype.setAltSetting = function(altSetting, cb){
 		}
 		cb.call(self, err)
 	})
-
 }
 
 Interface.prototype.endpoint = function(addr){
@@ -253,6 +349,14 @@ Interface.prototype.endpoint = function(addr){
 			return this.endpoints[i]
 		}
 	}
+}
+
+function Capability(device, id){
+	this.device = device
+	this.id = id
+	this.descriptor = this.device._bosDescriptor.capabilities[this.id]
+	this.type = this.descriptor.bDevCapabilityType
+	this.data = this.descriptor.dev_capability_data
 }
 
 function Endpoint(device, descriptor){
@@ -264,6 +368,10 @@ function Endpoint(device, descriptor){
 util.inherits(Endpoint, events.EventEmitter)
 
 Endpoint.prototype.timeout = 0
+
+Endpoint.prototype.clearHalt = function(callback){
+	return this.device.__clearHalt(this.address, callback);
+}
 
 Endpoint.prototype.makeTransfer = function(timeout, callback){
 	return new usb.Transfer(this.device, this.address, this.transferType, timeout, callback)
@@ -311,7 +419,7 @@ InEndpoint.prototype.direction = "in"
 
 InEndpoint.prototype.transfer = function(length, cb){
 	var self = this
-	var buffer = new Buffer(length)
+	var buffer = Buffer.alloc(length)
 
 	function callback(error, buf, actual){
 		cb.call(self, error, buffer.slice(0, actual))
@@ -343,6 +451,7 @@ InEndpoint.prototype.startPoll = function(nTransfers, transferSize){
 			self.pollPending--
 
 			if (self.pollPending == 0){
+				delete self.pollTransfers;
 				self.emit('end')
 			}
 		}
@@ -350,7 +459,7 @@ InEndpoint.prototype.startPoll = function(nTransfers, transferSize){
 
 	function startTransfer(t){
 		try {
-			t.submit(new Buffer(self.pollTransferSize), transferDone);
+			t.submit(Buffer.alloc(self.pollTransferSize), transferDone);
 		} catch (e) {
 			self.emit("error", e);
 			self.stopPoll();
@@ -373,9 +482,9 @@ OutEndpoint.prototype.direction = "out"
 OutEndpoint.prototype.transfer = function(buffer, cb){
 	var self = this
 	if (!buffer){
-		buffer = new Buffer(0)
+		buffer = Buffer.alloc(0)
 	}else if (!Buffer.isBuffer(buffer)){
-		buffer = new Buffer(buffer)
+		buffer = Buffer.from(buffer)
 	}
 
 	function callback(error, buf, actual){
@@ -394,7 +503,7 @@ OutEndpoint.prototype.transfer = function(buffer, cb){
 OutEndpoint.prototype.transferWithZLP = function (buf, cb) {
 	if (buf.length % this.descriptor.wMaxPacketSize == 0) {
 		this.transfer(buf);
-		this.transfer(new Buffer(0), cb);
+		this.transfer(Buffer.alloc(0), cb);
 	} else {
 		this.transfer(buf, cb);
 	}

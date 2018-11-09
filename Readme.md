@@ -1,7 +1,8 @@
 USB Library for Node.JS
 ===============================
 
-**POSIX:** [![Build Status](https://travis-ci.org/nonolith/node-usb.svg?branch=tcr-usb)](https://travis-ci.org/nonolith/node-usb) &nbsp;&nbsp;&nbsp; **Windows:** [![Build status](https://ci.appveyor.com/api/projects/status/b23kn1pi386nguya/branch/master)](https://ci.appveyor.com/project/kevinmehall/node-usb/branch/master)
+**POSIX:** [![Build Status](https://travis-ci.org/tessel/node-usb.svg?branch=master)](https://travis-ci.org/tessel/node-usb) &nbsp;&nbsp;&nbsp;
+**Windows:** [![Build status](https://ci.appveyor.com/api/projects/status/b23kn1pi386nguya/branch/master)](https://ci.appveyor.com/project/kevinmehall/node-usb/branch/master)
 
 Node.JS library for communicating with USB devices in JavaScript / CoffeeScript.
 
@@ -119,6 +120,17 @@ Set the device configuration to something other than the default (0). To use thi
 ### .getStringDescriptor(index, callback(error, data))
 Perform a control transfer to retrieve a string descriptor
 
+### .getBosDescriptor(callback(error, bosDescriptor))
+Perform a control transfer to retrieve an object with properties for the fields of the Binary Object Store descriptor:
+
+  - bLength
+  - bDescriptorType
+  - wTotalLength
+  - bNumDeviceCaps
+
+### .getCapabilities(callback(error, capabilities))
+Retrieve a list of Capability objects for the Binary Object Store capabilities of the device.
+
 ### .interface(interface)
 Return the interface with the specified interface number.
 
@@ -181,6 +193,23 @@ Object with fields from the interface descriptor -- see libusb documentation or 
   - iInterface
   - extra (Buffer containing any extra data or additional descriptors)
 
+
+Capability
+---------
+
+### .type
+Integer capability type.
+
+### .data
+Buffer capability data.
+
+### .descriptor
+Object with fields from the capability descriptor -- see libusb documentation or USB spec.
+  - bLength
+  - bDescriptorType
+  - bDevCapabilityType
+
+
 Endpoint
 --------
 
@@ -207,6 +236,9 @@ Object with fields from the endpoint descriptor -- see libusb documentation or U
 
 ### .timeout
 Sets the timeout in milliseconds for transfers on this endpoint. The default, `0`, is infinite timeout.
+
+### .clearHalt(callback(error))
+Clear the halt/stall condition for this endpoint.
 
 InEndpoint
 ----------
@@ -238,7 +270,7 @@ is called once all transfers have completed or canceled.
 Emitted with data received by the polling transfers
 
 ### Event: error(error)
-Emitted when polling encounters an error.
+Emitted when polling encounters an error. All in flight transfers will be automatically canceled and no further polling will be done. You have to wait for the `end` event before you can start polling again.
 
 ### Event: end
 Emitted when polling has been canceled
