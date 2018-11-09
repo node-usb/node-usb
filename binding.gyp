@@ -2,6 +2,8 @@
   'variables': {
     'use_udev%': 1,
     'use_system_libusb%': 'false',
+    'module_name': 'usb_bindings',
+    'module_path': './src/binding'
   },
   'targets': [
     {
