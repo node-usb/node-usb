@@ -31,8 +31,8 @@
   },
   "scripts": {
     "install": "node-pre-gyp install --fallback-to-build",
-    "test": "mocha --compilers coffee:coffee-script --grep Module",
-    "full-test": "mocha --compilers coffee:coffee-script",
+    "test": "mocha --compilers coffee:coffeescript --grep Module",
+    "full-test": "mocha --compilers coffee:coffeescript",
     "valgrind": "coffee -c test/usb.coffee; valgrind --leak-check=full --show-possibly-lost=no node --expose-gc --trace-gc node_modules/mocha/bin/_mocha -R spec"
   },
   "binary": {
