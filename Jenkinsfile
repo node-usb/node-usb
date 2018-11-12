@@ -60,14 +60,16 @@ stage('Checkout') {
 
     builders[label] = {
       node(label) {
-        cleanWs()
-        checkout([
-          $class: 'GitSCM',
-          branches: scm.branches,
-          extensions: scm.extensions + [[$class: 'CleanCheckout']],
-          userRemoteConfigs: [[url: 'git@github.com:Huddly/node-usb.git']]
-        ])
-        job.nodeName = env.NODE_NAME
+        sshagent(credentials: ['04bb3e7e-f3b3-42f9-8792-68b5ee8acafd']) {
+          cleanWs()
+          checkout([
+            $class: 'GitSCM',
+            branches: scm.branches,
+            extensions: scm.extensions + [[$class: 'CleanCheckout']],
+            userRemoteConfigs: [[url: 'git@github.com:Huddly/node-usb.git', credentialsId: '04bb3e7e-f3b3-42f9-8792-68b5ee8acafd']]
+          ])
+          job.nodeName = env.NODE_NAME
+        }
       }
     }
   }
