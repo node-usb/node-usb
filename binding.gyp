@@ -64,7 +64,7 @@
             'defines':[
               'WIN32_LEAN_AND_MEAN'
             ],
-            'default_configuration': 'Debug',
+            'default_configuration': 'Release',
             'configurations': {
               'Debug': {
                 'defines': [ 'DEBUG', '_DEBUG' ],
