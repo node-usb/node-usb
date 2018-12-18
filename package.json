@@ -42,8 +42,11 @@
     "remote_path": "{version}"
   },
   "dependencies": {
-    "nan": "^2.8.0",
+    "nan": "2.11.1",
     "node-pre-gyp": "^0.11.0"
+  },
+  "resolutions": {
+    "**/nan": "2.11.1"
   },
   "devDependencies": {
     "coffeescript": "~1.6.2",
