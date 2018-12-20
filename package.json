@@ -30,7 +30,7 @@
     "url": "https://github.com/tessel/node-usb.git"
   },
   "scripts": {
-    "build": "prebuildify --strip --target=node@7.10.0 --target=node@8.9.4 --target=electron@1.8.2 --target=electron@3.0.0",
+    "build": "prebuildify --strip --target=node@7.10.0 --target=node@11.5.0 --target=node@10.12.0 --target=node@8.9.4 --target=electron@1.8.2 --target=electron@3.0.0",
     "build_debug": "prebuildify --target=node@8.9.4 --debug",
     "configure_osx": "node-gyp configure -- -f xcode",
     "install": "node-gyp-build",
@@ -48,7 +48,9 @@
     "builtVersions": {
       "node": [
         "7.10.0",
-        "8.9.4"
+        "8.9.4",
+        "11.5.0",
+        "10.12.0"
       ],
       "electron": [
         "1.8.2",
@@ -58,7 +60,9 @@
     "builtABIs": {
       "node": [
         "51",
-        "57"
+        "57",
+        "64",
+        "67"
       ],
       "electron": [
         "57",
@@ -74,11 +78,10 @@
     "azure-storage": "^1.3.0",
     "bindings": "^1.3.0",
     "coffeescript": "~1.6.2",
-    "dotenv": "^2.0.0",
     "msgpack-lite": "^0.1.26",
     "nan": "2.10.0",
     "npm-run": "^4.1.0",
-    "prebuildify": "^2.7.0",
+    "prebuildify": "^2.9.1",
     "rimraf": "^2.5.4",
     "segfault-handler": "^1.0.1",
     "tar.gz": "^1.0.5",
