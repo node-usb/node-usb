@@ -13,7 +13,7 @@ pipeline {
       failFast false
       parallel {
         stage('node 8 mac') {
-          agent { label "iosBuild" }
+          agent { label "osx" }
           environment {
             NODE_VERSION="10.12.0"
             RELEASE="${params.ReleaseBuild}"
