@@ -15,7 +15,7 @@ pipeline {
         stage('node 8 mac') {
           agent { label "osx" }
           environment {
-            NODE_VERSION="10.12.0"
+            NODE_VERSION="11.9.0"
             RELEASE="${params.ReleaseBuild}"
           }
           steps {
@@ -33,9 +33,9 @@ pipeline {
           }
         }
         stage('node 8 linux') {
-          agent { label "linux-workstation-oslo" }
+          agent { label "linux && rev6" }
           environment {
-            NODE_VERSION="10.12.0"
+            NODE_VERSION="11.9.0"
             RELEASE="${params.ReleaseBuild}"
           }
           steps {
@@ -53,9 +53,9 @@ pipeline {
           }
         }
         stage('node 8 win') {
-          agent { label "win10-ci03" }
+          agent { label "win10-ci01" }
           environment {
-            NODE_VERSION="10.12.0"
+            NODE_VERSION="11.9.0"
             RELEASE="${params.ReleaseBuild}"
           }
           steps {

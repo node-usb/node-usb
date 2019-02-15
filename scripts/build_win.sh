@@ -1,18 +1,23 @@
 #!/bin/bash -l
 
 set -u #Do not allow unset variables
+set -x #Print commands
+set -e #Exit on error
 
 git submodule update --init --recursive
 
-nvm install 10.15.0
-nvm use 10.15.0
+nvm install 11.9.0
+nvm use 11.9.0
 
 source activate py27
 
-npm i
-npm run build
+yarn global add windows-build-tools
+
+yarn install
+ARCH=x64 yarn run build
+ARCH=ia32 yarn run build
 
 if [ "$RELEASE" = "true" ]
 then
-  npm run release-current-platform
+  yarn run release-current-platform
 fi
