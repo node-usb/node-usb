@@ -2,4 +2,3 @@ build/*
 node_modules
 *~
 *.log
-src/binding/*
