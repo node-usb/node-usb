@@ -31,6 +31,7 @@
   },
   "scripts": {
     "install": "prebuild-install --verbose || node-gyp rebuild",
+    "prebuild": "prebuild --force --strip --verbose",
     "test": "mocha --compilers coffee:coffeescript --grep Module",
     "full-test": "mocha --compilers coffee:coffeescript",
     "valgrind": "coffee -c test/usb.coffee; valgrind --leak-check=full --show-possibly-lost=no node --expose-gc --trace-gc node_modules/mocha/bin/_mocha -R spec"
@@ -44,7 +45,6 @@
     "**/nan": "2.11.1"
   },
   "devDependencies": {
-    "aws-sdk": "~2.0.0-rc.15",
     "coffeescript": "~1.6.2",
     "mocha": "~1.8.2",
     "prebuild": "^8.1.2"

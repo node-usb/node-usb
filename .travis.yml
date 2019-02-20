@@ -1,36 +1,47 @@
-branches:
-  only:
-    - master
-    - /^v?[0-9]/
+language: cpp
 
-language: objective-c
+os:
+- linux
+- osx
+- windows
+
+dist: trusty
+
+addons:
+  apt:
+    packages:
+    - libudev-dev
 
 env:
+  global:
+  - PREBUILD_TARGETS="6.0.0 8.0.0 10.0.0 11.0.0"
   matrix:
-  - NODE_VERSION="6"
-  - NODE_VERSION="8"
-  - NODE_VERSION="10"
-  - NODE_VERSION="11"
+  - ARCH="x64"
+  - ARCH="ia32"
+
+matrix:
+  exclude:
+  - os: linux
+    env: ARCH="ia32"
+  - os: osx
+    env: ARCH="ia32"
 
 before_install:
-- brew update
-- brew install nvm
-- export NVM_DIR=~/.nvm
-- source $(brew --prefix nvm)/nvm.sh
-- nvm install $NODE_VERSION
+- |
+  if [ $TRAVIS_OS_NAME == windows ]; then
+    choco install nodejs-lts
+    export PATH="/c/Program Files/nodejs:$PATH"
+    export GYP_MSVS_VERSION=2015
+  fi
+- $CXX --version
 - node --version
 - npm --version
 
 install:
-- export PATH=./node_modules/.bin/:$PATH
-- npm install -g node-pre-gyp-github@1.3.1
+- npm install
 
 script:
-- npm install --build-from-source --node-gyp=$(which pangyp)
-- "./node_modules/.bin/node-pre-gyp package"
-- echo $TRAVIS_TAG
-- echo $TRAVIS_PULL_REQUEST
 - |
-    if [[ "$TRAVIS_TAG" =~ ^v?[0-9] ]] && [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then
-      node-pre-gyp-github publish
-    fi
+  for target in $PREBUILD_TARGETS; do
+    npm run prebuild -- -t $target --arch=$ARCH
+  done

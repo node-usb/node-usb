@@ -1,4 +1,5 @@
 build/*
+prebuilds/
 node_modules
 *~
 *.log
