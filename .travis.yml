@@ -15,6 +15,7 @@ addons:
 env:
   global:
   - PREBUILD_TARGETS="6.0.0 8.0.0 10.0.0 11.0.0"
+  - PREBUILD_ELECTRON_TARGETS="3.0.0 4.0.0 4.0.4"
   matrix:
   - ARCH="x64"
   - ARCH="ia32"
@@ -46,6 +47,9 @@ script:
     npm run prebuild -- -t $target --arch=$ARCH
   done
 
+  for target in $PREBUILD_ELECTRON_TARGETS; do
+    npm run prebuild -- -t $target --arch=$ARCH -r electron
+  done
 deploy:
   provider: releases
   api_key:
