@@ -53,7 +53,8 @@ script:
 deploy:
   provider: releases
   api_key:
-    secure: Fw/y2EJoO4oSMgBrYgsz9TV6W4LlQDs1laqEmqnJIQrEr45KnXZ7slxCe50bDWyagxjdW1h3mUL7yAeT2xjJ2d5sThmCeW8QSuKxbe/AZfm/s+sRUA8saEuVpjdaQ6ocmhTBR8eQ5n8sZocQtpKoq4sm+mvoOVKphirShnZskopsESgObJ0MGIiH1gvQ9ExiD2fQYq9545sOQNRkXLxhXwnXgwneI5oIjokaNRzkLhyZfzBoTaB8Bi3OxuobB0fd+2rDr9XIjLMUwE5WsLV8j1I5HR9jvHQKXcSRg3JE7l8dqIBkVYY4TJJ3o5rRSOT8ycl7JM2lqjbR/oqIWyfDQBRcBQW7E854KVeGwMIIVpQ2L9JjHZXa8/lbYD8nYiRBC3NRtuoMs/ZWF6F5u4u2GQg01Az3yszh0hXOEdm8NVBmXAGtkm8sLDzGutRN+gGvUPXzQ/K2Cdlrx1hGlo4mwbOLgnkUqdF5igpxm+ZU0fXkG3k6WeuIfr0MXVk9LtTGJgJUIKIQ6L9ltFWkONgEkEMJJdEicaNO36kN/ddwjSXm7nudfkF4XTNoZtRm7GmIEPM0lYFFOGsl0kuMruz6/D2+Ju+t46nBcRFgAxxZLD9RkD7bwZgzkLmfMisfkIiUF60E/9e7TpfSDKUerSpJEAUzCbSwTmc6FLwaJGvoNT8=
+    # tm-rampart personal access token
+    secure: "ivZseBMz+0bsYcCFAXJ82mJIhmsRj4UN32bcggg+8ZYl8xzgC2P/kMGhPe8+4fDxo+lyxf4aJDKWozE0perMQKjjAOdri8MH2ufqGFRfkF0A3gJnOBcWMA6AP3ef0TE/HNF+NMluBCV+/VFPdsvZN08rnPauWzSBGy9SkeIJhY8="
   file_glob: true
   file: prebuilds/*
   skip_cleanup: true
