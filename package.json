@@ -30,20 +30,16 @@
     "url": "https://github.com/tessel/node-usb.git"
   },
   "scripts": {
-    "install": "node-pre-gyp install --fallback-to-build",
+    "install": "prebuild-install --verbose || node-gyp rebuild",
+    "prebuild": "prebuild --force --strip --verbose",
     "test": "mocha --compilers coffee:coffeescript --grep Module",
     "full-test": "mocha --compilers coffee:coffeescript",
     "valgrind": "coffee -c test/usb.coffee; valgrind --leak-check=full --show-possibly-lost=no node --expose-gc --trace-gc node_modules/mocha/bin/_mocha -R spec"
   },
-  "binary": {
-    "module_name": "usb_bindings",
-    "module_path": "./src/binding",
-    "host": "https://github.com/tessel/node-usb/releases/download/",
-    "remote_path": "{version}"
-  },
   "dependencies": {
+    "bindings": "^1.4.0",
     "nan": "2.11.1",
-    "node-pre-gyp": "^0.11.0"
+    "prebuild-install": "^5.2.4"
   },
   "resolutions": {
     "**/nan": "2.11.1"
@@ -51,7 +47,7 @@
   "devDependencies": {
     "coffeescript": "~1.6.2",
     "mocha": "~1.8.2",
-    "aws-sdk": "~2.0.0-rc.15"
+    "prebuild": "^8.1.2"
   },
   "license": "MIT"
 }
