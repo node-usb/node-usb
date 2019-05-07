@@ -55,7 +55,7 @@ NAN_METHOD(Transfer_Submit) {
 	if (!Buffer::HasInstance(info[0])){
 		THROW_BAD_ARGS("Buffer arg [0] must be Buffer");
 	}
-	Local<Object> buffer_obj = info[0]->ToObject();
+	Local<Object> buffer_obj = Nan::To<v8::Object>(info[0]).ToLocalChecked();
 	if (!self->device->device_handle){
 		THROW_ERROR("Device is not open");
 	}
@@ -153,5 +153,5 @@ void Transfer::Init(Local<Object> target){
 	Nan::SetPrototypeMethod(tpl, "submit", Transfer_Submit);
 	Nan::SetPrototypeMethod(tpl, "cancel", Transfer_Cancel);
 
-	target->Set(Nan::New("Transfer").ToLocalChecked(), tpl->GetFunction());
+	target->Set(Nan::New("Transfer").ToLocalChecked(), Nan::GetFunction(tpl).ToLocalChecked());
 }

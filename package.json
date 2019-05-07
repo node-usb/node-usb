@@ -38,11 +38,11 @@
   },
   "dependencies": {
     "bindings": "^1.4.0",
-    "nan": "2.11.1",
+    "nan": "2.13.2",
     "prebuild-install": "^5.2.4"
   },
   "resolutions": {
-    "**/nan": "2.11.1"
+    "**/nan": "2.13.2"
   },
   "devDependencies": {
     "coffeescript": "~1.6.2",
