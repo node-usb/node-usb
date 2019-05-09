@@ -297,6 +297,7 @@ void initConstants(Local<Object> target){
 
 Local<Value> libusbException(int errorno) {
 	const char* err = libusb_error_name(errorno);
-	Local<Value> e  = Nan::ErrnoException(errorno, NULL, err, NULL);
+	Local<Value> e  = Nan::Error(err);
+	e.As<v8::Object>()->Set(Nan::New<String>("errno").ToLocalChecked(), Nan::New<Integer>(errorno));
 	return e;
 }
