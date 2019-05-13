@@ -36,7 +36,7 @@ Local<Object> Device::get(libusb_device* dev){
 	} else {
 		Local<FunctionTemplate> constructorHandle = Nan::New<v8::FunctionTemplate>(device_constructor);
 		Local<Value> argv[1] = { EXTERNAL_NEW(new Device(dev)) };
-		Local<Object> obj = Nan::NewInstance(constructorHandle->GetFunction(), 1, argv).ToLocalChecked();
+		Local<Object> obj = Nan::NewInstance(Nan::GetFunction(constructorHandle).ToLocalChecked(), 1, argv).ToLocalChecked();
 		return obj;
 	}
 }
@@ -412,5 +412,5 @@ void Device::Init(Local<Object> target){
 	Nan::SetPrototypeMethod(tpl, "__attachKernelDriver", AttachKernelDriver);
 
 	device_constructor.Reset(tpl);
-	target->Set(Nan::New("Device").ToLocalChecked(), tpl->GetFunction());
+	target->Set(Nan::New("Device").ToLocalChecked(), Nan::GetFunction(tpl).ToLocalChecked());
 }

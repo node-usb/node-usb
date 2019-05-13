@@ -14,7 +14,7 @@ addons:
 
 env:
   global:
-  - PREBUILD_TARGETS="6.0.0 8.0.0 10.0.0 11.0.0"
+  - PREBUILD_TARGETS="6.0.0 8.0.0 10.0.0 11.0.0 12.0.0"
   - PREBUILD_ELECTRON_TARGETS="3.0.0 4.0.0 4.0.4"
   matrix:
   - ARCH="x64"
