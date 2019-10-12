@@ -1,6 +1,7 @@
 var usb = exports = module.exports = require('bindings')('usb_bindings');
 var events = require('events')
 var util = require('util')
+var Buffer = require('buffer/').Buffer 
 
 if (usb.INIT_ERROR) {
 	console.warn("Failed to initialize libusb.")
