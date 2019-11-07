@@ -39,7 +39,7 @@
   "dependencies": {
     "bindings": "^1.4.0",
     "nan": "2.13.2",
-    "prebuild-install": "^5.2.4"
+    "prebuild-install": "^5.3.3"
   },
   "resolutions": {
     "**/nan": "2.13.2"
