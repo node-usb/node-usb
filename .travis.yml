@@ -21,6 +21,7 @@ env:
   matrix:
   - ARCH="x64"
   - ARCH="ia32"
+  - ARCH="arm64"
 
 matrix:
   exclude:
@@ -28,6 +29,10 @@ matrix:
     env: ARCH="ia32"
   - os: osx
     env: ARCH="ia32"
+  - os: osx
+    env: ARCH="arm64"
+  - os: windows
+    env: ARCH="arm64"
 
 before_install:
 - |
