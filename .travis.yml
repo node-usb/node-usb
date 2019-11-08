@@ -28,6 +28,23 @@ env:
   - ARCH="arm64"
 
 matrix:
+  include:
+    - os: windows
+      env: ARCH="x64"
+      arch: amd64
+    - os: windows
+      env: ARCH="ia32"
+      arch: amd64
+    - os: osx
+      env: ARCH="x64"
+      arch: amd64
+    - os: linux
+      env: ARCH="x64"
+      arch: amd64
+    - os: linux
+      env: ARCH="arm64"
+      arch: arm64
+
   exclude:
   - os: linux
     env: ARCH="ia32"
