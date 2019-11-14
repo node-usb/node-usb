@@ -121,7 +121,7 @@ function(bmRequestType, bRequest, wValue, wIndex, data_or_length, callback){
 	buf.writeUInt16LE(wLength,       6)
 
 	if (!isIn){
-		data_or_length.copy(buf, SETUP_SIZE)
+		buf.set(data_or_length, SETUP_SIZE)
 	}
 
 	var transfer = new usb.Transfer(this, 0, usb.LIBUSB_TRANSFER_TYPE_CONTROL, this.timeout,
