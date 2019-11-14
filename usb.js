@@ -2,6 +2,10 @@ var usb = exports = module.exports = require('bindings')('usb_bindings');
 var events = require('events')
 var util = require('util')
 
+var isBuffer = function(obj) {
+	return obj && obj instanceof Uint8Array
+}
+
 if (usb.INIT_ERROR) {
 	console.warn("Failed to initialize libusb.")
 	usb.Device = function () { throw new Error("Device cannot be instantiated directly.") };
@@ -101,7 +105,7 @@ function(bmRequestType, bRequest, wValue, wIndex, data_or_length, callback){
 		}
 		wLength = data_or_length
 	}else{
-		if (!Buffer.isBuffer(data_or_length)){
+		if (!isBuffer(data_or_length)){
 			throw new TypeError("Expected buffer for OUT transfer (based on bmRequestType)")
 		}
 		wLength = data_or_length.length
@@ -478,7 +482,7 @@ OutEndpoint.prototype.transfer = function(buffer, cb){
 	var self = this
 	if (!buffer){
 		buffer = Buffer.alloc(0)
-	}else if (!Buffer.isBuffer(buffer)){
+	}else if (!isBuffer(buffer)){
 		buffer = Buffer.from(buffer)
 	}
 
