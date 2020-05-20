@@ -113,6 +113,8 @@ Parameter `data_or_length` can be a integer length for an IN transfer, or a Buff
 
 The `data` parameter of the callback is always undefined for OUT transfers, or will be passed a Buffer for IN transfers.
 
+A [package is available to calculate bmRequestType](https://www.npmjs.com/package/bmrequesttype) if needed.
+
 ### .setConfiguration(id, callback(error))
 Set the device configuration to something other than the default (0). To use this, first call `.open(false)` (which tells it not to auto configure), then before claiming an interface, call this method.
 
