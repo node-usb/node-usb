@@ -36,7 +36,6 @@ usb.Device.prototype.timeout = 1000
 
 usb.Device.prototype.open = function(defaultConfig){
 	this.__open()
-	if (defaultConfig === false) return
 	this.interfaces = []
 	var len = this.configDescriptor ? this.configDescriptor.interfaces.length : 0
 	for (var i=0; i<len; i++){
