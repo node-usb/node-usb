@@ -5,6 +5,8 @@ NAN_METHOD(SetDebugLevel);
 NAN_METHOD(GetDeviceList);
 NAN_METHOD(EnableHotplugEvents);
 NAN_METHOD(DisableHotplugEvents);
+NAN_METHOD(RefHotplugEvents);
+NAN_METHOD(UnrefHotplugEvents);
 void initConstants(Local<Object> target);
 
 libusb_context* usb_context;
@@ -90,6 +92,8 @@ extern "C" void Initialize(Local<Object> target) {
 	Nan::SetMethod(target, "getDeviceList", GetDeviceList);
 	Nan::SetMethod(target, "_enableHotplugEvents", EnableHotplugEvents);
 	Nan::SetMethod(target, "_disableHotplugEvents", DisableHotplugEvents);
+	Nan::SetMethod(target, "refHotplugEvents", RefHotplugEvents);
+	Nan::SetMethod(target, "unrefHotplugEvents", UnrefHotplugEvents);
 }
 
 NODE_MODULE(usb_bindings, Initialize)
@@ -183,6 +187,22 @@ NAN_METHOD(DisableHotplugEvents) {
 		libusb_hotplug_deregister_callback(usb_context, hotplugHandle);
 		hotplugQueue.unref();
 		hotplugEnabled = false;
+	}
+	info.GetReturnValue().Set(Nan::Undefined());
+}
+
+NAN_METHOD(RefHotplugEvents) {
+	Nan::HandleScope scope;
+	if (hotplugEnabled) {
+		hotplugQueue.ref();
+	}
+	info.GetReturnValue().Set(Nan::Undefined());
+}
+
+NAN_METHOD(UnrefHotplugEvents) {
+	Nan::HandleScope scope;
+	if (hotplugEnabled) {
+		hotplugQueue.unref();
 	}
 	info.GetReturnValue().Set(Nan::Undefined());
 }
