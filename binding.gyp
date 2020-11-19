@@ -12,7 +12,7 @@
         './src/transfer.cc',
       ],
       'cflags_cc': [
-        '-std=c++0x'
+        '-std=c++14'
       ],
       'defines': [
         '_FILE_OFFSET_BITS=64',
