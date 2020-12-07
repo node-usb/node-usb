@@ -47,7 +47,7 @@
   "devDependencies": {
     "coffeescript": "~2.4.1",
     "mocha": "~6.1.4",
-    "prebuild": "^9.1.1"
+    "prebuild": "^10.0.1"
   },
   "license": "MIT"
 }

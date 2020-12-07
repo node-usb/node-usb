@@ -1,11 +1,13 @@
 language: cpp
 
+sudo: required
+
 os:
 - linux
 - osx
 - windows
 
-dist: bionic
+dist: focal
 
 addons:
   apt:
@@ -38,6 +40,7 @@ before_install:
   fi
 - $CXX --version
 - node --version
+- npm update -g npm
 - npm --version
 
 install:
