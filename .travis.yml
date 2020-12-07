@@ -5,7 +5,7 @@ os:
 - osx
 - windows
 
-dist: trusty
+dist: bionic
 
 addons:
   apt:
