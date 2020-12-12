@@ -6,6 +6,15 @@
   'targets': [
     {
       'target_name': 'usb_bindings',
+      'cflags!': [ '-fno-exceptions' ],
+      'cflags_cc!': [ '-fno-exceptions' ],
+      'xcode_settings': { 'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
+        'CLANG_CXX_LIBRARY': 'libc++',
+        'MACOSX_DEPLOYMENT_TARGET': '10.7',
+      },
+      'msvs_settings': {
+        'VCCLCompilerTool': { 'ExceptionHandling': 1 },
+      },
       'sources': [
         './src/node_usb.cc',
         './src/device.cc',
@@ -20,7 +29,7 @@
       ],
       'include_dirs+': [
         'src/',
-        "<!(node -e \"require('nan')\")",
+        "<!@(node -p \"require('node-addon-api').include\")"
       ],
 
       'conditions' : [

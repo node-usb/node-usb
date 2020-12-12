@@ -8,11 +8,12 @@ void handleCompletion(Transfer* t);
 UVQueue<Transfer*> completionQueue(handleCompletion);
 #endif
 
-Transfer::Transfer(){
+Transfer::Transfer(const Napi::CallbackInfo& info): Napi::ObjectWrap<Transfer>(info) {
 	transfer = libusb_alloc_transfer(0);
 	transfer->callback = usbCompletionCb;
 	transfer->user_data = this;
 	DEBUG_LOG("Created Transfer %p", this);
+	Constructor(info);
 }
 
 Transfer::~Transfer(){
@@ -22,7 +23,8 @@ Transfer::~Transfer(){
 }
 
 // new Transfer(device, endpointAddr, type, timeout)
-NAN_METHOD(Transfer_constructor) {
+Napi::Value Transfer::Constructor(const Napi::CallbackInfo& info) {
+	Napi::Env env = info.Env();
 	ENTER_CONSTRUCTOR(5);
 	UNWRAP_ARG(Device, device, 0);
 	int endpoint, type, timeout;
@@ -31,9 +33,8 @@ NAN_METHOD(Transfer_constructor) {
 	INT_ARG(timeout, 3);
 	CALLBACK_ARG(4);
 
-	setConst(info.This(), "device", info[0]);
-	auto self = new Transfer();
-	self->attach(info.This());
+	info.This().As<Napi::Object>().DefineProperty(Napi::PropertyDescriptor::Value(std::string("device"), info[0], CONST_PROP));
+	auto self = this;
 	self->device = device;
 	self->transfer->endpoint = endpoint;
 	self->transfer->type = type;
@@ -41,21 +42,21 @@ NAN_METHOD(Transfer_constructor) {
 
 	self->v8callback.Reset(callback);
 
-	info.GetReturnValue().Set(info.This());
+	return info.This();
 }
 
 // Transfer.submit(buffer, callback)
-NAN_METHOD(Transfer_Submit) {
+Napi::Value Transfer::Submit(const Napi::CallbackInfo& info) {
 	ENTER_METHOD(Transfer, 1);
 
 	if (self->transfer->buffer){
 		THROW_ERROR("Transfer is already active")
 	}
 
-	if (!Buffer::HasInstance(info[0])){
+	if (!info[0].IsBuffer()){
 		THROW_BAD_ARGS("Buffer arg [0] must be Buffer");
 	}
-	Local<Object> buffer_obj = Nan::To<v8::Object>(info[0]).ToLocalChecked();
+	Napi::Buffer<unsigned char> buffer_obj = info[0].As<Napi::Buffer<unsigned char>>();
 	if (!self->device->device_handle){
 		THROW_ERROR("Device is not open");
 	}
@@ -64,8 +65,8 @@ NAN_METHOD(Transfer_Submit) {
 	self->transfer->dev_handle = self->device->device_handle;
 
 	self->v8buffer.Reset(buffer_obj);
-	self->transfer->buffer = (unsigned char*) Buffer::Data(buffer_obj);
-	self->transfer->length = Buffer::Length(buffer_obj);
+	self->transfer->buffer = (unsigned char*) buffer_obj.Data();
+	self->transfer->length = buffer_obj.ByteLength();
 
 	DEBUG_LOG("Submitting, %p %p %x %i %i %i %p",
 		self,
@@ -85,7 +86,7 @@ NAN_METHOD(Transfer_Submit) {
 	completionQueue.ref();
 	#endif
 
-	info.GetReturnValue().Set(info.This());
+	return info.This();
 }
 
 extern "C" void LIBUSB_CALL usbCompletionCb(libusb_transfer *transfer){
@@ -101,7 +102,8 @@ extern "C" void LIBUSB_CALL usbCompletionCb(libusb_transfer *transfer){
 }
 
 void handleCompletion(Transfer* self){
-	Nan::HandleScope scope;
+	Napi::Env env = self->Env();
+	Napi::HandleScope scope(env);
 	DEBUG_LOG("HandleCompletion %p", self);
 
 	self->device->unref();
@@ -111,47 +113,48 @@ void handleCompletion(Transfer* self){
 
 	// The callback may resubmit and overwrite these, so need to clear the
 	// persistent first.
-	Local<Object> buffer = Nan::New<Object>(self->v8buffer);
+	Napi::Object buffer = self->v8buffer.Value();
 	self->v8buffer.Reset();
 	self->transfer->buffer = NULL;
 
 	if (!self->v8callback.IsEmpty()) {
-		Local<Value> error = Nan::Undefined();
+		Napi::Value error = env.Undefined();
 		if (self->transfer->status != 0){
-			error = libusbException(self->transfer->status);
+			error = libusbException(env, self->transfer->status).Value();
 		}
-		Local<Value> argv[] = {error, buffer,
-			Nan::New<Uint32>((uint32_t) self->transfer->actual_length)};
-		Nan::TryCatch try_catch;
-		Nan::MakeCallback(self->handle(), Nan::New(self->v8callback), 3, argv);
-		if (try_catch.HasCaught()) {
-			Nan::FatalException(try_catch);
+		try {
+			self->v8callback.MakeCallback(self->Value(), { error, buffer,
+				Napi::Number::New(env, (uint32_t)self->transfer->actual_length) });
+		}
+		catch (const Napi::Error& e) {
+			Napi::Error::Fatal("", e.what());
 		}
 	}
 
 	self->unref();
 }
 
-NAN_METHOD(Transfer_Cancel){
+Napi::Value Transfer::Cancel(const Napi::CallbackInfo& info){
 	ENTER_METHOD(Transfer, 0);
 	DEBUG_LOG("Cancel %p %i", self, !!self->transfer->buffer);
 	int r = libusb_cancel_transfer(self->transfer);
 	if (r == LIBUSB_ERROR_NOT_FOUND){
 		// Not useful to throw an error for this case
-		info.GetReturnValue().Set(Nan::False());
+		return Napi::Boolean::New(env, false);
 	} else {
 		CHECK_USB(r);
-		info.GetReturnValue().Set(Nan::True());
+		return Napi::Boolean::New(env, true);
 	}
 }
 
-void Transfer::Init(Local<Object> target){
-	Local<FunctionTemplate> tpl = Nan::New<FunctionTemplate>(Transfer_constructor);
-	tpl->SetClassName(Nan::New("Transfer").ToLocalChecked());
-	tpl->InstanceTemplate()->SetInternalFieldCount(1);
+Napi::Object Transfer::Init(Napi::Env env, Napi::Object exports) {
+	exports.Set("Transfer", Transfer::DefineClass(
+		env,
+		"Transfer",
+		{
+			Transfer::InstanceMethod("submit", &Transfer::Submit),
+			Transfer::InstanceMethod("cancel", &Transfer::Cancel),
+		}));
 
-	Nan::SetPrototypeMethod(tpl, "submit", Transfer_Submit);
-	Nan::SetPrototypeMethod(tpl, "cancel", Transfer_Cancel);
-
-	Nan::Set(target, Nan::New("Transfer").ToLocalChecked(), Nan::GetFunction(tpl).ToLocalChecked());
+	return exports;
 }
