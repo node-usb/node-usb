@@ -1,6 +1,5 @@
 #include <vector>
 #include <napi.h>
-#include <uv.h>
 
 #define THROW_BAD_ARGS(FAIL_MSG) throw Napi::TypeError::New(env, FAIL_MSG);
 #define THROW_ERROR(FAIL_MSG) throw Napi::Error::New(env, FAIL_MSG);

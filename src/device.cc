@@ -199,64 +199,55 @@ Napi::Value Device::Close(const Napi::CallbackInfo& info) {
 	return env.Undefined();
 }
 
-struct Req{
-	uv_work_t req;
+struct Req: Napi::AsyncWorker {
 	Device* device;
-	Napi::FunctionReference callback;
 	int errcode;
 
-	void submit(Device* d, Napi::Function cb, uv_work_cb backend, uv_work_cb after){
-		callback.Reset(cb);
-		device = d;
+	Req(Device* d, Napi::Function& callback)
+		: Napi::AsyncWorker(callback), device(d) {
 		device->ref();
-		req.data = this;
-		uv_queue_work(uv_default_loop(), &req, backend, (uv_after_work_cb) after);
 	}
 
-	static void default_after(uv_work_t *req){
-		auto baton = (Req*)req->data;
-		auto device = baton->device->Value();
-		auto env = device.Env();
-		Napi::HandleScope scope(env);
+    void OnOK() override {
+		auto env = Env();
+        Napi::HandleScope scope(env);
+		device->unref();
 
-		baton->device->unref();
-
-		if (!baton->callback.IsEmpty()) {
-			Napi::Value error = env.Undefined();
-			if (baton->errcode < 0){
-				error = libusbException(env, baton->errcode).Value();
-			}
-			try {
-				baton->callback.MakeCallback(device, { error });
-			}
-			catch (const Napi::Error& e) {
-				Napi::Error::Fatal("", e.what());
-			}
-			baton->callback.Reset();
+		Napi::Value error = env.Undefined();
+		if (errcode < 0){
+			error = libusbException(env, errcode).Value();
 		}
-		delete baton;
-	}
+		try {
+			Callback().Call(device->Value(), { error });
+		}
+		catch (const Napi::Error& e) {
+			Napi::Error::Fatal("", e.what());
+		}
+    }
 };
 
-struct Device_Reset: Req{
+struct Device_Reset: Req {
+	Device_Reset(Device* d, Napi::Function& callback): Req(d, callback) {}
+
 	static Napi::Value begin(const Napi::CallbackInfo& info) {
 		Napi::Env env = info.Env(); 
 		Napi::HandleScope scope(env);
 		auto self = Napi::ObjectWrap<Device>::Unwrap(info.This().As<Napi::Object>());
 		CHECK_OPEN();
 		CALLBACK_ARG(0);
-		auto baton = new Device_Reset;
-		baton->submit(self, callback, &backend, &default_after);
+		auto baton = new Device_Reset(self, callback);
+		baton->Queue();
 		return env.Undefined();
 	}
 
-	static void backend(uv_work_t *req){
-		auto baton = (Device_Reset*) req->data;
-		baton->errcode = libusb_reset_device(baton->device->device_handle);
+	virtual void Execute() {
+		errcode = libusb_reset_device(device->device_handle);
 	}
 };
 
-struct Device_Clear_Halt: Req{
+struct Device_Clear_Halt: Req {
+	Device_Clear_Halt(Device* d, Napi::Function& callback): Req(d, callback) {}
+
 	int endpoint;
 
     static Napi::Value begin(const Napi::CallbackInfo& info) {
@@ -267,16 +258,15 @@ struct Device_Clear_Halt: Req{
 		CHECK_OPEN();
 		INT_ARG(endpoint, 0);
 		CALLBACK_ARG(1);
-		auto baton = new Device_Clear_Halt;
+		auto baton = new Device_Clear_Halt(self, callback);
 		baton->endpoint = endpoint;
-                baton->submit(self, callback, &backend, &default_after);
-                return env.Undefined();
-        }
+		baton->Queue();
+        return env.Undefined();
+    }
 
-        static void backend(uv_work_t *req){
-                auto baton = (Device_Clear_Halt*) req->data;
-                baton->errcode = libusb_clear_halt(baton->device->device_handle, baton->endpoint);
-        }
+	virtual void Execute() {
+		errcode = libusb_clear_halt(device->device_handle, endpoint);
+	}
 };
 
 
@@ -318,7 +308,9 @@ Napi::Value Device::ClaimInterface(const Napi::CallbackInfo& info) {
 	return env.Undefined();
 }
 
-struct Device_ReleaseInterface: Req{
+struct Device_ReleaseInterface: Req {
+	Device_ReleaseInterface(Device* d, Napi::Function& callback): Req(d, callback) {}
+
 	int interface;
 
 	static Napi::Value begin(const Napi::CallbackInfo& info){
@@ -329,20 +321,21 @@ struct Device_ReleaseInterface: Req{
 		int interface;
 		INT_ARG(interface, 0);
 		CALLBACK_ARG(1);
-		auto baton = new Device_ReleaseInterface;
+		auto baton = new Device_ReleaseInterface(self, callback);
 		baton->interface = interface;
-		baton->submit(self, callback, &backend, &default_after);
+		baton->Queue();
 
 		return env.Undefined();
 	}
 
-	static void backend(uv_work_t *req){
-		auto baton = (Device_ReleaseInterface*) req->data;
-		baton->errcode = libusb_release_interface(baton->device->device_handle, baton->interface);
+	virtual void Execute() {
+		errcode = libusb_release_interface(device->device_handle, interface);
 	}
 };
 
-struct Device_SetInterface: Req{
+struct Device_SetInterface: Req {
+	Device_SetInterface(Device* d, Napi::Function& callback): Req(d, callback) {}
+
 	int interface;
 	int altsetting;
 
@@ -355,21 +348,22 @@ struct Device_SetInterface: Req{
 		INT_ARG(interface, 0);
 		INT_ARG(altsetting, 1);
 		CALLBACK_ARG(2);
-		auto baton = new Device_SetInterface;
+		auto baton = new Device_SetInterface(self, callback);
 		baton->interface = interface;
 		baton->altsetting = altsetting;
-		baton->submit(self, callback, &backend, &default_after);
+		baton->Queue();
 		return env.Undefined();
 	}
 
-	static void backend(uv_work_t *req){
-		auto baton = (Device_SetInterface*) req->data;
-		baton->errcode = libusb_set_interface_alt_setting(
-			baton->device->device_handle, baton->interface, baton->altsetting);
+	virtual void Execute() {
+		errcode = libusb_set_interface_alt_setting(
+			device->device_handle, interface, altsetting);
 	}
 };
 
-struct Device_SetConfiguration: Req{
+struct Device_SetConfiguration: Req {
+	Device_SetConfiguration(Device* d, Napi::Function& callback): Req(d, callback) {}
+
 	int desired;
 
 	static Napi::Value begin(const Napi::CallbackInfo& info){
@@ -380,16 +374,15 @@ struct Device_SetConfiguration: Req{
 		int desired;
 		INT_ARG(desired, 0);
 		CALLBACK_ARG(1);
-		auto baton = new Device_SetConfiguration;
+		auto baton = new Device_SetConfiguration(self, callback);
 		baton->desired = desired;
-		baton->submit(self, callback, &backend, &default_after);
+		baton->Queue();
 		return env.Undefined();
 	}
 
-	static void backend(uv_work_t *req){
-		auto baton = (Device_SetConfiguration*) req->data;
-		baton->errcode = libusb_set_configuration(
-			baton->device->device_handle, baton->desired);
+	virtual void Execute() {
+		errcode = libusb_set_configuration(
+			device->device_handle, desired);
 	}
 };
 

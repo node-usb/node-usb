@@ -3,12 +3,13 @@
 extern "C" void LIBUSB_CALL usbCompletionCb(libusb_transfer *transfer);
 void handleCompletion(Transfer* t);
 
-#ifndef USE_POLL
-#include "uv_async_queue.h"
-UVQueue<Transfer*> completionQueue(handleCompletion);
-#endif
 
-Transfer::Transfer(const Napi::CallbackInfo& info): Napi::ObjectWrap<Transfer>(info) {
+Transfer::Transfer(const Napi::CallbackInfo& info)
+	: Napi::ObjectWrap<Transfer>(info)
+#ifndef USE_POLL
+	, completionQueue(handleCompletion)
+#endif
+	 {
 	transfer = libusb_alloc_transfer(0);
 	transfer->callback = usbCompletionCb;
 	transfer->user_data = this;
@@ -83,7 +84,7 @@ Napi::Value Transfer::Submit(const Napi::CallbackInfo& info) {
 	self->device->ref();
 
 	#ifndef USE_POLL
-	completionQueue.ref();
+	completionQueue.start(env);
 	#endif
 
 	return info.This();
@@ -97,7 +98,7 @@ extern "C" void LIBUSB_CALL usbCompletionCb(libusb_transfer *transfer){
 	#ifdef USE_POLL
 	handleCompletion(t);
 	#else
-	completionQueue.post(t);
+	t->completionQueue.post(t);
 	#endif
 }
 
@@ -108,7 +109,7 @@ void handleCompletion(Transfer* self){
 
 	self->device->unref();
 	#ifndef USE_POLL
-	completionQueue.unref();
+	self->completionQueue.stop();
 	#endif
 
 	// The callback may resubmit and overwrite these, so need to clear the

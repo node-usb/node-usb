@@ -12,9 +12,12 @@
 
 #include <napi.h>
 #include <node_buffer.h>
-#include <uv.h>
 
 #include "helpers.h"
+
+#ifndef USE_POLL
+#include "uv_async_queue.h"
+#endif
 
 Napi::Error libusbException(napi_env env, int errorno);
 
@@ -62,6 +65,10 @@ struct Transfer: public Napi::ObjectWrap<Transfer> {
 	Device* device;
 	Napi::ObjectReference v8buffer;
 	Napi::FunctionReference v8callback;
+
+	#ifndef USE_POLL
+	UVQueue<Transfer*> completionQueue;
+	#endif
 
 	static Napi::Object Init(Napi::Env env, Napi::Object exports);
 
