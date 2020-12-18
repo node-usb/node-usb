@@ -17,7 +17,7 @@ env:
     # Supported Node versions: https://nodejs.org/en/about/releases/
   - PREBUILD_TARGETS="6.0.0 8.0.0 10.0.0 12.0.0 14.0.0"
     # Supported Electron versions: https://electronjs.org/docs/tutorial/electron-timelines
-  - PREBUILD_ELECTRON_TARGETS="4.0.4 5.0.0 6.0.0 7.0.0 8.0.0 9.0.0 9.0.0 10.0.0 11.0.0 13.0.0"
+  - PREBUILD_ELECTRON_TARGETS="4.0.4 5.0.0 6.0.0 7.0.0 8.0.0 9.0.0 9.0.0 10.0.0 11.0.0 12.0.0"
   matrix:
   - ARCH="x64"
   - ARCH="ia32"
