@@ -11,16 +11,26 @@
 
 Napi::FunctionReference Device::constructor;
 
-Device::Device(const Napi::CallbackInfo & info) : Napi::ObjectWrap<Device>(info), device_handle(0), refs_(1) {
+Device::Device(const Napi::CallbackInfo & info) : Napi::ObjectWrap<Device>(info), device_handle(0), refs_(1)
+#ifndef USE_POLL
+, completionQueue(handleCompletion)
+#endif
+{
 	device = info[0].As<Napi::External<libusb_device>>().Data();
 	libusb_ref_device(device);
 	byPtr.insert(std::make_pair(device, this));
+#ifndef USE_POLL
+	completionQueue.start(info.Env());
+#endif
 	DEBUG_LOG("Created device %p", this);
 	Constructor(info);
 }
 
 Device::~Device(){
 	DEBUG_LOG("Freed device %p", this);
+#ifndef USE_POLL
+	completionQueue.stop();
+#endif
 	byPtr.erase(device);
 	libusb_close(device_handle);
 	libusb_unref_device(device);

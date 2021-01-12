@@ -21,7 +21,7 @@ class UVQueue{
 		
 		void post(T value){
 			auto cb = callback;
-			tsfn.BlockingCall( value, [&cb](Napi::Env _env, Napi::Function _jsCallback, T val) {
+			tsfn.BlockingCall( value, [cb](Napi::Env _env, Napi::Function _jsCallback, T val) {
 				cb(val);
 			});
 		}

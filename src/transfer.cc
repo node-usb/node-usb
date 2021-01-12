@@ -1,15 +1,9 @@
 #include "node_usb.h"
 
 extern "C" void LIBUSB_CALL usbCompletionCb(libusb_transfer *transfer);
-void handleCompletion(Transfer* t);
-
 
 Transfer::Transfer(const Napi::CallbackInfo& info)
-	: Napi::ObjectWrap<Transfer>(info)
-#ifndef USE_POLL
-	, completionQueue(handleCompletion)
-#endif
-	 {
+	: Napi::ObjectWrap<Transfer>(info) {
 	transfer = libusb_alloc_transfer(0);
 	transfer->callback = usbCompletionCb;
 	transfer->user_data = this;
@@ -41,7 +35,7 @@ Napi::Value Transfer::Constructor(const Napi::CallbackInfo& info) {
 	self->transfer->type = type;
 	self->transfer->timeout = timeout;
 
-	self->v8callback.Reset(callback);
+	self->v8callback.Reset(callback, 1);
 
 	return info.This();
 }
@@ -65,7 +59,7 @@ Napi::Value Transfer::Submit(const Napi::CallbackInfo& info) {
 	// Can't be cached in constructor as device could be closed and re-opened
 	self->transfer->dev_handle = self->device->device_handle;
 
-	self->v8buffer.Reset(buffer_obj);
+	self->v8buffer.Reset(buffer_obj, 1);
 	self->transfer->buffer = (unsigned char*) buffer_obj.Data();
 	self->transfer->length = buffer_obj.ByteLength();
 
@@ -83,10 +77,6 @@ Napi::Value Transfer::Submit(const Napi::CallbackInfo& info) {
 	self->ref();
 	self->device->ref();
 
-	#ifndef USE_POLL
-	completionQueue.start(env);
-	#endif
-
 	return info.This();
 }
 
@@ -98,7 +88,7 @@ extern "C" void LIBUSB_CALL usbCompletionCb(libusb_transfer *transfer){
 	#ifdef USE_POLL
 	handleCompletion(t);
 	#else
-	t->completionQueue.post(t);
+	t->device->completionQueue.post(t);
 	#endif
 }
 
@@ -108,9 +98,6 @@ void handleCompletion(Transfer* self){
 	DEBUG_LOG("HandleCompletion %p", self);
 
 	self->device->unref();
-	#ifndef USE_POLL
-	self->completionQueue.stop();
-	#endif
 
 	// The callback may resubmit and overwrite these, so need to clear the
 	// persistent first.

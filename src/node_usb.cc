@@ -157,7 +157,7 @@ void handleHotplug(HotPlug* info){
 		return;
 	}
 
-	hotplugThis.Value().As<Napi::Function>().MakeCallback(Napi::String::New(env, "emit"), { eventName, v8dev });
+	hotplugThis.Get("emit").As<Napi::Function>().MakeCallback(hotplugThis.Value(), { eventName, v8dev });
 }
 
 bool hotplugEnabled = 0;
@@ -176,7 +176,7 @@ Napi::Value EnableHotplugEvents(const Napi::CallbackInfo& info) {
 	Napi::HandleScope scope(env);
 
 	if (!hotplugEnabled) {
-		hotplugThis.Reset(info.This().As<Napi::Object>());
+		hotplugThis.Reset(info.This().As<Napi::Object>(), 1);
 		CHECK_USB(libusb_hotplug_register_callback(usb_context,
 			(libusb_hotplug_event)(LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT),
 			(libusb_hotplug_flag)0, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY,

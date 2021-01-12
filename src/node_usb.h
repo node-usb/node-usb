@@ -19,11 +19,18 @@
 #include "uv_async_queue.h"
 #endif
 
+struct Transfer;
+
 Napi::Error libusbException(napi_env env, int errorno);
+void handleCompletion(Transfer* self);
 
 struct Device: public Napi::ObjectWrap<Device> {
 	libusb_device* device;
 	libusb_device_handle* device_handle;
+
+#ifndef USE_POLL
+	UVQueue<Transfer*> completionQueue;
+#endif
 
 	static Napi::Object Init(Napi::Env env, Napi::Object exports);
 	static Napi::Object get(napi_env env, libusb_device* handle);
@@ -65,10 +72,6 @@ struct Transfer: public Napi::ObjectWrap<Transfer> {
 	Device* device;
 	Napi::ObjectReference v8buffer;
 	Napi::FunctionReference v8callback;
-
-	#ifndef USE_POLL
-	UVQueue<Transfer*> completionQueue;
-	#endif
 
 	static Napi::Object Init(Napi::Env env, Napi::Object exports);
 
