@@ -1,0 +1,32 @@
+name: prebuild
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  prebuild:
+    strategy:
+      matrix:
+        config:
+          - { os: macos-latest, arch: x64 }
+          - { os: ubuntu-latest, arch: x64 }
+          - { os: windows-latest, arch: x64 }
+          - { os: windows-latest, arch: ia32 }
+    runs-on: ${{ matrix.config.os }}
+    steps:
+      - if: matrix.config.os == 'ubuntu-latest'
+        run: sudo apt-get install libudev-dev
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 14.x
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - run: npm install
+      # Supported Node versions: https://nodejs.org/en/about/releases/
+      - run: npm run prebuild -- -t 8.0.0 -t 10.0.0 -t 12.0.0 -t 14.0.0 -a ${{ matrix.config.arch }} -u ${{ secrets.GITHUB_TOKEN }}
+      # Supported Electron versions: https://electronjs.org/docs/tutorial/electron-timelines
+      - run: npm run prebuild -- -t 4.0.4 -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -r electron -a ${{ matrix.config.arch }} -u ${{ secrets.GITHUB_TOKEN }}
