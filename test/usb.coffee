@@ -45,7 +45,8 @@ describe 'Device', ->
 	it 'should have sane properties', ->
 		assert.ok((device.busNumber > 0), "busNumber must be larger than 0")
 		assert.ok((device.deviceAddress > 0), "deviceAddress must be larger than 0")
-		assert.ok((util.isArray(device.portNumbers)), "portNumbers must be an array")
+		if process.platform != 'darwin' || process.arch != 'arm64'
+			assert.ok((util.isArray(device.portNumbers)), "portNumbers must be an array")
 
 	it 'should have a deviceDescriptor property', ->
 		assert.ok(((deviceDesc = device.deviceDescriptor) != undefined))
