@@ -34,7 +34,7 @@ jobs:
       # Supported Node versions: https://nodejs.org/en/about/releases/
       - run: npm run prebuild -- -t 8.0.0 -t 10.0.0 -t 12.0.0 -t 14.0.0 -a ${{ matrix.config.arch }}
       # Supported Electron versions: https://electronjs.org/docs/tutorial/electron-timelines
-      - run: npm run prebuild -- -t 4.0.4 -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0-beta.1 -r electron -a ${{ matrix.config.arch }}
+      - run: npm run prebuild -- -t 4.0.4 -t 5.0.0 -t 6.0.0 -t 7.0.0 -t 8.0.0 -t 9.0.0 -t 10.0.0 -t 11.0.0 -t 12.0.0-nightly.20201013 -r electron -a ${{ matrix.config.arch }}
       - if: startsWith(github.ref, 'refs/tags/')
         shell: bash
         env:
