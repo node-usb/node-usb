@@ -239,47 +239,41 @@ struct Req: Napi::AsyncWorker {
 struct Device_Reset: Req {
 	Device_Reset(Device* d, Napi::Function& callback): Req(d, callback) {}
 
-	static Napi::Value begin(const Napi::CallbackInfo& info) {
-		Napi::Env env = info.Env(); 
-		Napi::HandleScope scope(env);
-		auto self = Napi::ObjectWrap<Device>::Unwrap(info.This().As<Napi::Object>());
-		CHECK_OPEN();
-		CALLBACK_ARG(0);
-		auto baton = new Device_Reset(self, callback);
-		baton->Queue();
-		return env.Undefined();
-	}
-
 	virtual void Execute() {
 		errcode = libusb_reset_device(device->device_handle);
 	}
 };
+
+Napi::Value Device::Reset(const Napi::CallbackInfo& info) {
+	ENTER_METHOD(Device, 1);
+	CHECK_OPEN();
+	CALLBACK_ARG(0);
+	auto baton = new Device_Reset(self, callback);
+	baton->Queue();
+	return env.Undefined();
+}
 
 struct Device_Clear_Halt: Req {
 	Device_Clear_Halt(Device* d, Napi::Function& callback): Req(d, callback) {}
 
 	int endpoint;
 
-    static Napi::Value begin(const Napi::CallbackInfo& info) {
-		int endpoint;
-		Napi::Env env = info.Env();
-		Napi::HandleScope scope(env);
-		auto self = Napi::ObjectWrap<Device>::Unwrap(info.This().As<Napi::Object>());
-		CHECK_OPEN();
-		INT_ARG(endpoint, 0);
-		CALLBACK_ARG(1);
-		auto baton = new Device_Clear_Halt(self, callback);
-		baton->endpoint = endpoint;
-		baton->Queue();
-        return env.Undefined();
-    }
-
 	virtual void Execute() {
 		errcode = libusb_clear_halt(device->device_handle, endpoint);
 	}
 };
 
-
+Napi::Value Device::ClearHalt(const Napi::CallbackInfo& info) {
+	ENTER_METHOD(Device, 2);
+	int endpoint;
+	CHECK_OPEN();
+	INT_ARG(endpoint, 0);
+	CALLBACK_ARG(1);
+	auto baton = new Device_Clear_Halt(self, callback);
+	baton->endpoint = endpoint;
+	baton->Queue();
+	return env.Undefined();
+}
 
 Napi::Value Device::IsKernelDriverActive(const Napi::CallbackInfo& info) {
 	ENTER_METHOD(Device, 1);
@@ -323,25 +317,22 @@ struct Device_ReleaseInterface: Req {
 
 	int interface;
 
-	static Napi::Value begin(const Napi::CallbackInfo& info){
-		Napi::Env env = info.Env();
-		Napi::HandleScope scope(env);
-		auto self = Napi::ObjectWrap<Device>::Unwrap(info.This().As<Napi::Object>());
-		CHECK_OPEN();
-		int interface;
-		INT_ARG(interface, 0);
-		CALLBACK_ARG(1);
-		auto baton = new Device_ReleaseInterface(self, callback);
-		baton->interface = interface;
-		baton->Queue();
-
-		return env.Undefined();
-	}
-
 	virtual void Execute() {
 		errcode = libusb_release_interface(device->device_handle, interface);
 	}
 };
+
+Napi::Value Device::ReleaseInterface(const Napi::CallbackInfo& info) {
+	ENTER_METHOD(Device, 2);
+	CHECK_OPEN();
+	int interface;
+	INT_ARG(interface, 0);
+	CALLBACK_ARG(1);
+	auto baton = new Device_ReleaseInterface(self, callback);
+	baton->interface = interface;
+	baton->Queue();
+	return env.Undefined();
+}
 
 struct Device_SetInterface: Req {
 	Device_SetInterface(Device* d, Napi::Function& callback): Req(d, callback) {}
@@ -349,52 +340,48 @@ struct Device_SetInterface: Req {
 	int interface;
 	int altsetting;
 
-	static Napi::Value begin(const Napi::CallbackInfo& info){
-		Napi::Env env = info.Env();
-		Napi::HandleScope scope(env);
-		auto self = Napi::ObjectWrap<Device>::Unwrap(info.This().As<Napi::Object>());
-		CHECK_OPEN();
-		int interface, altsetting;
-		INT_ARG(interface, 0);
-		INT_ARG(altsetting, 1);
-		CALLBACK_ARG(2);
-		auto baton = new Device_SetInterface(self, callback);
-		baton->interface = interface;
-		baton->altsetting = altsetting;
-		baton->Queue();
-		return env.Undefined();
-	}
-
 	virtual void Execute() {
 		errcode = libusb_set_interface_alt_setting(
 			device->device_handle, interface, altsetting);
 	}
 };
 
+Napi::Value Device::SetInterface(const Napi::CallbackInfo& info) {
+	ENTER_METHOD(Device, 3);
+	CHECK_OPEN();
+	int interface, altsetting;
+	INT_ARG(interface, 0);
+	INT_ARG(altsetting, 1);
+	CALLBACK_ARG(2);
+	auto baton = new Device_SetInterface(self, callback);
+	baton->interface = interface;
+	baton->altsetting = altsetting;
+	baton->Queue();
+	return env.Undefined();
+}
+
 struct Device_SetConfiguration: Req {
 	Device_SetConfiguration(Device* d, Napi::Function& callback): Req(d, callback) {}
 
 	int desired;
-
-	static Napi::Value begin(const Napi::CallbackInfo& info){
-		Napi::Env env = info.Env();
-		Napi::HandleScope scope(env);
-		auto self = Napi::ObjectWrap<Device>::Unwrap(info.This().As<Napi::Object>());
-		CHECK_OPEN();
-		int desired;
-		INT_ARG(desired, 0);
-		CALLBACK_ARG(1);
-		auto baton = new Device_SetConfiguration(self, callback);
-		baton->desired = desired;
-		baton->Queue();
-		return env.Undefined();
-	}
 
 	virtual void Execute() {
 		errcode = libusb_set_configuration(
 			device->device_handle, desired);
 	}
 };
+
+Napi::Value Device::SetConfiguration(const Napi::CallbackInfo& info) {
+	ENTER_METHOD(Device, 2);
+	CHECK_OPEN();
+	int desired;
+	INT_ARG(desired, 0);
+	CALLBACK_ARG(1);
+	auto baton = new Device_SetConfiguration(self, callback);
+	baton->desired = desired;
+	baton->Queue();
+	return env.Undefined();
+}
 
 Napi::Object Device::Init(Napi::Env env, Napi::Object exports) {
 	auto func = Device::DefineClass(
@@ -406,12 +393,12 @@ Napi::Object Device::Init(Napi::Env env, Napi::Object exports) {
 			Device::InstanceMethod("__getAllConfigDescriptors", &Device::GetAllConfigDescriptors),
 			Device::InstanceMethod("__open", &Device::Open),
 			Device::InstanceMethod("__close", &Device::Close),
-			Device::StaticMethod("__clearHalt", Device_Clear_Halt::begin),
-			Device::StaticMethod("reset", Device_Reset::begin),
+			Device::InstanceMethod("__clearHalt", &Device::ClearHalt),
+			Device::InstanceMethod("reset", &Device::Reset),
 			Device::InstanceMethod("__claimInterface", &Device::ClaimInterface),
-			Device::StaticMethod("__releaseInterface", Device_ReleaseInterface::begin),
-			Device::StaticMethod("__setInterface", Device_SetInterface::begin),
-			Device::StaticMethod("__setConfiguration", Device_SetConfiguration::begin),
+			Device::InstanceMethod("__releaseInterface", &Device::ReleaseInterface),
+			Device::InstanceMethod("__setInterface", &Device::SetInterface),
+			Device::InstanceMethod("__setConfiguration", &Device::SetConfiguration),
 			Device::InstanceMethod("__isKernelDriverActive", &Device::IsKernelDriverActive),
 			Device::InstanceMethod("__detachKernelDriver", &Device::DetachKernelDriver),
 			Device::InstanceMethod("__attachKernelDriver", &Device::AttachKernelDriver),

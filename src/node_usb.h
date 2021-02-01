@@ -49,9 +49,11 @@ struct Device: public Napi::ObjectWrap<Device> {
 
 	Napi::Value GetConfigDescriptor(const Napi::CallbackInfo& info);
 	Napi::Value GetAllConfigDescriptors(const Napi::CallbackInfo& info);
+	Napi::Value SetConfiguration(const Napi::CallbackInfo& info);
 
 	Napi::Value GetParent(const Napi::CallbackInfo& info);
 	Napi::Value Open(const Napi::CallbackInfo& info);
+	Napi::Value Reset(const Napi::CallbackInfo& info);
 	Napi::Value Close(const Napi::CallbackInfo& info);
 
 	Napi::Value IsKernelDriverActive(const Napi::CallbackInfo& info);
@@ -59,6 +61,10 @@ struct Device: public Napi::ObjectWrap<Device> {
 	Napi::Value AttachKernelDriver(const Napi::CallbackInfo& info);
 
 	Napi::Value ClaimInterface(const Napi::CallbackInfo& info);
+	Napi::Value SetInterface(const Napi::CallbackInfo& info);
+	Napi::Value ReleaseInterface(const Napi::CallbackInfo& info);
+
+	Napi::Value ClearHalt(const Napi::CallbackInfo& info);
 protected:
 	static std::map<libusb_device*, Device*> byPtr;
 	static Napi::FunctionReference constructor;
