@@ -58,7 +58,8 @@ Object.defineProperty(usb.Device.prototype, "configDescriptor", {
 			if (e.errno == usb.LIBUSB_ERROR_NOT_FOUND) return null;
 			throw e;
 		}
-	}
+	},
+	configurable: true
 });
 
 Object.defineProperty(usb.Device.prototype, "allConfigDescriptors", {
@@ -70,13 +71,15 @@ Object.defineProperty(usb.Device.prototype, "allConfigDescriptors", {
 			if (e.errno == usb.LIBUSB_ERROR_NOT_FOUND) return [];
 			throw e;
 		}
-	}
+	},
+	configurable: true
 });
 
 Object.defineProperty(usb.Device.prototype, "parent", {
 	get: function() {
 		return this._parent || (this._parent = this.__getParent())
-	}
+	},
+	configurable: true
 });
 
 usb.Device.prototype.interface = function(addr){
