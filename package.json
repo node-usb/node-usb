@@ -30,8 +30,8 @@
     "url": "https://github.com/tessel/node-usb.git"
   },
   "scripts": {
-    "install": "prebuild-install --verbose || node-gyp rebuild",
-    "prebuild": "prebuild --force --strip --verbose",
+    "install": "prebuild-install --runtime napi --verbose || node-gyp rebuild",
+    "prebuild": "prebuild --runtime napi -t 4 --force --strip --verbose",
     "test": "mocha --require coffeescript/register --grep Module test/*",
     "full-test": "mocha --require coffeescript/register test/*",
     "valgrind": "coffee -c test/usb.coffee; valgrind --leak-check=full --show-possibly-lost=no node --expose-gc --trace-gc node_modules/mocha/bin/_mocha -R spec"
@@ -47,5 +47,8 @@
     "node-abi": "^2.19.3",
     "prebuild": "^10.0.1"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "binary": {
+    "napi_versions": [4]
+  }
 }
