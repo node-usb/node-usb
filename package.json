@@ -1,7 +1,7 @@
 {
   "name": "usb",
   "description": "Library to access USB devices",
-  "version": "1.6.5",
+  "version": "1.7.0-alpha.1",
   "engines": {
     "node": ">=6"
   },
@@ -19,6 +19,11 @@
       "name": "Tim Ryan",
       "email": "tim@technical.io",
       "url": "http://timryan.org"
+    },
+    {
+      "name": "Rob Moran",
+      "email": "github@thegecko.org",
+      "url": "https://github.com/thegecko"
     },
     {
       "name": "Christopher Klein"
@@ -49,6 +54,8 @@
   },
   "license": "MIT",
   "binary": {
-    "napi_versions": [4]
+    "napi_versions": [
+      4
+    ]
   }
 }
