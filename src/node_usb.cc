@@ -1,13 +1,18 @@
 #include "node_usb.h"
 #include "uv_async_queue.h"
+#include <thread>
 
-NAN_METHOD(SetDebugLevel);
-NAN_METHOD(GetDeviceList);
-NAN_METHOD(EnableHotplugEvents);
-NAN_METHOD(DisableHotplugEvents);
-void initConstants(Local<Object> target);
+Napi::Value SetDebugLevel(const Napi::CallbackInfo& info);
+Napi::Value GetDeviceList(const Napi::CallbackInfo& info);
+Napi::Value EnableHotplugEvents(const Napi::CallbackInfo& info);
+Napi::Value DisableHotplugEvents(const Napi::CallbackInfo& info);
+void initConstants(Napi::Object target);
 
 libusb_context* usb_context;
+struct HotPlug {
+	libusb_device* device;
+	libusb_hotplug_event event;
+};
 
 #ifdef USE_POLL
 #include <poll.h>
@@ -49,23 +54,23 @@ void LIBUSB_CALL onPollFDRemoved(int fd, void *user_data){
 }
 
 #else
-uv_thread_t usb_thread;
+std::thread usb_thread;
 
-void USBThreadFn(void*){
+void USBThreadFn(){
 	while(1) libusb_handle_events(usb_context);
 }
 #endif
 
-extern "C" void Initialize(Local<Object> target) {
-	Nan::HandleScope scope;
+Napi::Object Init(Napi::Env env, Napi::Object exports) {
+	Napi::HandleScope scope(env);
 
-	initConstants(target);
+	initConstants(exports);
 
 	// Initialize libusb. On error, halt initialization.
 	int res = libusb_init(&usb_context);
-	Nan::Set(target, Nan::New<String>("INIT_ERROR").ToLocalChecked(), Nan::New<Number>(res));
+	exports.Set("INIT_ERROR", Napi::Number::New(env, res));
 	if (res != 0) {
-		return;
+		return exports;
 	}
 
 	#ifdef USE_POLL
@@ -80,224 +85,234 @@ extern "C" void Initialize(Local<Object> target) {
 	free(pollfds);
 
 	#else
-	uv_thread_create(&usb_thread, USBThreadFn, NULL);
+	usb_thread = std::thread(USBThreadFn);
+	usb_thread.detach();
 	#endif
 
-	Device::Init(target);
-	Transfer::Init(target);
+	Device::Init(env, exports);
+	Transfer::Init(env, exports);
 
-	Nan::SetMethod(target, "setDebugLevel", SetDebugLevel);
-	Nan::SetMethod(target, "getDeviceList", GetDeviceList);
-	Nan::SetMethod(target, "_enableHotplugEvents", EnableHotplugEvents);
-	Nan::SetMethod(target, "_disableHotplugEvents", DisableHotplugEvents);
+	exports.Set("setDebugLevel", Napi::Function::New(env, SetDebugLevel));
+	exports.Set("getDeviceList", Napi::Function::New(env, GetDeviceList));
+	exports.Set("_enableHotplugEvents", Napi::Function::New(env, EnableHotplugEvents));
+	exports.Set("_disableHotplugEvents", Napi::Function::New(env, DisableHotplugEvents));
+	return exports;
 }
 
-NODE_MODULE(usb_bindings, Initialize)
+NODE_API_MODULE(usb_bindings, Init)
 
-NAN_METHOD(SetDebugLevel) {
-	Nan::HandleScope scope;
-	if (info.Length() != 1 || !info[0]->IsUint32() || Nan::To<v8::Uint32>(info[0]).ToLocalChecked()->Value() > 4) {
+Napi::Value SetDebugLevel(const Napi::CallbackInfo& info) {
+	Napi::Env env = info.Env();
+	Napi::HandleScope scope(env);
+	if (info.Length() != 1 || !info[0].IsNumber() || info[0].As<Napi::Number>().Uint32Value() > 4) {
 		THROW_BAD_ARGS("Usb::SetDebugLevel argument is invalid. [uint:[0-4]]!")
 	}
 
-	libusb_set_debug(usb_context, Nan::To<v8::Uint32>(info[0]).ToLocalChecked()->Value());
-	info.GetReturnValue().Set(Nan::Undefined());
+	libusb_set_debug(usb_context, info[0].As<Napi::Number>().Int32Value());
+	return env.Undefined();
 }
 
-NAN_METHOD(GetDeviceList) {
-	Nan::HandleScope scope;
+Napi::Value GetDeviceList(const Napi::CallbackInfo& info) {
+	Napi::Env env = info.Env();
+	Napi::HandleScope scope(env);
 	libusb_device **devs;
 	int cnt = libusb_get_device_list(usb_context, &devs);
 	CHECK_USB(cnt);
 
-	Local<Array> arr = Nan::New<Array>(cnt);
+	Napi::Array arr = Napi::Array::New(env, cnt);
 
 	for(int i = 0; i < cnt; i++) {
-		Nan::Set(arr, i, Device::get(devs[i]));
+		arr.Set(i, Device::get(env, devs[i]));
 	}
 	libusb_free_device_list(devs, true);
-	info.GetReturnValue().Set(arr);
+	return arr;
 }
 
-Nan::Persistent<Object> hotplugThis;
+Napi::ObjectReference hotplugThis;
 
-void handleHotplug(std::pair<libusb_device*, libusb_hotplug_event> info){
-	Nan::HandleScope scope;
+void handleHotplug(HotPlug* info){
+	Napi::Env env = hotplugThis.Env();
+	Napi::HandleScope scope(env);
 
-	libusb_device* dev = info.first;
-	libusb_hotplug_event event = info.second;
+	libusb_device* dev = info->device;
+	libusb_hotplug_event event = info->event;
+	delete info;
 
 	DEBUG_LOG("HandleHotplug %p %i", dev, event);
 
-	Local<Value> v8dev = Device::get(dev);
+	Napi::Value v8dev = Device::get(env, dev);
 	libusb_unref_device(dev);
 
-	Local<String> eventName;
-
+	Napi::String eventName;
 	if (LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED == event) {
 		DEBUG_LOG("Device arrived");
-		eventName = Nan::New("attach").ToLocalChecked();
+		eventName = Napi::String::New(env, "attach");
 
 	} else if (LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT == event) {
 		DEBUG_LOG("Device left");
-		eventName = Nan::New("detach").ToLocalChecked();
+		eventName = Napi::String::New(env, "detach");
 
 	} else {
 		DEBUG_LOG("Unhandled hotplug event %d\n", event);
 		return;
 	}
 
-	Local<Value> argv[] = {eventName, v8dev};
-	Nan::MakeCallback(Nan::New(hotplugThis), "emit", 2, argv);
+	hotplugThis.Get("emit").As<Napi::Function>().MakeCallback(hotplugThis.Value(), { eventName, v8dev });
 }
 
 bool hotplugEnabled = 0;
 libusb_hotplug_callback_handle hotplugHandle;
-UVQueue<std::pair<libusb_device*, libusb_hotplug_event>> hotplugQueue(handleHotplug);
+UVQueue<HotPlug*> hotplugQueue(handleHotplug);
 
-int LIBUSB_CALL hotplug_callback(libusb_context *ctx, libusb_device *dev,
+int LIBUSB_CALL hotplug_callback(libusb_context *ctx, libusb_device *device,
                      libusb_hotplug_event event, void *user_data) {
-	libusb_ref_device(dev);
-	hotplugQueue.post(std::pair<libusb_device*, libusb_hotplug_event>(dev, event));
+	libusb_ref_device(device);
+	hotplugQueue.post(new HotPlug {device, event});
 	return 0;
 }
 
-NAN_METHOD(EnableHotplugEvents) {
-	Nan::HandleScope scope;
+Napi::Value EnableHotplugEvents(const Napi::CallbackInfo& info) {
+	Napi::Env env = info.Env();
+	Napi::HandleScope scope(env);
 
 	if (!hotplugEnabled) {
-		hotplugThis.Reset(info.This());
+		hotplugThis.Reset(info.This().As<Napi::Object>(), 1);
 		CHECK_USB(libusb_hotplug_register_callback(usb_context,
 			(libusb_hotplug_event)(LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT),
 			(libusb_hotplug_flag)0, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY,
 			hotplug_callback, NULL, &hotplugHandle));
-		hotplugQueue.ref();
+		hotplugQueue.start(env);
 		hotplugEnabled = true;
 	}
-	info.GetReturnValue().Set(Nan::Undefined());
+	return env.Undefined();
 }
 
-NAN_METHOD(DisableHotplugEvents) {
-	Nan::HandleScope scope;
+Napi::Value DisableHotplugEvents(const Napi::CallbackInfo& info) {
+	Napi::Env env = info.Env();
+	Napi::HandleScope scope(env);
 	if (hotplugEnabled) {
 		libusb_hotplug_deregister_callback(usb_context, hotplugHandle);
-		hotplugQueue.unref();
+		hotplugQueue.stop();
 		hotplugEnabled = false;
 	}
-	info.GetReturnValue().Set(Nan::Undefined());
+	return env.Undefined();
 }
 
-void initConstants(Local<Object> target){
-	NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_PER_INTERFACE);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_AUDIO);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_COMM);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_HID);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_PRINTER);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_PTP);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_MASS_STORAGE);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_HUB);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_DATA);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_WIRELESS);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_APPLICATION);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_CLASS_VENDOR_SPEC);
-	// libusb_standard_request
-	NODE_DEFINE_CONSTANT(target, LIBUSB_REQUEST_GET_STATUS);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_REQUEST_CLEAR_FEATURE);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_REQUEST_SET_FEATURE);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_REQUEST_SET_ADDRESS );
-	NODE_DEFINE_CONSTANT(target, LIBUSB_REQUEST_GET_DESCRIPTOR);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_REQUEST_SET_DESCRIPTOR);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_REQUEST_GET_CONFIGURATION);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_REQUEST_SET_CONFIGURATION );
-	NODE_DEFINE_CONSTANT(target, LIBUSB_REQUEST_GET_INTERFACE);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_REQUEST_SET_INTERFACE);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_REQUEST_SYNCH_FRAME);
-	// libusb_descriptor_type
-	NODE_DEFINE_CONSTANT(target, LIBUSB_DT_DEVICE);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_DT_CONFIG);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_DT_STRING);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_DT_BOS);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_DT_INTERFACE);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_DT_ENDPOINT);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_DT_HID);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_DT_REPORT);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_DT_PHYSICAL);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_DT_HUB);
-	// libusb_endpoint_direction
-	NODE_DEFINE_CONSTANT(target, LIBUSB_ENDPOINT_IN);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_ENDPOINT_OUT);
-	// libusb_transfer_type
-	NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_TYPE_CONTROL);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_TYPE_ISOCHRONOUS);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_TYPE_BULK);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_TYPE_INTERRUPT);
-	// libusb_iso_sync_type
-	NODE_DEFINE_CONSTANT(target, LIBUSB_ISO_SYNC_TYPE_NONE);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_ISO_SYNC_TYPE_ASYNC);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_ISO_SYNC_TYPE_ADAPTIVE);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_ISO_SYNC_TYPE_SYNC);
-	// libusb_iso_usage_type
-	NODE_DEFINE_CONSTANT(target, LIBUSB_ISO_USAGE_TYPE_DATA);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_ISO_USAGE_TYPE_FEEDBACK);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_ISO_USAGE_TYPE_IMPLICIT);
-	// libusb_transfer_status
-	NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_COMPLETED);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_ERROR);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_TIMED_OUT);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_CANCELLED);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_STALL);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_NO_DEVICE);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_OVERFLOW);
-	// libusb_transfer_flags
-	NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_SHORT_NOT_OK);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_FREE_BUFFER);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_TRANSFER_FREE_TRANSFER);
-	// libusb_request_type
-	NODE_DEFINE_CONSTANT(target, LIBUSB_REQUEST_TYPE_STANDARD);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_REQUEST_TYPE_CLASS);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_REQUEST_TYPE_VENDOR);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_REQUEST_TYPE_RESERVED);
-	// libusb_request_recipient
-	NODE_DEFINE_CONSTANT(target, LIBUSB_RECIPIENT_DEVICE);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_RECIPIENT_INTERFACE);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_RECIPIENT_ENDPOINT);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_RECIPIENT_OTHER);
+#define DEFINE_CONSTANT(OBJ, VALUE) \
+	OBJ.DefineProperty(Napi::PropertyDescriptor::Value(#VALUE, Napi::Number::New(OBJ.Env(), VALUE), static_cast<napi_property_attributes>(napi_enumerable | napi_configurable)));
 
-	NODE_DEFINE_CONSTANT(target, LIBUSB_CONTROL_SETUP_SIZE);
-	NODE_DEFINE_CONSTANT(target, LIBUSB_DT_BOS_SIZE);
+
+void initConstants(Napi::Object target){
+	DEFINE_CONSTANT(target, LIBUSB_CLASS_PER_INTERFACE);
+	DEFINE_CONSTANT(target, LIBUSB_CLASS_AUDIO);
+	DEFINE_CONSTANT(target, LIBUSB_CLASS_COMM);
+	DEFINE_CONSTANT(target, LIBUSB_CLASS_HID);
+	DEFINE_CONSTANT(target, LIBUSB_CLASS_PRINTER);
+	DEFINE_CONSTANT(target, LIBUSB_CLASS_PTP);
+	DEFINE_CONSTANT(target, LIBUSB_CLASS_MASS_STORAGE);
+	DEFINE_CONSTANT(target, LIBUSB_CLASS_HUB);
+	DEFINE_CONSTANT(target, LIBUSB_CLASS_DATA);
+	DEFINE_CONSTANT(target, LIBUSB_CLASS_WIRELESS);
+	DEFINE_CONSTANT(target, LIBUSB_CLASS_APPLICATION);
+	DEFINE_CONSTANT(target, LIBUSB_CLASS_VENDOR_SPEC);
+	// libusb_standard_request
+	DEFINE_CONSTANT(target, LIBUSB_REQUEST_GET_STATUS);
+	DEFINE_CONSTANT(target, LIBUSB_REQUEST_CLEAR_FEATURE);
+	DEFINE_CONSTANT(target, LIBUSB_REQUEST_SET_FEATURE);
+	DEFINE_CONSTANT(target, LIBUSB_REQUEST_SET_ADDRESS );
+	DEFINE_CONSTANT(target, LIBUSB_REQUEST_GET_DESCRIPTOR);
+	DEFINE_CONSTANT(target, LIBUSB_REQUEST_SET_DESCRIPTOR);
+	DEFINE_CONSTANT(target, LIBUSB_REQUEST_GET_CONFIGURATION);
+	DEFINE_CONSTANT(target, LIBUSB_REQUEST_SET_CONFIGURATION );
+	DEFINE_CONSTANT(target, LIBUSB_REQUEST_GET_INTERFACE);
+	DEFINE_CONSTANT(target, LIBUSB_REQUEST_SET_INTERFACE);
+	DEFINE_CONSTANT(target, LIBUSB_REQUEST_SYNCH_FRAME);
+	// libusb_descriptor_type
+	DEFINE_CONSTANT(target, LIBUSB_DT_DEVICE);
+	DEFINE_CONSTANT(target, LIBUSB_DT_CONFIG);
+	DEFINE_CONSTANT(target, LIBUSB_DT_STRING);
+	DEFINE_CONSTANT(target, LIBUSB_DT_BOS);
+	DEFINE_CONSTANT(target, LIBUSB_DT_INTERFACE);
+	DEFINE_CONSTANT(target, LIBUSB_DT_ENDPOINT);
+	DEFINE_CONSTANT(target, LIBUSB_DT_HID);
+	DEFINE_CONSTANT(target, LIBUSB_DT_REPORT);
+	DEFINE_CONSTANT(target, LIBUSB_DT_PHYSICAL);
+	DEFINE_CONSTANT(target, LIBUSB_DT_HUB);
+	// libusb_endpoint_direction
+	DEFINE_CONSTANT(target, LIBUSB_ENDPOINT_IN);
+	DEFINE_CONSTANT(target, LIBUSB_ENDPOINT_OUT);
+	// libusb_transfer_type
+	DEFINE_CONSTANT(target, LIBUSB_TRANSFER_TYPE_CONTROL);
+	DEFINE_CONSTANT(target, LIBUSB_TRANSFER_TYPE_ISOCHRONOUS);
+	DEFINE_CONSTANT(target, LIBUSB_TRANSFER_TYPE_BULK);
+	DEFINE_CONSTANT(target, LIBUSB_TRANSFER_TYPE_INTERRUPT);
+	// libusb_iso_sync_type
+	DEFINE_CONSTANT(target, LIBUSB_ISO_SYNC_TYPE_NONE);
+	DEFINE_CONSTANT(target, LIBUSB_ISO_SYNC_TYPE_ASYNC);
+	DEFINE_CONSTANT(target, LIBUSB_ISO_SYNC_TYPE_ADAPTIVE);
+	DEFINE_CONSTANT(target, LIBUSB_ISO_SYNC_TYPE_SYNC);
+	// libusb_iso_usage_type
+	DEFINE_CONSTANT(target, LIBUSB_ISO_USAGE_TYPE_DATA);
+	DEFINE_CONSTANT(target, LIBUSB_ISO_USAGE_TYPE_FEEDBACK);
+	DEFINE_CONSTANT(target, LIBUSB_ISO_USAGE_TYPE_IMPLICIT);
+	// libusb_transfer_status
+	DEFINE_CONSTANT(target, LIBUSB_TRANSFER_COMPLETED);
+	DEFINE_CONSTANT(target, LIBUSB_TRANSFER_ERROR);
+	DEFINE_CONSTANT(target, LIBUSB_TRANSFER_TIMED_OUT);
+	DEFINE_CONSTANT(target, LIBUSB_TRANSFER_CANCELLED);
+	DEFINE_CONSTANT(target, LIBUSB_TRANSFER_STALL);
+	DEFINE_CONSTANT(target, LIBUSB_TRANSFER_NO_DEVICE);
+	DEFINE_CONSTANT(target, LIBUSB_TRANSFER_OVERFLOW);
+	// libusb_transfer_flags
+	DEFINE_CONSTANT(target, LIBUSB_TRANSFER_SHORT_NOT_OK);
+	DEFINE_CONSTANT(target, LIBUSB_TRANSFER_FREE_BUFFER);
+	DEFINE_CONSTANT(target, LIBUSB_TRANSFER_FREE_TRANSFER);
+	// libusb_request_type
+	DEFINE_CONSTANT(target, LIBUSB_REQUEST_TYPE_STANDARD);
+	DEFINE_CONSTANT(target, LIBUSB_REQUEST_TYPE_CLASS);
+	DEFINE_CONSTANT(target, LIBUSB_REQUEST_TYPE_VENDOR);
+	DEFINE_CONSTANT(target, LIBUSB_REQUEST_TYPE_RESERVED);
+	// libusb_request_recipient
+	DEFINE_CONSTANT(target, LIBUSB_RECIPIENT_DEVICE);
+	DEFINE_CONSTANT(target, LIBUSB_RECIPIENT_INTERFACE);
+	DEFINE_CONSTANT(target, LIBUSB_RECIPIENT_ENDPOINT);
+	DEFINE_CONSTANT(target, LIBUSB_RECIPIENT_OTHER);
+
+	DEFINE_CONSTANT(target, LIBUSB_CONTROL_SETUP_SIZE);
+	DEFINE_CONSTANT(target, LIBUSB_DT_BOS_SIZE);
 
 	// libusb_error
 	// Input/output error
-	NODE_DEFINE_CONSTANT(target, LIBUSB_ERROR_IO);
+	DEFINE_CONSTANT(target, LIBUSB_ERROR_IO);
 	// Invalid parameter
-	NODE_DEFINE_CONSTANT(target, LIBUSB_ERROR_INVALID_PARAM);
+	DEFINE_CONSTANT(target, LIBUSB_ERROR_INVALID_PARAM);
 	// Access denied (insufficient permissions)
-	NODE_DEFINE_CONSTANT(target, LIBUSB_ERROR_ACCESS);
+	DEFINE_CONSTANT(target, LIBUSB_ERROR_ACCESS);
 	// No such device (it may have been disconnected)
-	NODE_DEFINE_CONSTANT(target, LIBUSB_ERROR_NO_DEVICE);
+	DEFINE_CONSTANT(target, LIBUSB_ERROR_NO_DEVICE);
 	// Entity not found
-	NODE_DEFINE_CONSTANT(target, LIBUSB_ERROR_NOT_FOUND);
+	DEFINE_CONSTANT(target, LIBUSB_ERROR_NOT_FOUND);
 	// Resource busy
-	NODE_DEFINE_CONSTANT(target, LIBUSB_ERROR_BUSY);
+	DEFINE_CONSTANT(target, LIBUSB_ERROR_BUSY);
 	// Operation timed out
-	NODE_DEFINE_CONSTANT(target, LIBUSB_ERROR_TIMEOUT);
+	DEFINE_CONSTANT(target, LIBUSB_ERROR_TIMEOUT);
 	// Overflow
-	NODE_DEFINE_CONSTANT(target, LIBUSB_ERROR_OVERFLOW);
+	DEFINE_CONSTANT(target, LIBUSB_ERROR_OVERFLOW);
 	// Pipe error
-	NODE_DEFINE_CONSTANT(target, LIBUSB_ERROR_PIPE);
+	DEFINE_CONSTANT(target, LIBUSB_ERROR_PIPE);
 	// System call interrupted (perhaps due to signal)
-	NODE_DEFINE_CONSTANT(target, LIBUSB_ERROR_INTERRUPTED);
+	DEFINE_CONSTANT(target, LIBUSB_ERROR_INTERRUPTED);
 	// Insufficient memory
-	NODE_DEFINE_CONSTANT(target, LIBUSB_ERROR_NO_MEM);
+	DEFINE_CONSTANT(target, LIBUSB_ERROR_NO_MEM);
 	// Operation not supported or unimplemented on this platform
-	NODE_DEFINE_CONSTANT(target, LIBUSB_ERROR_NOT_SUPPORTED);
+	DEFINE_CONSTANT(target, LIBUSB_ERROR_NOT_SUPPORTED);
 	// Other error
-	NODE_DEFINE_CONSTANT(target, LIBUSB_ERROR_OTHER);
+	DEFINE_CONSTANT(target, LIBUSB_ERROR_OTHER);
 }
 
-Local<Value> libusbException(int errorno) {
+Napi::Error libusbException(napi_env env, int errorno) {
 	const char* err = libusb_error_name(errorno);
-	Local<Value> e  = Nan::Error(err);
-	Nan::Set(e.As<v8::Object>(), Nan::New<String>("errno").ToLocalChecked(), Nan::New<Integer>(errorno));
+	Napi::Error e  = Napi::Error::New(env, err);
+	e.Set("errno", (double)errorno);
 	return e;
 }
