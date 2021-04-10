@@ -23,7 +23,9 @@ jobs:
     runs-on: ${{ matrix.config.os }}
     steps:
       - if: matrix.config.os == 'ubuntu-latest'
-        run: sudo apt-get install libudev-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install libudev-dev
       - uses: actions/setup-node@v2
         with:
           node-version: 14.x
