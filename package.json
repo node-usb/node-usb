@@ -1,7 +1,7 @@
 {
   "name": "usb",
   "description": "Library to access USB devices",
-  "version": "1.7.0-alpha.1",
+  "version": "1.7.0",
   "engines": {
     "node": ">=6"
   },
@@ -48,7 +48,7 @@
   },
   "devDependencies": {
     "coffeescript": "~2.4.1",
-    "mocha": "~6.1.4",
+    "mocha": "^8.3.2",
     "node-abi": "^2.19.3",
     "prebuild": "^10.0.1"
   },
