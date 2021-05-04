@@ -308,7 +308,7 @@ Development and testing
 
 To build from git:
 
-	git clone --recursive https://github.com/nonolith/node-usb.git
+	git clone --recursive https://github.com/tessel/node-usb.git
 	cd node-usb
 	npm install
 
