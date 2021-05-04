@@ -3,7 +3,9 @@
 
 #define THROW_BAD_ARGS(FAIL_MSG) throw Napi::TypeError::New(env, FAIL_MSG);
 #define THROW_ERROR(FAIL_MSG) throw Napi::Error::New(env, FAIL_MSG);
-#define CHECK_N_ARGS(MIN_ARGS) if (info.Length() < MIN_ARGS) { THROW_BAD_ARGS("Expected " #MIN_ARGS " arguments") }
+
+#pragma GCC diagnostic ignored "-Wtype-limits"
+#define CHECK_N_ARGS(MIN_ARGS) if ((MIN_ARGS) > 0 && info.Length() < (MIN_ARGS)) { THROW_BAD_ARGS("Expected " #MIN_ARGS " arguments") }
 
 const napi_property_attributes CONST_PROP = static_cast<napi_property_attributes>(napi_enumerable | napi_configurable);
 
