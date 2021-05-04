@@ -3,3 +3,4 @@ prebuilds/
 node_modules
 *~
 *.log
+test/*.js
