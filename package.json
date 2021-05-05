@@ -1,7 +1,7 @@
 {
   "name": "usb",
   "description": "Library to access USB devices",
-  "version": "1.7.0",
+  "version": "1.7.1-alpha.1",
   "engines": {
     "node": ">=6"
   },
@@ -35,8 +35,8 @@
     "url": "https://github.com/tessel/node-usb.git"
   },
   "scripts": {
-    "install": "prebuild-install --runtime napi --verbose || node-gyp rebuild",
-    "prebuild": "prebuild --runtime napi -t 4 --force --strip --verbose",
+    "install": "prebuild-install --runtime napi --target 4 --verbose || node-gyp rebuild",
+    "prebuild": "prebuild --runtime napi --target 4 --force --strip --verbose",
     "test": "mocha --require coffeescript/register --grep Module test/*",
     "full-test": "mocha --require coffeescript/register test/*",
     "valgrind": "coffee -c test/usb.coffee; valgrind --leak-check=full --show-possibly-lost=no node --expose-gc --trace-gc node_modules/mocha/bin/_mocha -R spec"
