@@ -22,7 +22,7 @@ jobs:
           - { os: windows-latest, arch: ia32 }
     runs-on: ${{ matrix.config.os }}
     steps:
-      - if: matrix.config.os == 'ubuntu-latest'
+      - if: matrix.config.os == 'ubuntu-18.04'
         run: |
           sudo apt-get update
           sudo apt-get install libudev-dev
