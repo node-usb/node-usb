@@ -28,6 +28,8 @@ struct Device: public Napi::ObjectWrap<Device> {
 	libusb_device* device;
 	libusb_device_handle* device_handle;
 
+	int refs_;
+
 #ifndef USE_POLL
 	UVQueue<Transfer*> completionQueue;
 #endif
@@ -38,8 +40,6 @@ struct Device: public Napi::ObjectWrap<Device> {
 	inline void ref(){ refs_ = Ref();}
 	inline void unref(){ refs_ = Unref();}
 	inline bool canClose(){return refs_ == 0;}
-
-	int refs_;
 
 	Device(const Napi::CallbackInfo& info);
 	~Device();
