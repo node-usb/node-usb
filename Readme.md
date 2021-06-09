@@ -318,7 +318,10 @@ To execute the unit tests, [CoffeeScript](http://coffeescript.org) is required. 
 
 	npm test
 
-Some tests require an attached USB device -- firmware to be released soon.
+Some tests require an [attached STM32F103 Microprocessor USB device with specific firmware](https://github.com/thegecko/node-usb-test-firmware).
+
+	npm run --silent full-test
+	npm run --silent valgrind
 
 Limitations
 ===========
