@@ -1,12 +1,12 @@
 assert = require('assert')
 util = require('util')
-usb = require("../usb.js")
+usb = require('../')
 
 if typeof gc is 'function'
 	# running with --expose-gc, do a sweep between tests so valgrind blames the right one
 	afterEach -> gc()
 
-describe 'Module', ->
+describe 'USB Module', ->
 	it 'should describe basic constants', ->
 		assert.notEqual(usb, undefined, "usb must be undefined")
 		assert.ok((usb.LIBUSB_CLASS_PER_INTERFACE != undefined), "Constants must be described")
@@ -35,7 +35,6 @@ describe 'findByIds', ->
 	it 'should return an array with length > 0', ->
 		dev = usb.findByIds(0x59e3, 0x0a23)
 		assert.ok(dev, "Demo device is not attached")
-
 
 describe 'Device', ->
 	device = null
@@ -157,7 +156,6 @@ describe 'Device', ->
 				inEndpoint.on 'end', ->
 					#console.log("Stream stopped")
 					done()
-
 
 		describe 'OUT endpoint', ->
 			outEndpoint = null

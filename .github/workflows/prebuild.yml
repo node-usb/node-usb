@@ -32,9 +32,8 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
-      - run: npm install
-      # Supported Node versions: https://nodejs.org/en/about/releases/
-      - run: npm run prebuild -- -a ${{ matrix.config.arch }}
+      - run: yarn
+      - run: yarn run prebuild -- -a ${{ matrix.config.arch }}
       - if: startsWith(github.ref, 'refs/tags/')
         shell: bash
         env:
