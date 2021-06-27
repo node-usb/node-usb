@@ -15,16 +15,16 @@ export abstract class Endpoint extends EventEmitter {
     public transferType: number;
 
     /** Sets the timeout in milliseconds for transfers on this endpoint. The default, `0`, is infinite timeout. */
-    public timeout: number = 0;
+    public timeout = 0;
 
     /** Object with fields from the endpoint descriptor -- see libusb documentation or USB spec. */
     public descriptor: EndpointDescriptor;
 
     constructor(protected device: Device, descriptor: EndpointDescriptor) {
         super();
-        this.descriptor = descriptor
-        this.address = descriptor.bEndpointAddress
-        this.transferType = descriptor.bmAttributes & 0x03
+        this.descriptor = descriptor;
+        this.address = descriptor.bEndpointAddress;
+        this.transferType = descriptor.bmAttributes & 0x03;
     }
 
     /** Clear the halt/stall condition for this endpoint. */
@@ -73,15 +73,15 @@ export class InEndpoint extends Endpoint {
      * @param callback
      */
     public transfer(length: number, callback: (error: undefined | LibUSBException, data?: Buffer) => void): InEndpoint {
-        const self = this
-        const buffer = Buffer.alloc(length)
+        const self = this;
+        const buffer = Buffer.alloc(length);
 
         function cb(error: undefined | LibUSBException, _buffer?: Buffer, actualLength?: number) {
-            callback.call(self, error, buffer.slice(0, actualLength))
+            callback.call(self, error, buffer.slice(0, actualLength));
         }
 
         try {
-            this.makeTransfer(this.timeout, cb).submit(buffer)
+            this.makeTransfer(this.timeout, cb).submit(buffer);
         } catch (e) {
             process.nextTick(function () { callback.call(self, e); });
         }
@@ -99,25 +99,25 @@ export class InEndpoint extends Endpoint {
      * @param transferSize
      */
     public startPoll(nTransfers?: number, transferSize?: number): void {
-        const self = this
+        const self = this;
         this.pollTransfers = this.poll(nTransfers || 3, transferSize || this.descriptor.wMaxPacketSize, transferDone);
 
         function transferDone(error: undefined | LibUSBException, buffer: Buffer, actualLength: number, transfer: Transfer) {
             if (!error) {
-                self.emit("data", buffer.slice(0, actualLength))
+                self.emit('data', buffer.slice(0, actualLength));
             } else if (error.errno != LIBUSB_TRANSFER_CANCELLED) {
-                self.emit("error", error)
-                self.stopPoll()
+                self.emit('error', error);
+                self.stopPoll();
             }
 
             if (self.pollActive) {
                 startTransfer(transfer);
             } else {
-                self.pollPending--
+                self.pollPending--;
 
                 if (self.pollPending == 0) {
                     self.pollTransfers = [];
-                    self.emit('end')
+                    self.emit('end');
                 }
             }
         }
@@ -143,10 +143,10 @@ export class InEndpoint extends Endpoint {
         }
 
         this.pollTransferSize = transferSize;
-        this.pollActive = true
-        this.pollPending = 0
+        this.pollActive = true;
+        this.pollPending = 0;
 
-        const transfers: Transfer[] = []
+        const transfers: Transfer[] = [];
         for (let i = 0; i < nTransfers; i++) {
             const transfer = this.makeTransfer(0, (error: undefined | LibUSBException, buffer: Buffer, actualLength: number) => {
                 callback(error, buffer, actualLength, transfer);
@@ -170,12 +170,12 @@ export class InEndpoint extends Endpoint {
         }
         for (let i = 0; i < this.pollTransfers.length; i++) {
             try {
-                this.pollTransfers[i].cancel()
+                this.pollTransfers[i].cancel();
             } catch (err) {
                 this.emit('error', err);
             }
         }
-        this.pollActive = false
+        this.pollActive = false;
         if (callback) this.once('end', callback);
     }
 }
@@ -198,15 +198,15 @@ export class OutEndpoint extends Endpoint {
      * @param callback
      */
     public transfer(buffer: Buffer, callback?: (error: undefined | LibUSBException) => void): OutEndpoint {
-        const self = this
+        const self = this;
         if (!buffer) {
-            buffer = Buffer.alloc(0)
+            buffer = Buffer.alloc(0);
         } else if (!isBuffer(buffer)) {
-            buffer = Buffer.from(buffer)
+            buffer = Buffer.from(buffer);
         }
 
         function cb(error: undefined | LibUSBException) {
-            if (callback) callback.call(self, error)
+            if (callback) callback.call(self, error);
         }
 
         try {

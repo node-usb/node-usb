@@ -2,7 +2,7 @@ import * as usb from './usb';
 import { WebUSB } from './webusb';
 
 declare module './usb' {
-    const webusb: WebUSB
+    const webusb: WebUSB;
 }
 
 Object.assign(usb, {

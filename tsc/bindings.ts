@@ -6,6 +6,7 @@
 
 import type { DeviceDescriptor, ConfigDescriptor, BosDescriptor } from './descriptors';
 
+/* eslint-disable @typescript-eslint/no-var-requires */
 const usb = require('bindings')('usb_bindings');
 module.exports = usb;
 

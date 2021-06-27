@@ -62,30 +62,30 @@ export class ExtendedDevice {
             }
             throw e;
         }
-    };
+    }
 
     /**
      * Contains the parent of the device, such as a hub. If there is no parent this property is set to `null`.
      */
     public get parent(): Device {
         return (this as unknown as Device).__getParent();
-    };
+    }
 
     /**
      * Open the device.
      * @param defaultConfig
      */
-    public open(this: Device, defaultConfig: boolean = true): void {
+    public open(this: Device, defaultConfig = true): void {
         this.__open();
         if (defaultConfig === false) {
             return;
         }
-        this.interfaces = []
+        this.interfaces = [];
         const len = this.configDescriptor ? this.configDescriptor.interfaces.length : 0;
         for (let i = 0; i < len; i++) {
-            this.interfaces[i] = new Interface(this, i)
+            this.interfaces[i] = new Interface(this, i);
         }
-    };
+    }
 
     /**
      * Close the device.
@@ -95,7 +95,7 @@ export class ExtendedDevice {
     public close(this: Device): void {
         this.__close();
         this.interfaces = undefined;
-    };
+    }
 
     /**
      * Set the device configuration to something other than the default (0). To use this, first call `.open(false)` (which tells it not to auto configure),
@@ -109,8 +109,8 @@ export class ExtendedDevice {
         const self = this;
         this.__setConfiguration(desired, function (err) {
             if (!err) {
-                self.interfaces = []
-                const len = self.configDescriptor ? self.configDescriptor.interfaces.length : 0
+                self.interfaces = [];
+                const len = self.configDescriptor ? self.configDescriptor.interfaces.length : 0;
                 for (let i = 0; i < len; i++) {
                     self.interfaces[i] = new Interface(self, i);
                 }
@@ -119,7 +119,7 @@ export class ExtendedDevice {
                 callback.call(self, err);
             }
         });
-    };
+    }
 
     /**
      * Perform a control transfer with `libusb_control_transfer`.
@@ -138,54 +138,54 @@ export class ExtendedDevice {
      */
     public controlTransfer(this: Device, bmRequestType: number, bRequest: number, wValue: number, wIndex: number, data_or_length: number | Buffer,
         callback?: (error: undefined | LibUSBException, buffer?: Buffer) => void): Device {
-        const self = this
-        const isIn = !!(bmRequestType & LIBUSB_ENDPOINT_IN)
+        const self = this;
+        const isIn = !!(bmRequestType & LIBUSB_ENDPOINT_IN);
         const wLength = isIn ? data_or_length as number : (data_or_length as Buffer).length;
 
         if (isIn) {
             if (!(data_or_length >= 0)) {
-                throw new TypeError("Expected size number for IN transfer (based on bmRequestType)")
+                throw new TypeError('Expected size number for IN transfer (based on bmRequestType)');
             }
         } else {
             if (!isBuffer(data_or_length)) {
-                throw new TypeError("Expected buffer for OUT transfer (based on bmRequestType)")
+                throw new TypeError('Expected buffer for OUT transfer (based on bmRequestType)');
             }
         }
 
         // Buffer for the setup packet
         // http://libusbx.sourceforge.net/api-1.0/structlibusb__control__setup.html
-        const buf = Buffer.alloc(wLength + LIBUSB_CONTROL_SETUP_SIZE)
-        buf.writeUInt8(bmRequestType, 0)
-        buf.writeUInt8(bRequest, 1)
-        buf.writeUInt16LE(wValue, 2)
-        buf.writeUInt16LE(wIndex, 4)
-        buf.writeUInt16LE(wLength, 6)
+        const buf = Buffer.alloc(wLength + LIBUSB_CONTROL_SETUP_SIZE);
+        buf.writeUInt8(bmRequestType, 0);
+        buf.writeUInt8(bRequest, 1);
+        buf.writeUInt16LE(wValue, 2);
+        buf.writeUInt16LE(wIndex, 4);
+        buf.writeUInt16LE(wLength, 6);
 
         if (!isIn) {
-            buf.set(data_or_length as Buffer, LIBUSB_CONTROL_SETUP_SIZE)
+            buf.set(data_or_length as Buffer, LIBUSB_CONTROL_SETUP_SIZE);
         }
 
         const transfer = new Transfer(this, 0, LIBUSB_TRANSFER_TYPE_CONTROL, self.timeout,
             function (error, buf, actual) {
                 if (callback) {
                     if (isIn) {
-                        callback.call(self, error, buf.slice(LIBUSB_CONTROL_SETUP_SIZE, LIBUSB_CONTROL_SETUP_SIZE + actual))
+                        callback.call(self, error, buf.slice(LIBUSB_CONTROL_SETUP_SIZE, LIBUSB_CONTROL_SETUP_SIZE + actual));
                     } else {
-                        callback.call(self, error)
+                        callback.call(self, error);
                     }
                 }
             }
-        )
+        );
 
         try {
-            transfer.submit(buf)
+            transfer.submit(buf);
         } catch (e) {
             if (callback) {
                 process.nextTick(function () { callback.call(self, e); });
             }
         }
         return this;
-    };
+    }
 
     /**
      * Return the interface with the specified interface number.
@@ -195,18 +195,18 @@ export class ExtendedDevice {
      */
     public interface(this: Device, addr: number): Interface {
         if (!this.interfaces) {
-            throw new Error("Device must be open before searching for interfaces");
+            throw new Error('Device must be open before searching for interfaces');
         }
 
-        addr = addr || 0
+        addr = addr || 0;
         for (let i = 0; i < this.interfaces.length; i++) {
             if (this.interfaces[i].interfaceNumber == addr) {
-                return this.interfaces[i]
+                return this.interfaces[i];
             }
         }
 
         throw new Error(`Interface not found for address: ${addr}`);
-    };
+    }
 
     /**
      * Perform a control transfer to retrieve a string descriptor
@@ -231,7 +231,7 @@ export class ExtendedDevice {
                 callback(undefined, buffer ? buffer.toString('utf16le', 2) : undefined);
             }
         );
-    };
+    }
 
     /**
      * Perform a control transfer to retrieve an object with properties for the fields of the Binary Object Store descriptor.
@@ -315,7 +315,7 @@ export class ExtendedDevice {
                 );
             }
         );
-    };
+    }
 
     /**
      * Retrieve a list of Capability objects for the Binary Object Store capabilities of the device.
@@ -330,12 +330,12 @@ export class ExtendedDevice {
         this.getBosDescriptor(function (error, descriptor) {
             if (error) return callback(error, undefined);
 
-            const len = descriptor ? descriptor.capabilities.length : 0
+            const len = descriptor ? descriptor.capabilities.length : 0;
             for (let i = 0; i < len; i++) {
-                capabilities.push(new Capability(self, i))
+                capabilities.push(new Capability(self, i));
             }
 
             callback(undefined, capabilities);
         });
-    };
+    }
 }

@@ -1,40 +1,40 @@
 import { LibUSBException, LIBUSB_ENDPOINT_IN, Device } from './bindings';
 import { InterfaceDescriptor } from './descriptors';
-import { Endpoint, InEndpoint, OutEndpoint } from "./endpoint";
+import { Endpoint, InEndpoint, OutEndpoint } from './endpoint';
 
 export class Interface {
     /** Integer interface number. */
     public interfaceNumber!: number;
-  
+
     /** Integer alternate setting number. */
     public altSetting = 0;
-  
+
     /** Object with fields from the interface descriptor -- see libusb documentation or USB spec. */
     public descriptor!: InterfaceDescriptor;
-  
+
     /** List of endpoints on this interface: InEndpoint and OutEndpoint objects. */
     public endpoints!: Endpoint[];
-  
+
     constructor(protected device: Device, protected id: number) {
         this.refresh();
     }
 
-    protected refresh() {
+    protected refresh(): void {
         if (!this.device.configDescriptor) {
             return;
         }
 
-        this.descriptor = this.device.configDescriptor.interfaces[this.id][this.altSetting]
-        this.interfaceNumber = this.descriptor.bInterfaceNumber
-        this.endpoints = []
-        const len = this.descriptor.endpoints.length
+        this.descriptor = this.device.configDescriptor.interfaces[this.id][this.altSetting];
+        this.interfaceNumber = this.descriptor.bInterfaceNumber;
+        this.endpoints = [];
+        const len = this.descriptor.endpoints.length;
         for (let i=0; i<len; i++){
             const desc = this.descriptor.endpoints[i];
             const c = (desc.bEndpointAddress & LIBUSB_ENDPOINT_IN) ? InEndpoint : OutEndpoint;
-            this.endpoints[i] = new c(this.device, desc)
+            this.endpoints[i] = new c(this.device, desc);
         }
     }
-  
+
     /**
      * Claims the interface. This method must be called before using any endpoints of this interface.
      *
@@ -43,7 +43,7 @@ export class Interface {
     public claim(): void {
         this.device.__claimInterface(this.id);
     }
-  
+
     /**
      * Releases the interface and resets the alternate setting. Calls callback when complete.
      *
@@ -53,7 +53,7 @@ export class Interface {
      * @param callback
      */
     public release(callback?: (error: undefined | LibUSBException) => void): void;
-  
+
     /**
      * Releases the interface and resets the alternate setting. Calls callback when complete.
      *
@@ -76,7 +76,7 @@ export class Interface {
             callback = closeEndpointsOrCallback;
         }
 
-        const self = this;        
+        const self = this;
         if (!closeEndpoints || this.endpoints.length == 0) {
             next();
         } else {
@@ -96,20 +96,20 @@ export class Interface {
                 }
             });
         }
-        
+
         function next() {
             self.device.__releaseInterface(self.id, function(err) {
                 if (!err) {
                     self.altSetting = 0;
-                    self.refresh()
+                    self.refresh();
                 }
                 if (callback) {
-                    callback.call(self, err)
+                    callback.call(self, err);
                 }
             });
         }
     }
-  
+
     /**
      * Returns `false` if a kernel driver is not active; `true` if active.
      *
@@ -118,7 +118,7 @@ export class Interface {
     public isKernelDriverActive(): boolean {
         return this.device.__isKernelDriverActive(this.id);
     }
-  
+
     /**
      * Detaches the kernel driver from the interface.
      *
@@ -127,7 +127,7 @@ export class Interface {
     public detachKernelDriver(): void {
         return this.device.__detachKernelDriver(this.id);
     }
-  
+
     /**
      * Re-attaches the kernel driver for the interface.
      *
@@ -136,7 +136,7 @@ export class Interface {
     public attachKernelDriver(): void {
         return this.device.__attachKernelDriver(this.id);
     }
-  
+
     /**
      * Sets the alternate setting. It updates the `interface.endpoints` array to reflect the endpoints found in the alternate setting.
      *
@@ -154,9 +154,9 @@ export class Interface {
             if (callback) {
                 callback.call(self, err);
             }
-        })
+        });
     }
-  
+
     /**
      * Return the InEndpoint or OutEndpoint with the specified address.
      *

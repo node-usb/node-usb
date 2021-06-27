@@ -143,7 +143,7 @@ export class WebUSBDevice implements USBDevice {
             if (!this.opened) {
                 return;
             }
-    
+
             try {
                 if (this.configuration) {
                     for (const iface of this.configuration?.interfaces) {
@@ -168,7 +168,7 @@ export class WebUSBDevice implements USBDevice {
             this.deviceMutex.unlock();
         }
     }
-  
+
     public async selectConfiguration(configurationValue: number): Promise<void> {
         try {
             await this.deviceMutex.lock();
@@ -208,12 +208,12 @@ export class WebUSBDevice implements USBDevice {
             if (!this.configuration) {
                 throw new Error('claimInterface error: interface not found');
             }
-        
+
             const iface = this.configuration.interfaces.find(usbInterface => usbInterface.interfaceNumber === interfaceNumber);
             if (!iface) {
                 throw new Error('claimInterface error: interface not found');
             }
-    
+
             if (iface.claimed) {
                 return;
             }
@@ -262,7 +262,7 @@ export class WebUSBDevice implements USBDevice {
     public async selectAlternateInterface(interfaceNumber: number, alternateSetting: number): Promise<void> {
         try {
             await this.deviceMutex.lock();
-            
+
             if (!this.opened) {
                 throw new Error('selectAlternateInterface error: invalid state');
             }
@@ -485,10 +485,10 @@ export class WebUSBDevice implements USBDevice {
                     for (const endpoint of alternate.endpoints) {
                         endpoints.push({
                             endpointNumber: endpoint.bEndpointAddress & ENDPOINT_NUMBER_MASK,
-                            direction: endpoint.bEndpointAddress & LIBUSB_ENDPOINT_IN ? "in" : "out",
-                            type: (endpoint.bmAttributes & LIBUSB_TRANSFER_TYPE_MASK) === LIBUSB_TRANSFER_TYPE_BULK ? "bulk"
-                                : (endpoint.bmAttributes & LIBUSB_TRANSFER_TYPE_MASK) === LIBUSB_TRANSFER_TYPE_INTERRUPT ? "interrupt"
-                                : "isochronous",
+                            direction: endpoint.bEndpointAddress & LIBUSB_ENDPOINT_IN ? 'in' : 'out',
+                            type: (endpoint.bmAttributes & LIBUSB_TRANSFER_TYPE_MASK) === LIBUSB_TRANSFER_TYPE_BULK ? 'bulk'
+                                : (endpoint.bmAttributes & LIBUSB_TRANSFER_TYPE_MASK) === LIBUSB_TRANSFER_TYPE_INTERRUPT ? 'interrupt'
+                                    : 'isochronous',
                             packetSize: endpoint.wMaxPacketSize
                         });
                     }
@@ -500,25 +500,27 @@ export class WebUSBDevice implements USBDevice {
                         interfaceProtocol: alternate.bInterfaceProtocol,
                         interfaceName: await this.getStringDescriptor(alternate.iInterface),
                         endpoints
-                    })
+                    });
                 }
 
                 const interfaceNumber = iface[0].bInterfaceNumber;
-                const alternate = alternates.find(alt => alt.alternateSetting === this.device.interface(interfaceNumber).altSetting)!;
+                const alternate = alternates.find(alt => alt.alternateSetting === this.device.interface(interfaceNumber).altSetting);
 
-                interfaces.push({
-                    interfaceNumber,
-                    alternate,
-                    alternates,
-                    claimed: false
-                });
+                if (alternate) {
+                    interfaces.push({
+                        interfaceNumber,
+                        alternate,
+                        alternates,
+                        claimed: false
+                    });
+                }
             }
 
             configs.push({
                 configurationValue: config.bConfigurationValue,
                 configurationName: await this.getStringDescriptor(config.iConfiguration),
                 interfaces
-            })
+            });
         }
 
         return configs;
@@ -541,13 +543,13 @@ export class WebUSBDevice implements USBDevice {
 
     private controlTransferParamsToType(setup: USBControlTransferParameters, direction: number): number {
         const recipient = setup.recipient === 'device' ? LIBUSB_RECIPIENT_DEVICE
-                        : setup.recipient === 'interface' ? LIBUSB_RECIPIENT_INTERFACE
-                        : setup.recipient === 'endpoint' ? LIBUSB_RECIPIENT_ENDPOINT
-                        : LIBUSB_RECIPIENT_OTHER;
+            : setup.recipient === 'interface' ? LIBUSB_RECIPIENT_INTERFACE
+                : setup.recipient === 'endpoint' ? LIBUSB_RECIPIENT_ENDPOINT
+                    : LIBUSB_RECIPIENT_OTHER;
 
         const requestType = setup.requestType === 'standard' ? LIBUSB_REQUEST_TYPE_STANDARD
-                          : setup.requestType === 'class' ? LIBUSB_REQUEST_TYPE_CLASS
-                          : LIBUSB_REQUEST_TYPE_VENDOR;
+            : setup.requestType === 'class' ? LIBUSB_REQUEST_TYPE_CLASS
+                : LIBUSB_REQUEST_TYPE_VENDOR;
 
         return recipient | requestType | direction;
     }

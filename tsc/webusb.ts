@@ -50,34 +50,34 @@ export class WebUSB extends TypedEventTarget<USBEvents> implements USB {
     public async requestDevice(options?: USBDeviceRequestOptions): Promise<USBDevice> {
         // Must have options
         if (!options) {
-            throw new TypeError("requestDevice error: 1 argument required, but only 0 present");
+            throw new TypeError('requestDevice error: 1 argument required, but only 0 present');
         }
 
         // Options must be an object
         if (options.constructor !== {}.constructor) {
-            throw new TypeError("requestDevice error: parameter 1 (options) is not an object");
+            throw new TypeError('requestDevice error: parameter 1 (options) is not an object');
         }
 
         // Must have a filter
         if (!options.filters) {
-            throw new TypeError("requestDevice error: required member filters is undefined");
+            throw new TypeError('requestDevice error: required member filters is undefined');
         }
 
         // Filter must be an array
         if (options.filters.constructor !== [].constructor) {
-            throw new TypeError("requestDevice error: the provided value cannot be converted to a sequence");
+            throw new TypeError('requestDevice error: the provided value cannot be converted to a sequence');
         }
 
         // Check filters
         options.filters.forEach(filter => {
             // Protocol & Subclass
             if (filter.protocolCode && !filter.subclassCode) {
-                throw new TypeError("requestDevice error: subclass code is required");
+                throw new TypeError('requestDevice error: subclass code is required');
             }
 
             // Subclass & Class
             if (filter.subclassCode && !filter.classCode) {
-                throw new TypeError("requestDevice error: class code is required");
+                throw new TypeError('requestDevice error: class code is required');
             }
         });
 
@@ -85,15 +85,15 @@ export class WebUSB extends TypedEventTarget<USBEvents> implements USB {
         devices = devices.filter(device => this.filterDevice(options, device));
 
         if (devices.length === 0) {
-            throw new Error("requestDevice error: no devices found");
+            throw new Error('requestDevice error: no devices found');
         }
 
         try {
             // If no devicesFound function, select the first device found
             const device = this.options.devicesFound ? await this.options.devicesFound(devices) : devices[0];
-            
+
             if (!device) {
-                throw new Error("selected device not found");
+                throw new Error('selected device not found');
             }
 
             if (!this.replaceAllowedDevice(device)) {

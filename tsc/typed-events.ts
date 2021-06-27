@@ -11,8 +11,8 @@ export interface TypedEventEmitter<T> {
     on<K extends keyof T>(event: K, listener: (arg: T[K]) => void): void;
     off<K extends keyof T>(event: K, listener: (arg: T[K]) => void): void;
     once<K extends keyof T>(event: K, listener: (arg: T[K]) => void): void;
-    listeners<K extends keyof T>(event: K): Function[];
-    rawListeners<K extends keyof T>(event: K): Function[];
+    listeners<K extends keyof T>(event: K): ((arg: T[K]) => void)[];
+    rawListeners<K extends keyof T>(event: K): ((arg: T[K]) => void)[];
     removeAllListeners<K extends keyof T>(event?: K): void;
     emit<K extends keyof T>(event: K, arg: T[K]): boolean;
     listenerCount<K extends keyof T>(event: K): number;
@@ -32,7 +32,7 @@ export class TypedEventTarget<T extends { [key: string]: Event }> implements Eve
     public removeEventListener(type: string, listener: (event: T[keyof T]) => void): void {
         this.emitter.removeListener(type, listener);
     }
- 
+
     public dispatchEvent(event: T[keyof T]): boolean;
     public dispatchEvent(event: Event): boolean;
     public dispatchEvent(event: T[keyof T]): boolean {
