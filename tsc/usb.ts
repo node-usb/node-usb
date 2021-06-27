@@ -2,7 +2,7 @@ import { promisify } from 'util';
 import { EventEmitter } from 'events';
 import { ExtendedDevice } from './device';
 import * as usb from './bindings';
-import { EventListeners } from './typed-events';
+import type { EventListeners } from './typed-events';
 
 if (usb.INIT_ERROR) {
     console.warn('Failed to initialize libusb.');

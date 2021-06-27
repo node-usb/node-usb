@@ -1,5 +1,5 @@
+import * as usb from './usb';
 import { TypedEventTarget } from './typed-events';
-import { Device, getDeviceList } from './usb';
 import { WebUSBDevice } from './webusb-device';
 
 /**
@@ -136,18 +136,25 @@ export class WebUSB extends TypedEventTarget<USBEvents> implements USB {
         return devices;
     }
 
-    private loadDevices(preFilters?: Array<USBDeviceFilter>): Promise<USBDevice[]> {
-        let devices = getDeviceList();
+    private async loadDevices(preFilters?: Array<USBDeviceFilter>): Promise<USBDevice[]> {
+        let devices = usb.getDeviceList();
 
         if (preFilters) {
             // Pre-filter devices
             devices = this.preFilterDevices(devices, preFilters);
         }
 
-        return Promise.all(devices.map(device => WebUSBDevice.createInstance(device)));
+        const webDevices: USBDevice[] = [];
+
+        for (const device of devices) {
+            const webDevice = await WebUSBDevice.createInstance(device);
+            webDevices.push(webDevice);
+        }
+
+        return webDevices;
     }
 
-    private preFilterDevices(devices: Array<Device>, preFilters: Array<USBDeviceFilter>): Array<Device> {
+    private preFilterDevices(devices: Array<usb.Device>, preFilters: Array<USBDeviceFilter>): Array<usb.Device> {
         // Just pre-filter on vid/pid
         return devices.filter(device => preFilters.some(filter => {
             // Vendor

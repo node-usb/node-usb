@@ -1,22 +1,6 @@
+import * as usb from './usb';
 import { promisify } from 'util';
 import { Endpoint, InEndpoint, OutEndpoint } from './endpoint';
-import {
-    Device,
-    LIBUSB_ENDPOINT_IN,
-    LIBUSB_ENDPOINT_OUT,
-    LIBUSB_RECIPIENT_DEVICE,
-    LIBUSB_RECIPIENT_INTERFACE,
-    LIBUSB_RECIPIENT_ENDPOINT,
-    LIBUSB_RECIPIENT_OTHER,
-    LIBUSB_REQUEST_TYPE_STANDARD,
-    LIBUSB_REQUEST_TYPE_CLASS,
-    LIBUSB_REQUEST_TYPE_VENDOR,
-    LIBUSB_TRANSFER_STALL,
-    LIBUSB_TRANSFER_OVERFLOW,
-    LIBUSB_TRANSFER_TYPE_BULK,
-    LIBUSB_TRANSFER_TYPE_INTERRUPT
-} from './usb';
-
 const LIBUSB_TRANSFER_TYPE_MASK = 0x03;
 const ENDPOINT_NUMBER_MASK = 0x7f;
 const CLEAR_FEATURE = 0x01;
@@ -65,9 +49,9 @@ class Mutex {
  * Wrapper to make a node-usb device look like a webusb device
  */
 export class WebUSBDevice implements USBDevice {
-    public static async createInstance(device: Device): Promise<WebUSBDevice> {
+    public static async createInstance(device: usb.Device): Promise<WebUSBDevice> {
         const instance = new WebUSBDevice(device);
-        await instance.initialise();
+        await instance.initialize();
         return instance;
     }
 
@@ -90,7 +74,7 @@ export class WebUSBDevice implements USBDevice {
 
     private deviceMutex = new Mutex();
 
-    private constructor(private device: Device) {
+    private constructor(private device: usb.Device) {
         const usbVersion = this.decodeVersion(device.deviceDescriptor.bcdUSB);
         this.usbVersionMajor = usbVersion.major;
         this.usbVersionMinor = usbVersion.minor;
@@ -295,7 +279,7 @@ export class WebUSBDevice implements USBDevice {
     public async controlTransferIn(setup: USBControlTransferParameters, length: number): Promise<USBInTransferResult> {
         try {
             await this.deviceMutex.lock();
-            const type = this.controlTransferParamsToType(setup, LIBUSB_ENDPOINT_IN);
+            const type = this.controlTransferParamsToType(setup, usb.LIBUSB_ENDPOINT_IN);
             const controlTransfer = promisify(this.device.controlTransfer).bind(this.device);
             const result = await controlTransfer(type, setup.request, setup.value, setup.index, length);
 
@@ -304,13 +288,13 @@ export class WebUSBDevice implements USBDevice {
                 status: 'ok'
             };
         } catch (error) {
-            if (error.errno === LIBUSB_TRANSFER_STALL) {
+            if (error.errno === usb.LIBUSB_TRANSFER_STALL) {
                 return {
                     status: 'stall'
                 };
             }
 
-            if (error.errno === LIBUSB_TRANSFER_OVERFLOW) {
+            if (error.errno === usb.LIBUSB_TRANSFER_OVERFLOW) {
                 return {
                     status: 'babble'
                 };
@@ -325,7 +309,7 @@ export class WebUSBDevice implements USBDevice {
     public async controlTransferOut(setup: USBControlTransferParameters, data?: ArrayBuffer): Promise<USBOutTransferResult> {
         try {
             await this.deviceMutex.lock();
-            const type = this.controlTransferParamsToType(setup, LIBUSB_ENDPOINT_OUT);
+            const type = this.controlTransferParamsToType(setup, usb.LIBUSB_ENDPOINT_OUT);
             const controlTransfer = promisify(this.device.controlTransfer).bind(this.device);
             const buffer = data ? Buffer.from(data) : new Buffer(0);
             await controlTransfer(type, setup.request, setup.value, setup.index, buffer);
@@ -335,7 +319,7 @@ export class WebUSBDevice implements USBDevice {
                 status: 'ok'
             };
         } catch (error) {
-            if (error.errno === LIBUSB_TRANSFER_STALL) {
+            if (error.errno === usb.LIBUSB_TRANSFER_STALL) {
                 return {
                     bytesWritten: 0,
                     status: 'stall'
@@ -351,9 +335,9 @@ export class WebUSBDevice implements USBDevice {
     public async clearHalt(direction: USBDirection, endpointNumber: number): Promise<void> {
         try {
             await this.deviceMutex.lock();
-            const wIndex = endpointNumber | (direction === 'in' ? LIBUSB_ENDPOINT_IN : LIBUSB_ENDPOINT_OUT);
+            const wIndex = endpointNumber | (direction === 'in' ? usb.LIBUSB_ENDPOINT_IN : usb.LIBUSB_ENDPOINT_OUT);
             const controlTransfer = promisify(this.device.controlTransfer).bind(this.device);
-            await controlTransfer(LIBUSB_RECIPIENT_ENDPOINT, CLEAR_FEATURE, ENDPOINT_HALT, wIndex, 0);
+            await controlTransfer(usb.LIBUSB_RECIPIENT_ENDPOINT, CLEAR_FEATURE, ENDPOINT_HALT, wIndex, 0);
         } catch (error) {
             throw new Error(`clearHalt error: ${error}`);
         } finally {
@@ -364,7 +348,7 @@ export class WebUSBDevice implements USBDevice {
     public async transferIn(endpointNumber: number, length: number): Promise<USBInTransferResult> {
         try {
             await this.deviceMutex.lock();
-            const endpoint = this.getEndpoint(endpointNumber | LIBUSB_ENDPOINT_IN) as InEndpoint;
+            const endpoint = this.getEndpoint(endpointNumber | usb.LIBUSB_ENDPOINT_IN) as InEndpoint;
             const transfer = promisify(endpoint.transfer).bind(endpoint);
             const result = await transfer(length);
 
@@ -373,13 +357,13 @@ export class WebUSBDevice implements USBDevice {
                 status: 'ok'
             };
         } catch (error) {
-            if (error.errno === LIBUSB_TRANSFER_STALL) {
+            if (error.errno === usb.LIBUSB_TRANSFER_STALL) {
                 return {
                     status: 'stall'
                 };
             }
 
-            if (error.errno === LIBUSB_TRANSFER_OVERFLOW) {
+            if (error.errno === usb.LIBUSB_TRANSFER_OVERFLOW) {
                 return {
                     status: 'babble'
                 };
@@ -394,7 +378,7 @@ export class WebUSBDevice implements USBDevice {
     public async transferOut(endpointNumber: number, data: ArrayBuffer): Promise<USBOutTransferResult> {
         try {
             await this.deviceMutex.lock();
-            const endpoint = this.getEndpoint(endpointNumber | LIBUSB_ENDPOINT_OUT) as OutEndpoint;
+            const endpoint = this.getEndpoint(endpointNumber | usb.LIBUSB_ENDPOINT_OUT) as OutEndpoint;
             const transfer = promisify(endpoint.transfer).bind(endpoint);
             const buffer = Buffer.from(data);
             await transfer(buffer);
@@ -404,7 +388,7 @@ export class WebUSBDevice implements USBDevice {
                 status: 'ok'
             };
         } catch (error) {
-            if (error.errno === LIBUSB_TRANSFER_STALL) {
+            if (error.errno === usb.LIBUSB_TRANSFER_STALL) {
                 return {
                     bytesWritten: 0,
                     status: 'stall'
@@ -437,7 +421,7 @@ export class WebUSBDevice implements USBDevice {
         }
     }
 
-    private async initialise(): Promise<void> {
+    private async initialize(): Promise<void> {
         try {
             await this.deviceMutex.lock();
             this.device.open();
@@ -485,9 +469,9 @@ export class WebUSBDevice implements USBDevice {
                     for (const endpoint of alternate.endpoints) {
                         endpoints.push({
                             endpointNumber: endpoint.bEndpointAddress & ENDPOINT_NUMBER_MASK,
-                            direction: endpoint.bEndpointAddress & LIBUSB_ENDPOINT_IN ? 'in' : 'out',
-                            type: (endpoint.bmAttributes & LIBUSB_TRANSFER_TYPE_MASK) === LIBUSB_TRANSFER_TYPE_BULK ? 'bulk'
-                                : (endpoint.bmAttributes & LIBUSB_TRANSFER_TYPE_MASK) === LIBUSB_TRANSFER_TYPE_INTERRUPT ? 'interrupt'
+                            direction: endpoint.bEndpointAddress & usb.LIBUSB_ENDPOINT_IN ? 'in' : 'out',
+                            type: (endpoint.bmAttributes & LIBUSB_TRANSFER_TYPE_MASK) === usb.LIBUSB_TRANSFER_TYPE_BULK ? 'bulk'
+                                : (endpoint.bmAttributes & LIBUSB_TRANSFER_TYPE_MASK) === usb.LIBUSB_TRANSFER_TYPE_INTERRUPT ? 'interrupt'
                                     : 'isochronous',
                             packetSize: endpoint.wMaxPacketSize
                         });
@@ -542,14 +526,14 @@ export class WebUSBDevice implements USBDevice {
     }
 
     private controlTransferParamsToType(setup: USBControlTransferParameters, direction: number): number {
-        const recipient = setup.recipient === 'device' ? LIBUSB_RECIPIENT_DEVICE
-            : setup.recipient === 'interface' ? LIBUSB_RECIPIENT_INTERFACE
-                : setup.recipient === 'endpoint' ? LIBUSB_RECIPIENT_ENDPOINT
-                    : LIBUSB_RECIPIENT_OTHER;
+        const recipient = setup.recipient === 'device' ? usb.LIBUSB_RECIPIENT_DEVICE
+            : setup.recipient === 'interface' ? usb.LIBUSB_RECIPIENT_INTERFACE
+                : setup.recipient === 'endpoint' ? usb.LIBUSB_RECIPIENT_ENDPOINT
+                    : usb.LIBUSB_RECIPIENT_OTHER;
 
-        const requestType = setup.requestType === 'standard' ? LIBUSB_REQUEST_TYPE_STANDARD
-            : setup.requestType === 'class' ? LIBUSB_REQUEST_TYPE_CLASS
-                : LIBUSB_REQUEST_TYPE_VENDOR;
+        const requestType = setup.requestType === 'standard' ? usb.LIBUSB_REQUEST_TYPE_STANDARD
+            : setup.requestType === 'class' ? usb.LIBUSB_REQUEST_TYPE_CLASS
+                : usb.LIBUSB_REQUEST_TYPE_VENDOR;
 
         return recipient | requestType | direction;
     }
