@@ -8,6 +8,11 @@ const isBuffer = (obj: any): obj is Uint8Array => obj && obj instanceof Uint8Arr
 export abstract class Endpoint extends EventEmitter {
     public address: number;
 
+    protected pollTransfers: Transfer[] | undefined;
+    protected pollTransferSize = 0;
+    protected pollPending = 0;
+    public pollActive = false;
+
     /** Endpoint direction: `"in"` or `"out"`. */
     public abstract direction: 'in' | 'out';
 
@@ -41,18 +46,53 @@ export abstract class Endpoint extends EventEmitter {
      * @param timeout Timeout for the transfer (0 means unlimited).
      * @param callback Transfer completion callback.
      */
-    public makeTransfer(timeout: number, callback: (error: undefined | LibUSBException, buffer: Buffer, actualLength: number) => void): Transfer {
+    public makeTransfer(timeout: number, callback: (error: LibUSBException | undefined, buffer: Buffer, actualLength: number) => void): Transfer {
         return new Transfer(this.device, this.address, this.transferType, timeout, callback);
+    }
+
+    public startPoll(nTransfers = 3, transferSize = this.descriptor.wMaxPacketSize, callback: (error: LibUSBException | undefined, buffer: Buffer, actualLength: number) => void): Transfer[] {
+        if (this.pollTransfers) {
+            throw new Error('Polling already active');
+        }
+
+        this.pollTransferSize = transferSize;
+        this.pollActive = true;
+        this.pollPending = 0;
+
+        const transfers: Transfer[] = [];
+        for (let i = 0; i < nTransfers; i++) {
+            const transfer = this.makeTransfer(0, callback);
+            transfers[i] = transfer;
+        }
+        return transfers;
+    }
+
+    /**
+     * Stop polling.
+     *
+     * Further data may still be received. The `end` event is emitted and the callback is called once all transfers have completed or canceled.
+     *
+     * The device must be open to use this method.
+     * @param callback
+     */
+    public stopPoll(callback?: () => void): void {
+        if (!this.pollTransfers) {
+            throw new Error('Polling is not active.');
+        }
+        for (let i = 0; i < this.pollTransfers.length; i++) {
+            try {
+                this.pollTransfers[i].cancel();
+            } catch (err) {
+                this.emit('error', err);
+            }
+        }
+        this.pollActive = false;
+        if (callback) this.once('end', callback);
     }
 }
 
 /** Endpoints in the IN direction (device->PC) have this type. */
 export class InEndpoint extends Endpoint {
-
-    protected pollTransfers: Transfer[] | undefined;
-    protected pollTransferSize = 0;
-    protected pollPending = 0;
-    public pollActive = false;
 
     /** Endpoint direction. */
     public direction: 'in' | 'out' = 'in';
@@ -98,11 +138,11 @@ export class InEndpoint extends Endpoint {
      * @param nTransfers
      * @param transferSize
      */
-    public startPoll(nTransfers?: number, transferSize?: number): void {
+     public startPoll(nTransfers?: number, transferSize?: number, _callback?: (error: LibUSBException | undefined, buffer: Buffer, actualLength: number) => void): Transfer[] {
         const self = this;
-        this.pollTransfers = this.poll(nTransfers || 3, transferSize || this.descriptor.wMaxPacketSize, transferDone);
+        this.pollTransfers = super.startPoll(nTransfers, transferSize, transferDone);
 
-        function transferDone(error: undefined | LibUSBException, buffer: Buffer, actualLength: number, transfer: Transfer) {
+        function transferDone(this: Transfer, error: LibUSBException | undefined, buffer: Buffer, actualLength: number) {
             if (!error) {
                 self.emit('data', buffer.slice(0, actualLength));
             } else if (error.errno != LIBUSB_TRANSFER_CANCELLED) {
@@ -111,7 +151,7 @@ export class InEndpoint extends Endpoint {
             }
 
             if (self.pollActive) {
-                startTransfer(transfer);
+                startTransfer(this);
             } else {
                 self.pollPending--;
 
@@ -124,9 +164,7 @@ export class InEndpoint extends Endpoint {
 
         function startTransfer(transfer: Transfer) {
             try {
-                transfer.submit(Buffer.alloc(self.pollTransferSize), (error: undefined | LibUSBException, buffer: Buffer, actualLength: number) => {
-                    transferDone(error, buffer, actualLength, transfer);
-                });
+                transfer.submit(Buffer.alloc(self.pollTransferSize), transferDone);
             } catch (e) {
                 self.emit('error', e);
                 self.stopPoll();
@@ -135,48 +173,7 @@ export class InEndpoint extends Endpoint {
 
         this.pollTransfers.forEach(startTransfer);
         self.pollPending = this.pollTransfers.length;
-    }
-
-    private poll(nTransfers: number, transferSize: number, callback: (error: undefined | LibUSBException, buffer: Buffer, actualLength: number, transfer: Transfer) => void): Transfer[] {
-        if (this.pollTransfers) {
-            throw new Error('Polling already active');
-        }
-
-        this.pollTransferSize = transferSize;
-        this.pollActive = true;
-        this.pollPending = 0;
-
-        const transfers: Transfer[] = [];
-        for (let i = 0; i < nTransfers; i++) {
-            const transfer = this.makeTransfer(0, (error: undefined | LibUSBException, buffer: Buffer, actualLength: number) => {
-                callback(error, buffer, actualLength, transfer);
-            });
-            transfers[i] = transfer;
-        }
-        return transfers;
-    }
-
-    /**
-     * Stop polling.
-     *
-     * Further data may still be received. The `end` event is emitted and the callback is called once all transfers have completed or canceled.
-     *
-     * The device must be open to use this method.
-     * @param callback
-     */
-    public stopPoll(callback?: () => void): void {
-        if (!this.pollTransfers) {
-            throw new Error('Polling is not active.');
-        }
-        for (let i = 0; i < this.pollTransfers.length; i++) {
-            try {
-                this.pollTransfers[i].cancel();
-            } catch (err) {
-                this.emit('error', err);
-            }
-        }
-        this.pollActive = false;
-        if (callback) this.once('end', callback);
+        return this.pollTransfers;
     }
 }
 
