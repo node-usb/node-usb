@@ -15,6 +15,15 @@ export interface USBOptions {
 /**
  * @hidden
  */
+interface Device {
+    vendorId?: number;
+    productId?: number;
+    serialNumber?: string;
+}
+
+/**
+ * @hidden
+ */
 export type USBEvents = {
     /**
      * USBDevice connected event
@@ -27,8 +36,8 @@ export type USBEvents = {
 };
 
 export class WebUSB extends TypedEventTarget<USBEvents> implements USB {
-
-    private allowedDevices: Array<USBDevice> = [];
+    
+    private allowedDevices: Array<Device> = [];
 
     constructor(private options: USBOptions = {}) {
         super();
@@ -97,7 +106,11 @@ export class WebUSB extends TypedEventTarget<USBEvents> implements USB {
             }
 
             if (!this.replaceAllowedDevice(device)) {
-                this.allowedDevices.push(device);
+                this.allowedDevices.push({
+                    vendorId: device.vendorId,
+                    productId: device.productId,
+                    serialNumber: device.serialNumber
+                });
             }
 
             return device;
@@ -115,9 +128,6 @@ export class WebUSB extends TypedEventTarget<USBEvents> implements USB {
         const preFilters = this.allowedDevices.map(device => ({
             vendorId: device.vendorId || undefined,
             productId: device.productId || undefined,
-            classCode: device.deviceClass || undefined,
-            subclassCode: device.deviceSubclass || undefined,
-            protocolCode: device.deviceProtocol || undefined,
             serialNumber: device.serialNumber || undefined
         }));
 
@@ -136,7 +146,7 @@ export class WebUSB extends TypedEventTarget<USBEvents> implements USB {
         return devices;
     }
 
-    private async loadDevices(preFilters?: Array<USBDeviceFilter>): Promise<USBDevice[]> {
+    private async loadDevices(preFilters?: Array<Device>): Promise<USBDevice[]> {
         let devices = usb.getDeviceList();
 
         if (preFilters) {
@@ -154,7 +164,7 @@ export class WebUSB extends TypedEventTarget<USBEvents> implements USB {
         return webDevices;
     }
 
-    private preFilterDevices(devices: Array<usb.Device>, preFilters: Array<USBDeviceFilter>): Array<usb.Device> {
+    private preFilterDevices(devices: Array<usb.Device>, preFilters: Array<Device>): Array<usb.Device> {
         // Just pre-filter on vid/pid
         return devices.filter(device => preFilters.some(filter => {
             // Vendor
@@ -168,7 +178,7 @@ export class WebUSB extends TypedEventTarget<USBEvents> implements USB {
         }));
     }
 
-    private isSameDevice(device1: USBDevice, device2: USBDevice): boolean {
+    private isSameDevice(device1: Device, device2: Device): boolean {
         return (device1.productId === device2.productId
              && device1.vendorId === device2.vendorId
              && device1.serialNumber === device2.serialNumber);
@@ -177,7 +187,11 @@ export class WebUSB extends TypedEventTarget<USBEvents> implements USB {
     private replaceAllowedDevice(device: USBDevice): boolean {
         for (const i in this.allowedDevices) {
             if (this.isSameDevice(device, this.allowedDevices[i])) {
-                this.allowedDevices[i] = device;
+                this.allowedDevices[i] = {
+                    vendorId: device.vendorId,
+                    productId: device.productId,
+                    serialNumber: device.serialNumber
+                };
                 return true;
             }
         }
