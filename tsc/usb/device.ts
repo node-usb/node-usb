@@ -1,15 +1,4 @@
-import {
-    Device,
-    LibUSBException,
-    LIBUSB_CONTROL_SETUP_SIZE,
-    LIBUSB_DT_BOS, LIBUSB_DT_BOS_SIZE,
-    LIBUSB_DT_STRING, LIBUSB_ENDPOINT_IN,
-    LIBUSB_ERROR_NOT_FOUND,
-    LIBUSB_REQUEST_GET_DESCRIPTOR,
-    LIBUSB_TRANSFER_STALL,
-    LIBUSB_TRANSFER_TYPE_CONTROL,
-    Transfer
-} from './bindings';
+import * as usb from './bindings';
 import { Interface } from './interface';
 import { Capability } from './capability';
 import { BosDescriptor, ConfigDescriptor } from './descriptors';
@@ -39,10 +28,10 @@ export class ExtendedDevice {
      */
     public get configDescriptor(): ConfigDescriptor | undefined {
         try {
-            return (this as unknown as Device).__getConfigDescriptor();
+            return (this as unknown as usb.Device).__getConfigDescriptor();
         } catch (e) {
             // Check descriptor exists
-            if (e.errno == LIBUSB_ERROR_NOT_FOUND) {
+            if (e.errno === usb.LIBUSB_ERROR_NOT_FOUND) {
                 return undefined;
             }
             throw e;
@@ -54,10 +43,10 @@ export class ExtendedDevice {
      */
     public get allConfigDescriptors(): ConfigDescriptor[] {
         try {
-            return (this as unknown as Device).__getAllConfigDescriptors();
+            return (this as unknown as usb.Device).__getAllConfigDescriptors();
         } catch (e) {
             // Check descriptors exist
-            if (e.errno == LIBUSB_ERROR_NOT_FOUND) {
+            if (e.errno === usb.LIBUSB_ERROR_NOT_FOUND) {
                 return [];
             }
             throw e;
@@ -67,15 +56,15 @@ export class ExtendedDevice {
     /**
      * Contains the parent of the device, such as a hub. If there is no parent this property is set to `null`.
      */
-    public get parent(): Device {
-        return (this as unknown as Device).__getParent();
+    public get parent(): usb.Device {
+        return (this as unknown as usb.Device).__getParent();
     }
 
     /**
      * Open the device.
      * @param defaultConfig
      */
-    public open(this: Device, defaultConfig = true): void {
+    public open(this: usb.Device, defaultConfig = true): void {
         this.__open();
         if (defaultConfig === false) {
             return;
@@ -92,7 +81,7 @@ export class ExtendedDevice {
      *
      * The device must be open to use this method.
      */
-    public close(this: Device): void {
+    public close(this: usb.Device): void {
         this.__close();
         this.interfaces = undefined;
     }
@@ -105,10 +94,10 @@ export class ExtendedDevice {
      * @param desired
      * @param callback
      */
-    public setConfiguration(this: Device, desired: number, callback?: (error: undefined | LibUSBException) => void): void {
+    public setConfiguration(this: usb.Device, desired: number, callback?: (error: usb.LibUSBException | undefined) => void): void {
         const self = this;
-        this.__setConfiguration(desired, function (err) {
-            if (!err) {
+        this.__setConfiguration(desired, error => {
+            if (!error) {
                 self.interfaces = [];
                 const len = self.configDescriptor ? self.configDescriptor.interfaces.length : 0;
                 for (let i = 0; i < len; i++) {
@@ -116,7 +105,7 @@ export class ExtendedDevice {
                 }
             }
             if (callback) {
-                callback.call(self, err);
+                callback.call(self, error);
             }
         });
     }
@@ -136,10 +125,10 @@ export class ExtendedDevice {
      * @param data_or_length
      * @param callback
      */
-    public controlTransfer(this: Device, bmRequestType: number, bRequest: number, wValue: number, wIndex: number, data_or_length: number | Buffer,
-        callback?: (error: undefined | LibUSBException, buffer?: Buffer) => void): Device {
+    public controlTransfer(this: usb.Device, bmRequestType: number, bRequest: number, wValue: number, wIndex: number, data_or_length: number | Buffer,
+        callback?: (error: usb.LibUSBException | undefined, buffer?: Buffer) => void): usb.Device {
         const self = this;
-        const isIn = !!(bmRequestType & LIBUSB_ENDPOINT_IN);
+        const isIn = !!(bmRequestType & usb.LIBUSB_ENDPOINT_IN);
         const wLength = isIn ? data_or_length as number : (data_or_length as Buffer).length;
 
         if (isIn) {
@@ -154,7 +143,7 @@ export class ExtendedDevice {
 
         // Buffer for the setup packet
         // http://libusbx.sourceforge.net/api-1.0/structlibusb__control__setup.html
-        const buf = Buffer.alloc(wLength + LIBUSB_CONTROL_SETUP_SIZE);
+        const buf = Buffer.alloc(wLength + usb.LIBUSB_CONTROL_SETUP_SIZE);
         buf.writeUInt8(bmRequestType, 0);
         buf.writeUInt8(bRequest, 1);
         buf.writeUInt16LE(wValue, 2);
@@ -162,14 +151,14 @@ export class ExtendedDevice {
         buf.writeUInt16LE(wLength, 6);
 
         if (!isIn) {
-            buf.set(data_or_length as Buffer, LIBUSB_CONTROL_SETUP_SIZE);
+            buf.set(data_or_length as Buffer, usb.LIBUSB_CONTROL_SETUP_SIZE);
         }
 
-        const transfer = new Transfer(this, 0, LIBUSB_TRANSFER_TYPE_CONTROL, self.timeout,
-            function (error, buf, actual) {
+        const transfer = new usb.Transfer(this, 0, usb.LIBUSB_TRANSFER_TYPE_CONTROL, self.timeout,
+            (error, buf, actual) => {
                 if (callback) {
                     if (isIn) {
-                        callback.call(self, error, buf.slice(LIBUSB_CONTROL_SETUP_SIZE, LIBUSB_CONTROL_SETUP_SIZE + actual));
+                        callback.call(self, error, buf.slice(usb.LIBUSB_CONTROL_SETUP_SIZE, usb.LIBUSB_CONTROL_SETUP_SIZE + actual));
                     } else {
                         callback.call(self, error);
                     }
@@ -181,7 +170,7 @@ export class ExtendedDevice {
             transfer.submit(buf);
         } catch (e) {
             if (callback) {
-                process.nextTick(function () { callback.call(self, e); });
+                process.nextTick(() => callback.call(self, e));
             }
         }
         return this;
@@ -193,14 +182,14 @@ export class ExtendedDevice {
      * The device must be open to use this method.
      * @param addr
      */
-    public interface(this: Device, addr: number): Interface {
+    public interface(this: usb.Device, addr: number): Interface {
         if (!this.interfaces) {
             throw new Error('Device must be open before searching for interfaces');
         }
 
         addr = addr || 0;
         for (let i = 0; i < this.interfaces.length; i++) {
-            if (this.interfaces[i].interfaceNumber == addr) {
+            if (this.interfaces[i].interfaceNumber === addr) {
                 return this.interfaces[i];
             }
         }
@@ -215,16 +204,16 @@ export class ExtendedDevice {
      * @param desc_index
      * @param callback
      */
-    public getStringDescriptor(this: Device, desc_index: number, callback: (error?: LibUSBException, value?: string) => void): void {
+    public getStringDescriptor(this: usb.Device, desc_index: number, callback: (error?: usb.LibUSBException, value?: string) => void): void {
         const langid = 0x0409;
         const length = 255;
         this.controlTransfer(
-            LIBUSB_ENDPOINT_IN,
-            LIBUSB_REQUEST_GET_DESCRIPTOR,
-            ((LIBUSB_DT_STRING << 8) | desc_index),
+            usb.LIBUSB_ENDPOINT_IN,
+            usb.LIBUSB_REQUEST_GET_DESCRIPTOR,
+            ((usb.LIBUSB_DT_STRING << 8) | desc_index),
             langid,
             length,
-            (error?: LibUSBException, buffer?: Buffer) => {
+            (error?: usb.LibUSBException, buffer?: Buffer) => {
                 if (error) {
                     return callback(error);
                 }
@@ -239,7 +228,7 @@ export class ExtendedDevice {
      * The device must be open to use this method.
      * @param callback
      */
-    public getBosDescriptor(this: Device, callback: (error?: LibUSBException, descriptor?: BosDescriptor) => void): void {
+    public getBosDescriptor(this: usb.Device, callback: (error?: usb.LibUSBException, descriptor?: BosDescriptor) => void): void {
         const self = this;
 
         if (this._bosDescriptor) {
@@ -253,15 +242,15 @@ export class ExtendedDevice {
         }
 
         this.controlTransfer(
-            LIBUSB_ENDPOINT_IN,
-            LIBUSB_REQUEST_GET_DESCRIPTOR,
-            (LIBUSB_DT_BOS << 8),
+            usb.LIBUSB_ENDPOINT_IN,
+            usb.LIBUSB_REQUEST_GET_DESCRIPTOR,
+            (usb.LIBUSB_DT_BOS << 8),
             0,
-            LIBUSB_DT_BOS_SIZE,
-            function (error, buffer) {
+            usb.LIBUSB_DT_BOS_SIZE,
+            (error, buffer) => {
                 if (error) {
                     // Check BOS descriptor exists
-                    if (error.errno == LIBUSB_TRANSFER_STALL) return callback(undefined, undefined);
+                    if (error.errno === usb.LIBUSB_TRANSFER_STALL) return callback(undefined, undefined);
                     return callback(error, undefined);
                 }
 
@@ -271,15 +260,15 @@ export class ExtendedDevice {
 
                 const totalLength = buffer.readUInt16LE(2);
                 self.controlTransfer(
-                    LIBUSB_ENDPOINT_IN,
-                    LIBUSB_REQUEST_GET_DESCRIPTOR,
-                    (LIBUSB_DT_BOS << 8),
+                    usb.LIBUSB_ENDPOINT_IN,
+                    usb.LIBUSB_REQUEST_GET_DESCRIPTOR,
+                    (usb.LIBUSB_DT_BOS << 8),
                     0,
                     totalLength,
-                    function (error, buffer) {
+                    (error, buffer) => {
                         if (error) {
                             // Check BOS descriptor exists
-                            if (error.errno == LIBUSB_TRANSFER_STALL) return callback(undefined, undefined);
+                            if (error.errno === usb.LIBUSB_TRANSFER_STALL) return callback(undefined, undefined);
                             return callback(error, undefined);
                         }
 
@@ -295,7 +284,7 @@ export class ExtendedDevice {
                             capabilities: []
                         };
 
-                        let i = LIBUSB_DT_BOS_SIZE;
+                        let i = usb.LIBUSB_DT_BOS_SIZE;
                         while (i < descriptor.wTotalLength) {
                             const capability = {
                                 bLength: buffer.readUInt8(i + 0),
@@ -323,11 +312,11 @@ export class ExtendedDevice {
      * The device must be open to use this method.
      * @param callback
      */
-    public getCapabilities(this: Device, callback: (error: undefined | LibUSBException, capabilities?: Capability[]) => void): void {
+    public getCapabilities(this: usb.Device, callback: (error: usb.LibUSBException | undefined, capabilities?: Capability[]) => void): void {
         const capabilities: Capability[] = [];
         const self = this;
 
-        this.getBosDescriptor(function (error, descriptor) {
+        this.getBosDescriptor((error, descriptor) => {
             if (error) return callback(error, undefined);
 
             const len = descriptor ? descriptor.capabilities.length : 0;

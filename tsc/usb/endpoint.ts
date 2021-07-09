@@ -28,7 +28,7 @@ export abstract class Endpoint extends EventEmitter {
     }
 
     /** Clear the halt/stall condition for this endpoint. */
-    public clearHalt(callback: (error: undefined | LibUSBException) => void): void {
+    public clearHalt(callback: (error: LibUSBException | undefined) => void): void {
         return this.device.__clearHalt(this.address, callback);
     }
 
@@ -72,18 +72,18 @@ export class InEndpoint extends Endpoint {
      * @param length
      * @param callback
      */
-    public transfer(length: number, callback: (error: undefined | LibUSBException, data?: Buffer) => void): InEndpoint {
+    public transfer(length: number, callback: (error: LibUSBException | undefined, data?: Buffer) => void): InEndpoint {
         const self = this;
         const buffer = Buffer.alloc(length);
 
-        function cb(error: undefined | LibUSBException, _buffer?: Buffer, actualLength?: number) {
+        const cb = (error: LibUSBException | undefined, _buffer?: Buffer, actualLength?: number) => {
             callback.call(self, error, buffer.slice(0, actualLength));
-        }
+        };
 
         try {
             this.makeTransfer(this.timeout, cb).submit(buffer);
         } catch (e) {
-            process.nextTick(function () { callback.call(self, e); });
+            process.nextTick(() => callback.call(self, e));
         }
         return this;
     }
@@ -115,21 +115,21 @@ export class InEndpoint extends Endpoint {
             } else {
                 self.pollPending--;
 
-                if (self.pollPending == 0) {
+                if (self.pollPending === 0) {
                     self.pollTransfers = [];
                     self.emit('end');
                 }
             }
         }
 
-        function startTransfer(transfer: Transfer) {
+        const startTransfer = (transfer: Transfer) => {
             try {
                 transfer.submit(Buffer.alloc(self.pollTransferSize), transferDone);
             } catch (e) {
                 self.emit('error', e);
                 self.stopPoll();
             }
-        }
+        };
 
         this.pollTransfers.forEach(startTransfer);
         self.pollPending = this.pollTransfers.length;
@@ -168,8 +168,8 @@ export class InEndpoint extends Endpoint {
         for (let i = 0; i < this.pollTransfers.length; i++) {
             try {
                 this.pollTransfers[i].cancel();
-            } catch (err) {
-                this.emit('error', err);
+            } catch (error) {
+                this.emit('error', error);
             }
         }
         this.pollActive = false;
@@ -194,7 +194,7 @@ export class OutEndpoint extends Endpoint {
      * @param buffer
      * @param callback
      */
-    public transfer(buffer: Buffer, callback?: (error: undefined | LibUSBException) => void): OutEndpoint {
+    public transfer(buffer: Buffer, callback?: (error: LibUSBException | undefined) => void): OutEndpoint {
         const self = this;
         if (!buffer) {
             buffer = Buffer.alloc(0);
@@ -202,21 +202,23 @@ export class OutEndpoint extends Endpoint {
             buffer = Buffer.from(buffer);
         }
 
-        function cb(error: undefined | LibUSBException) {
-            if (callback) callback.call(self, error);
-        }
+        const cb = (error: LibUSBException | undefined) => {
+            if (callback) {
+                callback.call(self, error);
+            }
+        };
 
         try {
             this.makeTransfer(this.timeout, cb).submit(buffer);
         } catch (e) {
-            process.nextTick(function () { cb(e); });
+            process.nextTick(() => cb(e));
         }
 
         return this;
     }
 
-    public transferWithZLP(buffer: Buffer, callback: (error: undefined | LibUSBException) => void): void {
-        if (buffer.length % this.descriptor.wMaxPacketSize == 0) {
+    public transferWithZLP(buffer: Buffer, callback: (error: LibUSBException | undefined) => void): void {
+        if (buffer.length % this.descriptor.wMaxPacketSize === 0) {
             this.transfer(buffer);
             this.transfer(Buffer.alloc(0), callback);
         } else {

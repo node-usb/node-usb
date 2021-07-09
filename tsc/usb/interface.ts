@@ -52,7 +52,7 @@ export class Interface {
      * The device must be open to use this method.
      * @param callback
      */
-    public release(callback?: (error: undefined | LibUSBException) => void): void;
+    public release(callback?: (error?: LibUSBException) => void): void;
 
     /**
      * Releases the interface and resets the alternate setting. Calls callback when complete.
@@ -66,8 +66,8 @@ export class Interface {
      * @param closeEndpoints
      * @param callback
      */
-    public release(closeEndpoints?: boolean, callback?: (error: undefined | LibUSBException) => void): void;
-    public release(closeEndpointsOrCallback?: boolean | ((error: undefined | LibUSBException) => void), callback?: (error: undefined | LibUSBException) => void): void {
+    public release(closeEndpoints?: boolean, callback?: (error?: LibUSBException) => void): void;
+    public release(closeEndpointsOrCallback?: boolean | ((error?: LibUSBException) => void), callback?: (error: LibUSBException | undefined) => void): void {
 
         let closeEndpoints = false;
         if (typeof closeEndpointsOrCallback === 'boolean') {
@@ -77,34 +77,34 @@ export class Interface {
         }
 
         const self = this;
-        if (!closeEndpoints || this.endpoints.length == 0) {
+        const next = () => {
+            self.device.__releaseInterface(self.id, error => {
+                if (!error) {
+                    self.altSetting = 0;
+                    self.refresh();
+                }
+                if (callback) {
+                    callback.call(self, error);
+                }
+            });
+        };
+
+        if (!closeEndpoints || this.endpoints.length === 0) {
             next();
         } else {
             let n = self.endpoints.length;
-            self.endpoints.forEach(function (ep) {
+            self.endpoints.forEach(ep => {
                 if (ep.direction === 'in' && (ep as InEndpoint).pollActive) {
-                    ep.once('end', function () {
-                        if (--n == 0) {
+                    ep.once('end', () => {
+                        if (--n === 0) {
                             next();
                         }
                     });
                     (ep as InEndpoint).stopPoll();
                 } else {
-                    if (--n == 0) {
+                    if (--n === 0) {
                         next();
                     }
-                }
-            });
-        }
-
-        function next() {
-            self.device.__releaseInterface(self.id, function(err) {
-                if (!err) {
-                    self.altSetting = 0;
-                    self.refresh();
-                }
-                if (callback) {
-                    callback.call(self, err);
                 }
             });
         }
@@ -144,15 +144,15 @@ export class Interface {
      * @param altSetting
      * @param callback
      */
-    public setAltSetting(altSetting: number, callback?: (error: undefined | LibUSBException) => void): void {
+    public setAltSetting(altSetting: number, callback?: (error: LibUSBException | undefined) => void): void {
         const self = this;
-        this.device.__setInterface(this.id, altSetting, function(err){
-            if (!err){
+        this.device.__setInterface(this.id, altSetting, error => {
+            if (!error){
                 self.altSetting = altSetting;
                 self.refresh();
             }
             if (callback) {
-                callback.call(self, err);
+                callback.call(self, error);
             }
         });
     }

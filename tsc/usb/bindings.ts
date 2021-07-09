@@ -1,8 +1,6 @@
-// Type definitions for node-usb 1.5
-// Project: https://github.com/tessel/node-usb
-// Definitions by: Eric Brody <https://github.com/underscorebrody>
-//                 Rob Moran <https://github.com/thegecko>
-// Definitions: https://github.com/borisyankov/DefinitelyTyped
+// Definitions from DefinitelyTyped, thanks to:
+//  Eric Brody <https://github.com/underscorebrody>
+//  Rob Moran <https://github.com/thegecko>
 
 import type { DeviceDescriptor, ConfigDescriptor, BosDescriptor } from './descriptors';
 
@@ -39,7 +37,7 @@ export declare class Transfer {
      *
      * @param buffer Buffer where data will be written (for IN transfers) or read from (for OUT transfers).
      */
-    submit(buffer: Buffer, callback?: (error: undefined | LibUSBException, buffer: Buffer, actualLength: number) => void): Transfer;
+    submit(buffer: Buffer, callback?: (error: LibUSBException | undefined, buffer: Buffer, actualLength: number) => void): Transfer;
 
     /**
      * Cancel the transfer.
@@ -71,7 +69,7 @@ export declare class Device {
     __getConfigDescriptor(): ConfigDescriptor;
     __getAllConfigDescriptors(): ConfigDescriptor[];
     __setConfiguration(desired: number, callback: (error?: LibUSBException) => void): void;
-    __clearHalt(addr: number, callback: (error: undefined | LibUSBException) => void): void;
+    __clearHalt(addr: number, callback: (error?: LibUSBException) => void): void;
     __setInterface(addr: number, altSetting: number, callback: (error?: LibUSBException) => void): void;
     __claimInterface(addr: number): void;
     __releaseInterface(addr: number, callback: (error?: LibUSBException) => void): void;
@@ -85,7 +83,7 @@ export declare class Device {
     * The device must be open to use this method.
     * @param callback
     */
-    reset(callback: (error: undefined | LibUSBException) => void): void;
+    reset(callback: (error?: LibUSBException) => void): void;
 }
 
 /**
