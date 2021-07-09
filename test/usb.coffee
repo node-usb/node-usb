@@ -69,7 +69,7 @@ describe 'Device', ->
 				assert.ok(e == undefined, e)
 				done()
 
-		it "should fail when bmRequestType doesn't match buffer / length", ->
+		it 'should fail when bmRequestType doesn\'t match buffer / length', ->
 			assert.throws(-> device.controlTransfer(0x40, 0x81, 0, 0, 64))
 
 		it 'should IN transfer when the IN bit is set', (done) ->

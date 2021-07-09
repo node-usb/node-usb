@@ -311,7 +311,7 @@ export class WebUSBDevice implements USBDevice {
             await this.deviceMutex.lock();
             const type = this.controlTransferParamsToType(setup, usb.LIBUSB_ENDPOINT_OUT);
             const controlTransfer = promisify(this.device.controlTransfer).bind(this.device);
-            const buffer = data ? Buffer.from(data) : new Buffer(0);
+            const buffer = data ? Buffer.from(data) : Buffer.alloc(0);
             await controlTransfer(type, setup.request, setup.value, setup.index, buffer);
 
             return {

@@ -49,15 +49,33 @@ describe 'Device properties', ->
 		assert.equal(device.vendorId, 0x59e3)
 		assert.equal(device.productId, 0x0a23)
 
-	it 'should have configurations', ->
-		assert.ok(device.configurations.length > 0)
+	it 'should have a single configuration', ->
+		assert.equal(device.configurations.length, 1)
+		assert.equal(device.configurations[0].configurationValue, 1)
 
 	it 'should have a configuration property', ->
-		assert.ok(device.configuration != undefined)
+		assert.notEqual(device.configuration, undefined)
 
-	it 'gets string descriptors', ->
+	it 'should have a single interface', ->
+		assert.equal(device.configuration.interfaces.length, 1)
+		assert.equal(device.configuration.interfaces[0].interfaceNumber, 0)
+
+	it 'should have a single alternate', ->
+		assert.equal(device.configuration.interfaces[0].alternates.length, 1)
+		assert.equal(device.configuration.interfaces[0].alternates[0].alternateSetting, 0)
+
+describe 'String descriptors', ->
+	device = null
+	before ->
+		device = await webusb.requestDevice({ filters: [{ vendorId: 0x59e3 }] });
+
+	it 'gets serialNumber string', ->
 		assert.equal(device.serialNumber, "TEST_DEVICE")
+
+	it 'gets manufacturerName string', ->
 		assert.equal(device.manufacturerName, "Nonolith Labs")
+
+	it 'gets productName string', ->
 		assert.equal(device.productName, "STM32F103 Test Device")
 
 describe 'Device access', ->
@@ -75,19 +93,97 @@ describe 'Device access', ->
 		await device.close()
 		assert.equal(device.opened, false)
 
-#	after ->
-#		device.close()
+describe 'Configurations', ->
+	device = null
+	before ->
+		device = await webusb.requestDevice({ filters: [{ vendorId: 0x59e3 }] });
+		await device.open()
 
-#  attribute EventHandler onconnect;
-#  attribute EventHandler ondisconnect;
+	it 'selects existing configuration', ->
+		assert.doesNotReject(device.selectConfiguration(1))
 
-#  Promise<undefined> selectConfiguration(octet configurationValue);
-#  Promise<undefined> claimInterface(octet interfaceNumber);
-#  Promise<undefined> releaseInterface(octet interfaceNumber);
-#  Promise<undefined> selectAlternateInterface(octet interfaceNumber, octet alternateSetting);
+	it 'fails to select missing configuration', ->
+		assert.rejects(device.selectConfiguration(99))
 
-#  Promise<USBInTransferResult> controlTransferIn(USBControlTransferParameters setup, unsigned short length);
-#  Promise<USBOutTransferResult> controlTransferOut(USBControlTransferParameters setup, optional BufferSource data);
+	after ->
+		device.close()
 
-#  Promise<USBInTransferResult> transferIn(octet endpointNumber, unsigned long length);
-#  Promise<USBOutTransferResult> transferOut(octet endpointNumber, BufferSource data);
+describe 'Interfaces', ->
+	device = null
+	before ->
+		device = await webusb.requestDevice({ filters: [{ vendorId: 0x59e3 }] });
+		await device.open()
+
+	it 'claims existing interface', ->
+		assert.doesNotReject(device.claimInterface(0))
+
+	it 'fails to claim missing interface', ->
+		assert.rejects(device.claimInterface(99))
+
+	it 'releases existing interface', ->
+		assert.doesNotReject(device.releaseInterface(0))
+
+	it 'fails to release missing interface', ->
+		assert.rejects(device.releaseInterface(99))
+
+	after ->
+		device.close()
+
+describe 'Alternates', ->
+	device = null
+	before ->
+		device = await webusb.requestDevice({ filters: [{ vendorId: 0x59e3 }] });
+		await device.open()
+		await device.claimInterface(0)
+
+	it 'selects existing alternate', ->
+		assert.doesNotReject(device.selectAlternateInterface(0, 0))
+
+	after ->
+		device.close()
+
+describe 'Transfers', ->
+	device = null
+	b = Uint8Array.from([0x30...0x40]).buffer
+
+	before ->
+		device = await webusb.requestDevice({ filters: [{ vendorId: 0x59e3 }] });
+		await device.open()
+		await device.claimInterface(0)
+
+	it 'should control transfer OUT', ->
+		transferResult = await device.controlTransferOut({
+			requestType: 'device',
+			recipient: 'vendor';
+			request: 0x81,
+			value: 0,
+			index: 0
+		}, b)
+
+		assert.equal(transferResult.status, 'ok')
+		assert.equal(transferResult.bytesWritten, b.byteLength)
+
+	it 'should control transfer IN', ->
+		transferResult = await device.controlTransferIn({
+			requestType: 'device',
+			recipient: 'vendor';
+			request: 0x81,
+			value: 0,
+			index: 0
+		}, 128)
+
+		assert.equal(transferResult.status, 'ok')
+		assert.equal(transferResult.data.buffer.toString(), b.toString())
+
+	it 'should transfer OUT', ->
+		transferResult = await device.transferOut(2, b)
+		assert.equal(transferResult.status, 'ok')
+		assert.equal(transferResult.bytesWritten, b.byteLength)
+
+	it 'should transfer IN', ->
+		transferResult = await device.transferIn(1, 64)
+		assert.equal(transferResult.status, 'ok')
+		assert.equal(transferResult.data.byteLength, 64)
+
+	after ->
+		device.close()
