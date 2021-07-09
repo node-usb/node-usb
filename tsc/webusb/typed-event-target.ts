@@ -1,10 +1,5 @@
 import { EventEmitter } from 'events';
 
-export interface EventListeners<T> {
-    newListener: keyof T;
-    removeListener: keyof T;
-}
-
 export class TypedEventTarget<T extends { [key: string]: Event }> implements EventTarget {
     private emitter = new EventEmitter();
 

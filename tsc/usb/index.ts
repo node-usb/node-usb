@@ -2,7 +2,6 @@ import { promisify } from 'util';
 import { EventEmitter } from 'events';
 import { ExtendedDevice } from './device';
 import * as usb from './bindings';
-import type { EventListeners } from './typed-events';
 
 if (usb.INIT_ERROR) {
     console.warn('Failed to initialize libusb.');
@@ -13,6 +12,11 @@ Object.setPrototypeOf(usb, EventEmitter.prototype);
 Object.getOwnPropertyNames(ExtendedDevice.prototype).forEach(name => {
     Object.defineProperty(usb.Device.prototype, name, Object.getOwnPropertyDescriptor(ExtendedDevice.prototype, name) || Object.create(null));
 });
+
+interface EventListeners<T> {
+    newListener: keyof T;
+    removeListener: keyof T;
+}
 
 declare module './bindings' {
 	interface Device extends ExtendedDevice {

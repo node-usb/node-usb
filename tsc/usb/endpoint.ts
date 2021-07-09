@@ -138,7 +138,7 @@ export class InEndpoint extends Endpoint {
      * @param nTransfers
      * @param transferSize
      */
-     public startPoll(nTransfers?: number, transferSize?: number, _callback?: (error: LibUSBException | undefined, buffer: Buffer, actualLength: number) => void): Transfer[] {
+    public startPoll(nTransfers?: number, transferSize?: number, _callback?: (error: LibUSBException | undefined, buffer: Buffer, actualLength: number) => void): Transfer[] {
         const self = this;
         this.pollTransfers = super.startPoll(nTransfers, transferSize, transferDone);
 

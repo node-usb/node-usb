@@ -1,6 +1,6 @@
-import * as usb from './usb';
-import { TypedEventTarget } from './typed-events';
+import * as usb from '../usb';
 import { WebUSBDevice } from './webusb-device';
+import { TypedEventTarget } from './typed-event-target';
 
 /**
  * USB Options
@@ -36,7 +36,7 @@ export type USBEvents = {
 };
 
 export class WebUSB extends TypedEventTarget<USBEvents> implements USB {
-    
+
     private allowedDevices: Array<Device> = [];
 
     constructor(private options: USBOptions = {}) {

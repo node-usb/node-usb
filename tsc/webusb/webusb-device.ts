@@ -1,49 +1,12 @@
-import * as usb from './usb';
+import * as usb from '../usb';
 import { promisify } from 'util';
-import { Endpoint, InEndpoint, OutEndpoint } from './endpoint';
+import { Endpoint, InEndpoint, OutEndpoint } from '../usb/endpoint';
+import { Mutex } from './mutex';
+
 const LIBUSB_TRANSFER_TYPE_MASK = 0x03;
 const ENDPOINT_NUMBER_MASK = 0x7f;
 const CLEAR_FEATURE = 0x01;
 const ENDPOINT_HALT = 0x00;
-
-/**
- * A mutex implementation that can be used to lock access between concurrent async functions
- */
-class Mutex {
-    private locked: boolean;
-
-    /**
-     * Create a new Mutex
-     */
-    constructor() {
-        this.locked = false;
-    }
-
-    /**
-     *  Yield the current execution context, effectively moving it to the back of the promise queue
-     */
-    private async sleep(): Promise<void> {
-        return new Promise(resolve => setTimeout(resolve, 1));
-    }
-
-    /**
-     * Wait until the Mutex is available and claim it
-     */
-    public async lock(): Promise<void> {
-        while (this.locked) {
-            await this.sleep();
-        }
-
-        this.locked = true;
-    }
-
-    /**
-     * Unlock the Mutex
-     */
-    public unlock(): void {
-        this.locked = false;
-    }
-}
 
 /**
  * Wrapper to make a node-usb device look like a webusb device
