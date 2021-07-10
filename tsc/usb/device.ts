@@ -3,7 +3,7 @@ import { Interface } from './interface';
 import { Capability } from './capability';
 import { BosDescriptor, ConfigDescriptor } from './descriptors';
 
-const isBuffer = (obj: any): obj is Uint8Array => obj && obj instanceof Uint8Array;
+const isBuffer = (obj: number | Uint8Array | undefined): obj is Uint8Array => !!obj && obj instanceof Uint8Array;
 const DEFAULT_TIMEOUT = 1000;
 
 export class ExtendedDevice {
@@ -115,7 +115,7 @@ export class ExtendedDevice {
      *
      * Parameter `data_or_length` can be an integer length for an IN transfer, or a `Buffer` for an OUT transfer. The type must match the direction specified in the MSB of bmRequestType.
      *
-     * The `data` parameter of the callback is always undefined for OUT transfers, or will be passed a Buffer for IN transfers.
+     * The `data` parameter of the callback is actual transferred for OUT transfers, or will be passed a Buffer for IN transfers.
      *
      * The device must be open to use this method.
      * @param bmRequestType
@@ -126,7 +126,7 @@ export class ExtendedDevice {
      * @param callback
      */
     public controlTransfer(this: usb.Device, bmRequestType: number, bRequest: number, wValue: number, wIndex: number, data_or_length: number | Buffer,
-        callback?: (error: usb.LibUSBException | undefined, buffer?: Buffer) => void): usb.Device {
+        callback?: (error: usb.LibUSBException | undefined, buffer: Buffer | number | undefined) => void): usb.Device {
         const self = this;
         const isIn = !!(bmRequestType & usb.LIBUSB_ENDPOINT_IN);
         const wLength = isIn ? data_or_length as number : (data_or_length as Buffer).length;
@@ -160,7 +160,7 @@ export class ExtendedDevice {
                     if (isIn) {
                         callback.call(self, error, buf.slice(usb.LIBUSB_CONTROL_SETUP_SIZE, usb.LIBUSB_CONTROL_SETUP_SIZE + actual));
                     } else {
-                        callback.call(self, error);
+                        callback.call(self, error, actual);
                     }
                 }
             }
@@ -170,7 +170,7 @@ export class ExtendedDevice {
             transfer.submit(buf);
         } catch (e) {
             if (callback) {
-                process.nextTick(() => callback.call(self, e));
+                process.nextTick(() => callback.call(self, e, undefined));
             }
         }
         return this;
@@ -213,11 +213,11 @@ export class ExtendedDevice {
             ((usb.LIBUSB_DT_STRING << 8) | desc_index),
             langid,
             length,
-            (error?: usb.LibUSBException, buffer?: Buffer) => {
+            (error, buffer) => {
                 if (error) {
                     return callback(error);
                 }
-                callback(undefined, buffer ? buffer.toString('utf16le', 2) : undefined);
+                callback(undefined, isBuffer(buffer) ? buffer.toString('utf16le', 2) : undefined);
             }
         );
     }
@@ -254,7 +254,7 @@ export class ExtendedDevice {
                     return callback(error, undefined);
                 }
 
-                if (!buffer) {
+                if (!isBuffer(buffer)) {
                     return callback(undefined, undefined);
                 }
 
@@ -272,7 +272,7 @@ export class ExtendedDevice {
                             return callback(error, undefined);
                         }
 
-                        if (!buffer) {
+                        if (!isBuffer(buffer)) {
                             return callback(undefined, undefined);
                         }
 

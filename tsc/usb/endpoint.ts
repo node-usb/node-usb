@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 import { LibUSBException, LIBUSB_TRANSFER_CANCELLED, Transfer, Device } from './bindings';
 import { EndpointDescriptor } from './descriptors';
 
-const isBuffer = (obj: any): obj is Uint8Array => obj && obj instanceof Uint8Array;
+const isBuffer = (obj: ArrayBuffer | Buffer): obj is Uint8Array => obj && obj instanceof Uint8Array;
 
 /** Common base for InEndpoint and OutEndpoint. */
 export abstract class Endpoint extends EventEmitter {
@@ -194,7 +194,7 @@ export class OutEndpoint extends Endpoint {
      * @param buffer
      * @param callback
      */
-    public transfer(buffer: Buffer, callback?: (error: LibUSBException | undefined) => void): OutEndpoint {
+    public transfer(buffer: Buffer, callback?: (error: LibUSBException | undefined, actual: number) => void): OutEndpoint {
         const self = this;
         if (!buffer) {
             buffer = Buffer.alloc(0);
@@ -202,9 +202,9 @@ export class OutEndpoint extends Endpoint {
             buffer = Buffer.from(buffer);
         }
 
-        const cb = (error: LibUSBException | undefined) => {
+        const cb = (error: LibUSBException | undefined, _buffer?: Buffer, actual?: number) => {
             if (callback) {
-                callback.call(self, error);
+                callback.call(self, error, actual || 0);
             }
         };
 

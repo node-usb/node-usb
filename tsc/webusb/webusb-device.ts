@@ -247,7 +247,7 @@ export class WebUSBDevice implements USBDevice {
             const result = await controlTransfer(type, setup.request, setup.value, setup.index, length);
 
             return {
-                data: result ? new DataView(new Uint8Array(result).buffer) : undefined,
+                data: result ? new DataView(new Uint8Array(result as Buffer).buffer) : undefined,
                 status: 'ok'
             };
         } catch (error) {
@@ -275,10 +275,10 @@ export class WebUSBDevice implements USBDevice {
             const type = this.controlTransferParamsToType(setup, usb.LIBUSB_ENDPOINT_OUT);
             const controlTransfer = promisify(this.device.controlTransfer).bind(this.device);
             const buffer = data ? Buffer.from(data) : Buffer.alloc(0);
-            await controlTransfer(type, setup.request, setup.value, setup.index, buffer);
+            const bytesWritten = <number> await controlTransfer(type, setup.request, setup.value, setup.index, buffer);
 
             return {
-                bytesWritten: buffer.byteLength, // Hack, should be bytes actually written
+                bytesWritten,
                 status: 'ok'
             };
         } catch (error) {
@@ -344,10 +344,10 @@ export class WebUSBDevice implements USBDevice {
             const endpoint = this.getEndpoint(endpointNumber | usb.LIBUSB_ENDPOINT_OUT) as OutEndpoint;
             const transfer = promisify(endpoint.transfer).bind(endpoint);
             const buffer = Buffer.from(data);
-            await transfer(buffer);
+            const bytesWritten = await transfer(buffer);
 
             return {
-                bytesWritten: buffer.byteLength, // Hack, should be bytes actually written
+                bytesWritten,
                 status: 'ok'
             };
         } catch (error) {

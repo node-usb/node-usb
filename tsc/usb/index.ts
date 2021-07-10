@@ -4,6 +4,7 @@ import { ExtendedDevice } from './device';
 import * as usb from './bindings';
 
 if (usb.INIT_ERROR) {
+    /* eslint-disable no-console */
     console.warn('Failed to initialize libusb.');
 }
 
@@ -19,9 +20,9 @@ interface EventListeners<T> {
 }
 
 declare module './bindings' {
-	interface Device extends ExtendedDevice {
-        // Merge interfaces
-    }
+
+    /* eslint-disable @typescript-eslint/no-empty-interface */
+	interface Device extends ExtendedDevice {}
 
 	interface DeviceEvents extends EventListeners<DeviceEvents> {
 		attach: Device;
