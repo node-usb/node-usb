@@ -95,17 +95,16 @@ export class ExtendedDevice {
      * @param callback
      */
     public setConfiguration(this: usb.Device, desired: number, callback?: (error: usb.LibUSBException | undefined) => void): void {
-        const self = this;
         this.__setConfiguration(desired, error => {
             if (!error) {
-                self.interfaces = [];
-                const len = self.configDescriptor ? self.configDescriptor.interfaces.length : 0;
+                this.interfaces = [];
+                const len = this.configDescriptor ? this.configDescriptor.interfaces.length : 0;
                 for (let i = 0; i < len; i++) {
-                    self.interfaces[i] = new Interface(self, i);
+                    this.interfaces[i] = new Interface(this, i);
                 }
             }
             if (callback) {
-                callback.call(self, error);
+                callback.call(this, error);
             }
         });
     }
@@ -127,7 +126,6 @@ export class ExtendedDevice {
      */
     public controlTransfer(this: usb.Device, bmRequestType: number, bRequest: number, wValue: number, wIndex: number, data_or_length: number | Buffer,
         callback?: (error: usb.LibUSBException | undefined, buffer: Buffer | number | undefined) => void): usb.Device {
-        const self = this;
         const isIn = !!(bmRequestType & usb.LIBUSB_ENDPOINT_IN);
         const wLength = isIn ? data_or_length as number : (data_or_length as Buffer).length;
 
@@ -154,13 +152,13 @@ export class ExtendedDevice {
             buf.set(data_or_length as Buffer, usb.LIBUSB_CONTROL_SETUP_SIZE);
         }
 
-        const transfer = new usb.Transfer(this, 0, usb.LIBUSB_TRANSFER_TYPE_CONTROL, self.timeout,
+        const transfer = new usb.Transfer(this, 0, usb.LIBUSB_TRANSFER_TYPE_CONTROL, this.timeout,
             (error, buf, actual) => {
                 if (callback) {
                     if (isIn) {
-                        callback.call(self, error, buf.slice(usb.LIBUSB_CONTROL_SETUP_SIZE, usb.LIBUSB_CONTROL_SETUP_SIZE + actual));
+                        callback.call(this, error, buf.slice(usb.LIBUSB_CONTROL_SETUP_SIZE, usb.LIBUSB_CONTROL_SETUP_SIZE + actual));
                     } else {
-                        callback.call(self, error, actual);
+                        callback.call(this, error, actual);
                     }
                 }
             }
@@ -170,7 +168,7 @@ export class ExtendedDevice {
             transfer.submit(buf);
         } catch (e) {
             if (callback) {
-                process.nextTick(() => callback.call(self, e, undefined));
+                process.nextTick(() => callback.call(this, e, undefined));
             }
         }
         return this;
@@ -229,8 +227,6 @@ export class ExtendedDevice {
      * @param callback
      */
     public getBosDescriptor(this: usb.Device, callback: (error?: usb.LibUSBException, descriptor?: BosDescriptor) => void): void {
-        const self = this;
-
         if (this._bosDescriptor) {
             // Cached descriptor
             return callback(undefined, this._bosDescriptor);
@@ -259,7 +255,7 @@ export class ExtendedDevice {
                 }
 
                 const totalLength = buffer.readUInt16LE(2);
-                self.controlTransfer(
+                this.controlTransfer(
                     usb.LIBUSB_ENDPOINT_IN,
                     usb.LIBUSB_REQUEST_GET_DESCRIPTOR,
                     (usb.LIBUSB_DT_BOS << 8),
@@ -298,8 +294,8 @@ export class ExtendedDevice {
                         }
 
                         // Cache descriptor
-                        self._bosDescriptor = descriptor;
-                        callback(undefined, self._bosDescriptor);
+                        this._bosDescriptor = descriptor;
+                        callback(undefined, this._bosDescriptor);
                     }
                 );
             }
@@ -314,14 +310,13 @@ export class ExtendedDevice {
      */
     public getCapabilities(this: usb.Device, callback: (error: usb.LibUSBException | undefined, capabilities?: Capability[]) => void): void {
         const capabilities: Capability[] = [];
-        const self = this;
 
         this.getBosDescriptor((error, descriptor) => {
             if (error) return callback(error, undefined);
 
             const len = descriptor ? descriptor.capabilities.length : 0;
             for (let i = 0; i < len; i++) {
-                capabilities.push(new Capability(self, i));
+                capabilities.push(new Capability(this, i));
             }
 
             callback(undefined, capabilities);

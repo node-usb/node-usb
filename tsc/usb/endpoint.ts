@@ -73,17 +73,16 @@ export class InEndpoint extends Endpoint {
      * @param callback
      */
     public transfer(length: number, callback: (error: LibUSBException | undefined, data?: Buffer) => void): InEndpoint {
-        const self = this;
         const buffer = Buffer.alloc(length);
 
         const cb = (error: LibUSBException | undefined, _buffer?: Buffer, actualLength?: number) => {
-            callback.call(self, error, buffer.slice(0, actualLength));
+            callback.call(this, error, buffer.slice(0, actualLength));
         };
 
         try {
             this.makeTransfer(this.timeout, cb).submit(buffer);
         } catch (e) {
-            process.nextTick(() => callback.call(self, e));
+            process.nextTick(() => callback.call(this, e));
         }
         return this;
     }
@@ -99,40 +98,42 @@ export class InEndpoint extends Endpoint {
      * @param transferSize
      */
     public startPoll(nTransfers?: number, transferSize?: number, _callback?: (error: LibUSBException | undefined, buffer: Buffer, actualLength: number) => void): Transfer[] {
-        const self = this;
-        this.pollTransfers = this.startPollTransfers(nTransfers, transferSize, transferDone);
-
-        function transferDone(this: Transfer, error: LibUSBException | undefined, buffer: Buffer, actualLength: number) {
+        const transferDone = (error: LibUSBException | undefined, transfer: Transfer, buffer: Buffer, actualLength: number) => {
             if (!error) {
-                self.emit('data', buffer.slice(0, actualLength));
+                this.emit('data', buffer.slice(0, actualLength));
             } else if (error.errno != LIBUSB_TRANSFER_CANCELLED) {
-                self.emit('error', error);
-                self.stopPoll();
+                this.emit('error', error);
+                this.stopPoll();
             }
 
-            if (self.pollActive) {
-                startTransfer(this);
+            if (this.pollActive) {
+                startTransfer(transfer);
             } else {
-                self.pollPending--;
+                this.pollPending--;
 
-                if (self.pollPending === 0) {
-                    self.pollTransfers = [];
-                    self.emit('end');
+                if (this.pollPending === 0) {
+                    this.pollTransfers = [];
+                    this.emit('end');
                 }
-            }
-        }
-
-        const startTransfer = (transfer: Transfer) => {
-            try {
-                transfer.submit(Buffer.alloc(self.pollTransferSize), transferDone);
-            } catch (e) {
-                self.emit('error', e);
-                self.stopPoll();
             }
         };
 
+        const startTransfer = (transfer: Transfer) => {
+            try {
+                transfer.submit(Buffer.alloc(this.pollTransferSize), (error, buffer, actualLength) => {
+                    transferDone(error, transfer, buffer, actualLength);
+                });
+            } catch (e) {
+                this.emit('error', e);
+                this.stopPoll();
+            }
+        };
+
+        this.pollTransfers = this.startPollTransfers(nTransfers, transferSize, function (this: Transfer, error, buffer, actualLength) {
+            transferDone(error, this, buffer, actualLength);
+        });
         this.pollTransfers.forEach(startTransfer);
-        self.pollPending = this.pollTransfers.length;
+        this.pollPending = this.pollTransfers.length;
         return this.pollTransfers;
     }
 
@@ -195,7 +196,6 @@ export class OutEndpoint extends Endpoint {
      * @param callback
      */
     public transfer(buffer: Buffer, callback?: (error: LibUSBException | undefined, actual: number) => void): OutEndpoint {
-        const self = this;
         if (!buffer) {
             buffer = Buffer.alloc(0);
         } else if (!isBuffer(buffer)) {
@@ -204,7 +204,7 @@ export class OutEndpoint extends Endpoint {
 
         const cb = (error: LibUSBException | undefined, _buffer?: Buffer, actual?: number) => {
             if (callback) {
-                callback.call(self, error, actual || 0);
+                callback.call(this, error, actual || 0);
             }
         };
 

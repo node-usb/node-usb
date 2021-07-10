@@ -76,15 +76,14 @@ export class Interface {
             callback = closeEndpointsOrCallback;
         }
 
-        const self = this;
         const next = () => {
-            self.device.__releaseInterface(self.id, error => {
+            this.device.__releaseInterface(this.id, error => {
                 if (!error) {
-                    self.altSetting = 0;
-                    self.refresh();
+                    this.altSetting = 0;
+                    this.refresh();
                 }
                 if (callback) {
-                    callback.call(self, error);
+                    callback.call(this, error);
                 }
             });
         };
@@ -92,8 +91,8 @@ export class Interface {
         if (!closeEndpoints || this.endpoints.length === 0) {
             next();
         } else {
-            let n = self.endpoints.length;
-            self.endpoints.forEach(ep => {
+            let n = this.endpoints.length;
+            this.endpoints.forEach(ep => {
                 if (ep.direction === 'in' && (ep as InEndpoint).pollActive) {
                     ep.once('end', () => {
                         if (--n === 0) {
@@ -145,14 +144,13 @@ export class Interface {
      * @param callback
      */
     public setAltSetting(altSetting: number, callback?: (error: LibUSBException | undefined) => void): void {
-        const self = this;
         this.device.__setInterface(this.id, altSetting, error => {
             if (!error){
-                self.altSetting = altSetting;
-                self.refresh();
+                this.altSetting = altSetting;
+                this.refresh();
             }
             if (callback) {
-                callback.call(self, error);
+                callback.call(this, error);
             }
         });
     }
