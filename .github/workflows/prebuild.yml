@@ -1,15 +1,6 @@
 name: prebuild
 
-on:
-  push:
-    branches:
-      - master
-    tags:
-      - '*'
-  pull_request:
-    branches:
-      - master
-  workflow_dispatch:
+on: [push, pull_request]
 
 jobs:
   prebuild:

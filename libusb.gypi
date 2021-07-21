@@ -22,7 +22,7 @@
         'libusb/libusb/strerror.c',
         'libusb/libusb/sync.c',
         'libusb/libusb/version.h',
-        'libusb/libusb/version_nano.h',
+        'libusb/libusb/version_nano.h'
       ],
       'include_dirs': [
         'libusb_config',
@@ -120,6 +120,11 @@
         }],
         [ 'OS == "win"', {
           'sources': [
+            'libusb/libusb/os/windows_nt_common.c',
+            'libusb/libusb/os/windows_nt_common.h',
+            'libusb/libusb/os/windows_nt_shared_types.h',
+            'libusb/libusb/os/windows_usbdk.c',
+            'libusb/libusb/os/windows_usbdk.h',
             'libusb/libusb/os/poll_windows.c',
             'libusb/libusb/os/poll_windows.h',
             'libusb/libusb/os/threads_windows.c',
