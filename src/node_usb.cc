@@ -177,6 +177,7 @@ Napi::Value EnableHotplugEvents(const Napi::CallbackInfo& info) {
 
 	if (!hotplugEnabled) {
 		hotplugThis.Reset(info.This().As<Napi::Object>(), 1);
+		hotplugThis.SuppressDestruct();
 		CHECK_USB(libusb_hotplug_register_callback(usb_context,
 			(libusb_hotplug_event)(LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT),
 			(libusb_hotplug_flag)0, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY,
