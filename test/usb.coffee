@@ -1,6 +1,8 @@
 assert = require('assert')
 util = require('util')
-usb = require('../')
+usb = require('../').usb
+getDeviceList = require('../').getDeviceList
+findByIds = require('../').findByIds
 
 if typeof gc is 'function'
 	# running with --expose-gc, do a sweep between tests so valgrind blames the right one
@@ -28,18 +30,18 @@ describe 'USB Module', ->
 
 describe 'getDeviceList', ->
 	it 'should return at least one device', ->
-		l = usb.getDeviceList()
+		l = getDeviceList()
 		assert.ok((l.length > 0))
 
 describe 'findByIds', ->
 	it 'should return an array with length > 0', ->
-		dev = usb.findByIds(0x59e3, 0x0a23)
+		dev = findByIds(0x59e3, 0x0a23)
 		assert.ok(dev, "Demo device is not attached")
 
 describe 'Device', ->
 	device = null
 	before ->
-		device = usb.findByIds(0x59e3, 0x0a23)
+		device = findByIds(0x59e3, 0x0a23)
 
 	it 'should have sane properties', ->
 		assert.ok((device.busNumber > 0), "busNumber must be larger than 0")
