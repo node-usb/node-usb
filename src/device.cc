@@ -11,7 +11,7 @@
 
 Napi::FunctionReference Device::constructor;
 
-Device::Device(const Napi::CallbackInfo & info) : Napi::ObjectWrap<Device>(info), device_handle(0), refs_(1)
+Device::Device(const Napi::CallbackInfo & info) : Napi::ObjectWrap<Device>(info), device_handle(0), refs_(0)
 #ifndef USE_POLL
 , completionQueue(handleCompletion)
 #endif
