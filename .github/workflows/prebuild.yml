@@ -1,6 +1,13 @@
 name: prebuild
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+    tags:
+    - 'v*'
+  pull_request:
+  release:
 
 jobs:
   prebuild:
