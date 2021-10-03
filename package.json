@@ -40,12 +40,12 @@
     "full-test": "mocha --require coffeescript/register test/*",
     "valgrind": "coffee -c test/usb.coffee; valgrind --leak-check=full --show-possibly-lost=no node --expose-gc --trace-gc node_modules/mocha/bin/_mocha -R spec",
     "prebuild": "prebuildify --napi --strip",
-    "prebuild-darwin": "prebuildify -t 8.14.0 --napi --strip --arch x64+arm64",
-    "prebuild-win32-x86": "prebuildify -t 8.14.0 --napi --strip",
-    "prebuild-win32-x64": "prebuildify -t 8.14.0 --napi --strip",
-    "prebuild-linux-x64": "prebuildify-cross -i centos7-devtoolset7 -i alpine -t 8.14.0 --napi --strip",
-    "prebuild-linux-arm": "prebuildify-cross -i linux-armv6 -i linux-armv7 -i linux-arm64 -t 8.14.0 --napi --strip",
-    "prebuild-android-arm": "prebuildify-cross -i android-armv7 -i android-arm64 -t 8.14.0 --napi --strip"
+    "prebuild-darwin": "prebuildify --napi --strip --arch x64+arm64",
+    "prebuild-win32-x86": "prebuildify --napi --strip",
+    "prebuild-win32-x64": "prebuildify --napi --strip",
+    "prebuild-linux-x64": "prebuildify-cross -i centos7-devtoolset7 -i alpine --napi --strip",
+    "prebuild-linux-arm": "prebuildify-cross -i linux-armv6 -i linux-armv7 -i linux-arm64 --napi --strip",
+    "prebuild-android-arm": "prebuildify-cross -i android-armv7 -i android-arm64 --napi --strip"
   },
   "dependencies": {
     "node-addon-api": "^4.2.0",
