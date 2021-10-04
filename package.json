@@ -44,7 +44,7 @@
     "prebuild-win32-x86": "prebuildify --napi --strip",
     "prebuild-win32-x64": "prebuildify --napi --strip",
     "prebuild-linux-x64": "prebuildify-cross -i ghcr.io/node-usb/centos7-devtoolset7:1 -i ghcr.io/node-usb/alpine:1 --napi --strip",
-    "prebuild-linux-arm": "prebuildify-cross -i linux-armv6 -i linux-armv7 -i linux-arm64 --preinstall \"apt-get -y update && apt-get -y install libudev-dev\" --napi --strip",
+    "prebuild-linux-arm": "prebuildify-cross -i linux-armv6 -i linux-armv7 -i linux-arm64 --preinstall \"sudo apt-get -y update && apt-get -y install libudev-dev\" --napi --strip",
     "prebuild-android-arm": "prebuildify-cross -i ghcr.io/node-usb/android-arm64:1 -i ghcr.io/node-usb/android-armv7:1 --napi --strip"
   },
   "dependencies": {
