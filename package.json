@@ -41,14 +41,14 @@
     "valgrind": "coffee -c test/usb.coffee; valgrind --leak-check=full --show-possibly-lost=no node --expose-gc --trace-gc node_modules/mocha/bin/_mocha -R spec",
     "prebuild": "prebuildify --napi --strip",
     "prebuild-darwin": "prebuildify --napi --strip --arch x64+arm64",
-    "prebuild-win32-x86": "prebuildify --napi --target 8.16.0 --strip",
-    "prebuild-win32-x64": "prebuildify --napi --target 8.16.0 --strip",
-    "prebuild-linux-x64": "prebuildify-cross -i ghcr.io/node-usb/centos7-devtoolset7:1 -i ghcr.io/node-usb/alpine:1 --napi --target 8.16.0 --strip",
-    "prebuild-linux-arm": "prebuildify-cross -i ghcr.io/node-usb/linux-arm64:1 -i ghcr.io/node-usb/linux-armv7:1 -i ghcr.io/node-usb/linux-armv6:1 --napi --target 8.16.0 --strip",
-    "prebuild-android-arm": "prebuildify-cross -i ghcr.io/node-usb/android-arm64:1 -i ghcr.io/node-usb/android-armv7:1 --napi --target 8.16.0 --strip"
+    "prebuild-win32-x86": "prebuildify --napi --strip",
+    "prebuild-win32-x64": "prebuildify --napi --strip",
+    "prebuild-linux-x64": "prebuildify-cross -i ghcr.io/node-usb/centos7-devtoolset7:1 -i ghcr.io/node-usb/alpine:1 --napi --strip",
+    "prebuild-linux-arm": "prebuildify-cross -i ghcr.io/node-usb/linux-arm64:1 -i ghcr.io/node-usb/linux-armv7:1 -i ghcr.io/node-usb/linux-armv6:1 --napi --strip",
+    "prebuild-android-arm": "prebuildify-cross -i ghcr.io/node-usb/android-arm64:1 -i ghcr.io/node-usb/android-armv7:1 --napi --strip"
   },
   "dependencies": {
-    "node-addon-api": "3.0.2",
+    "node-addon-api": "^4.2.0",
     "node-gyp-build": "^4.3.0"
   },
   "devDependencies": {
