@@ -44,3 +44,18 @@ jobs:
           name: ${{ matrix.config.name }}
           path: ${{ matrix.config.name }}.tar.gz
           retention-days: 1
+  release:
+    needs: prebuild
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v2
+        with:
+          path: artifacts
+      - uses: docker://antonyurchenko/git-release:v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ALLOW_EMPTY_CHANGELOG: true
+        with:
+          args: artifacts/*/*.tar.gz
