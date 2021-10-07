@@ -56,6 +56,6 @@ jobs:
       - uses: docker://antonyurchenko/git-release:v4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ALLOW_EMPTY_CHANGELOG: true
+          CHANGELOG_FILE: none
         with:
           args: artifacts/*/*.tar.gz
