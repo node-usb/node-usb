@@ -37,7 +37,9 @@ jobs:
         with:
           submodules: recursive
       - run: npm install --ignore-scripts
-      - run: npm run prebuild-${{ matrix.config.name }}      
+      - name: Prebuild
+        run: npm run prebuild-${{ matrix.config.name }}
+        shell: bash
       - run: tar -zcvf ${{ matrix.config.name }}.tar.gz -C prebuilds .
       - uses: actions/upload-artifact@v2
         with:
