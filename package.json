@@ -3,7 +3,7 @@
   "description": "Library to access USB devices",
   "version": "1.7.2-prebuild",
   "engines": {
-    "node": ">=10"
+    "node": ">=10.16.0"
   },
   "keywords": [
     "usb",
