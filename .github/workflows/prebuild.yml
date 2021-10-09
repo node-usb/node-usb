@@ -15,32 +15,42 @@ jobs:
   prebuild:
     strategy:
       matrix:
-        config:
-          - { name: darwin, os: macos-11, node: x64 }
-          - { name: win32-x86, os: windows-latest, node: x86 }
-          - { name: win32-x64, os: windows-latest, node: x64 }
-          - { name: linux-x86, os: ubuntu-latest }
-          - { name: linux-x64, os: ubuntu-latest }
-          - { name: linux-arm, os: ubuntu-latest }
-          - { name: android-arm, os: ubuntu-latest }
-    name: Build ${{ matrix.config.name }}
-    runs-on: ${{ matrix.config.os }}
+        include:
+          - name: darwin
+            os: macos-11
+            node: x64
+          - name: win32-x86
+            os: windows-latest
+            node: x86
+          - name: win32-x64
+            os: windows-latest
+            node: x64
+          - name: linux-x86
+            os: ubuntu-latest
+          - name: linux-x64
+            os: ubuntu-latest
+          - name: linux-arm
+            os: ubuntu-latest
+          - name: android-arm
+            os: ubuntu-latest
+    name: Build ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
     steps:
-      - if: matrix.config.node
+      - if: matrix.node
         uses: actions/setup-node@v2
         with:
           node-version: 14.x
-          architecture: ${{ matrix.config.node }}
+          architecture: ${{ matrix.node }}
       - uses: actions/checkout@v2
         with:
           submodules: recursive
       - run: npm install --ignore-scripts
-      - run: npm run prebuild-${{ matrix.config.name }}      
-      - run: tar -zcvf ${{ matrix.config.name }}.tar.gz -C prebuilds .
+      - run: npm run prebuild-${{ matrix.name }}      
+      - run: tar -zcvf ${{ matrix.name }}.tar.gz -C prebuilds .
       - uses: actions/upload-artifact@v2
         with:
-          name: ${{ matrix.config.name }}
-          path: ${{ matrix.config.name }}.tar.gz
+          name: ${{ matrix.name }}
+          path: ${{ matrix.name }}.tar.gz
           retention-days: 1
   release:
     needs: prebuild
