@@ -1,7 +1,7 @@
 {
   "name": "usb",
   "description": "Library to access USB devices",
-  "version": "1.7.2",
+  "version": "1.8.0",
   "engines": {
     "node": ">=10.16.0"
   },
@@ -32,7 +32,7 @@
   "main": "./usb",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tessel/node-usb.git"
+    "url": "https://github.com/node-usb/node-usb.git"
   },
   "scripts": {
     "install": "node-gyp-build",
