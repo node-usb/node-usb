@@ -2,14 +2,14 @@
   "name": "usb",
   "description": "Library to access USB devices",
   "license": "MIT",
-  "version": "2.0.0-alpha.2",
+  "version": "1.8.0",
   "main": "dist/index.js",
   "engines": {
-    "node": ">=10"
+    "node": ">=10.16.0"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/tessel/node-usb.git"
+    "url": "https://github.com/node-usb/node-usb.git"
   },
   "contributors": [
     {
@@ -37,8 +37,7 @@
   ],
   "scripts": {
     "prepare": "yarn compile",
-    "install": "prebuild-install --runtime napi --verbose || node-gyp rebuild",
-    "prebuild": "prebuild --runtime napi -t 4 --force --strip --verbose",
+    "install": "node-gyp-build",
     "clean": "git clean -dfx",
     "compile": "tsc && yarn lint && yarn docs",
     "lint": "eslint . --ext .ts",
@@ -46,13 +45,21 @@
     "test": "mocha --require coffeescript/register --grep Module test/*",
     "full-test": "mocha --require coffeescript/register test/*.coffee",
     "valgrind": "coffee -c test/usb.coffee; valgrind --leak-check=full --show-possibly-lost=no node --expose-gc --trace-gc node_modules/mocha/bin/_mocha -R spec",
-    "docs": "typedoc"
+    "docs": "typedoc",
+    "prebuild": "prebuildify --napi --strip",
+    "prebuild-darwin": "prebuildify --napi --strip --arch x64+arm64",
+    "prebuild-win32-x86": "prebuildify --napi --strip",
+    "prebuild-win32-x64": "prebuildify --napi --strip",
+    "prebuild-linux-x86": "prebuildify-cross -i ghcr.io/node-usb/linux-x86 --napi --strip",
+    "prebuild-linux-x64": "prebuildify-cross -i ghcr.io/node-usb/centos7-devtoolset7 -i ghcr.io/node-usb/alpine --napi --strip --tag-libc",
+    "prebuild-linux-arm": "prebuildify-cross -i ghcr.io/node-usb/linux-arm64 -i ghcr.io/node-usb/linux-armv7 -i ghcr.io/node-usb/linux-armv6 --napi --strip --tag-armv",
+    "prebuild-android-arm": "prebuildify-cross -i ghcr.io/node-usb/android-arm64 -i ghcr.io/node-usb/android-armv7 --napi --strip --tag-armv",
+    "prebuild-download": "prebuildify-ci download"
   },
   "dependencies": {
     "@types/w3c-web-usb": "^1.0.4",
-    "bindings": "^1.4.0",
-    "node-addon-api": "^3.1.0",
-    "prebuild-install": "^6.1.1"
+    "node-addon-api": "^4.2.0",
+    "node-gyp-build": "^4.3.0"
   },
   "devDependencies": {
     "@types/node": "^14.14.41",
@@ -61,7 +68,10 @@
     "coffeescript": "^2.5.1",
     "eslint": "^7.29.0",
     "mocha": "^8.3.2",
-    "prebuild": "^10.0.1",
+    "node-gyp": "^7.1.2",
+    "prebuildify": "^4.2.1",
+    "prebuildify-ci": "^1.0.5",
+    "prebuildify-cross": "^4.0.1",
     "typedoc": "^0.20.36",
     "typescript": "~4.2.4"
   },

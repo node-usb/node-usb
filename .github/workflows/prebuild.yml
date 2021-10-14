@@ -15,34 +15,56 @@ jobs:
   prebuild:
     strategy:
       matrix:
-        config:
-          - { os: macos-latest, arch: x64 }
-          - { os: ubuntu-18.04, arch: x64 }
-          - { os: windows-latest, arch: x64 }
-          - { os: windows-latest, arch: ia32 }
-    runs-on: ${{ matrix.config.os }}
+        include:
+          - name: darwin
+            os: macos-11
+            node: x64
+          - name: win32-x86
+            os: windows-latest
+            node: x86
+          - name: win32-x64
+            os: windows-latest
+            node: x64
+          - name: linux-x86
+            os: ubuntu-latest
+          - name: linux-x64
+            os: ubuntu-latest
+          - name: linux-arm
+            os: ubuntu-latest
+          - name: android-arm
+            os: ubuntu-latest
+    name: Build ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
     steps:
-      - if: matrix.config.os == 'ubuntu-18.04'
-        run: |
-          sudo apt-get update
-          sudo apt-get install libudev-dev
-      - uses: actions/setup-node@v2
+      - if: matrix.node
+        uses: actions/setup-node@v2
         with:
           node-version: 14.x
+          architecture: ${{ matrix.node }}
       - uses: actions/checkout@v2
         with:
           submodules: recursive
-      - run: yarn
-      - run: yarn run prebuild -- -a ${{ matrix.config.arch }}
-      - if: startsWith(github.ref, 'refs/tags/')
-        shell: bash
+      - run: npm install --ignore-scripts
+      - run: npm run prebuild-${{ matrix.name }}      
+      - run: tar -zcvf ${{ matrix.name }}.tar.gz -C prebuilds .
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.name }}
+          path: ${{ matrix.name }}.tar.gz
+          retention-days: 1
+  release:
+    needs: prebuild
+    name: Release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v2
+        with:
+          path: artifacts
+      - uses: docker://antonyurchenko/git-release:v4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          assets=()
-          for asset in ./prebuilds/*; do
-            assets+=("-a" "$asset")
-          done
-          tag_name="${GITHUB_REF##*/}"
-          hub release create -m "$tag_name" "$tag_name" || true
-          hub release edit "${assets[@]}" -m "" "$tag_name"
+          CHANGELOG_FILE: none
+        with:
+          args: artifacts/*/*.tar.gz

@@ -1,7 +1,7 @@
 USB Library for Node.JS
 ===============================
 
-[![Build Status](https://github.com/tessel/node-usb/workflows/prebuild/badge.svg)](https://github.com/tessel/node-usb/actions)
+[![Build Status](https://github.com/node-usb/node-usb/workflows/prebuild/badge.svg)](https://github.com/node-usb/node-usb/actions)
 
 Node.JS library for communicating with USB devices in JavaScript / CoffeeScript.
 
@@ -310,7 +310,7 @@ Development and testing
 
 To build from git:
 
-	git clone --recursive https://github.com/tessel/node-usb.git
+	git clone --recursive https://github.com/node-usb/node-usb.git
 	cd node-usb
 	npm install
 
