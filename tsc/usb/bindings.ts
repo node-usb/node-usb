@@ -2,10 +2,11 @@
 //  Eric Brody <https://github.com/underscorebrody>
 //  Rob Moran <https://github.com/thegecko>
 
+import { join } from 'path';
 import type { DeviceDescriptor, ConfigDescriptor, BosDescriptor } from './descriptors';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
-const usb = require('node-gyp-build')(__dirname);
+const usb = require('node-gyp-build')(join(__dirname, '..', '..'));
 module.exports = usb;
 
 /**
