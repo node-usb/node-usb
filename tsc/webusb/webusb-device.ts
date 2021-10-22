@@ -98,9 +98,9 @@ export class WebUSBDevice implements USBDevice {
                         // Re-create the USBInterface to set the claimed attribute
                         this.configuration.interfaces[this.configuration.interfaces.indexOf(iface)] = {
                             interfaceNumber: iface.interfaceNumber,
-                            alternate : iface.alternate,
-                            alternates : iface.alternates,
-                            claimed : false
+                            alternate: iface.alternate,
+                            alternates: iface.alternates,
+                            claimed: false
                         };
                     }
                 }
@@ -128,7 +128,7 @@ export class WebUSBDevice implements USBDevice {
                 return;
             }
 
-            const config =  this.configurations.find(configuration => configuration.configurationValue === configurationValue);
+            const config = this.configurations.find(configuration => configuration.configurationValue === configurationValue);
             if (!config) {
                 throw new Error('selectConfiguration error: configuration not found');
             }
@@ -171,9 +171,9 @@ export class WebUSBDevice implements USBDevice {
                 // Re-create the USBInterface to set the claimed attribute
                 this.configuration.interfaces[this.configuration.interfaces.indexOf(iface)] = {
                     interfaceNumber,
-                    alternate : iface.alternate,
-                    alternates : iface.alternates,
-                    claimed : true
+                    alternate: iface.alternate,
+                    alternates: iface.alternates,
+                    claimed: true
                 };
             } catch (error) {
                 throw new Error(`claimInterface error: ${error}`);
@@ -194,9 +194,9 @@ export class WebUSBDevice implements USBDevice {
                     // Re-create the USBInterface to set the claimed attribute
                     this.configuration.interfaces[this.configuration.interfaces.indexOf(iface)] = {
                         interfaceNumber,
-                        alternate : iface.alternate,
-                        alternates : iface.alternates,
-                        claimed : false
+                        alternate: iface.alternate,
+                        alternates: iface.alternates,
+                        claimed: false
                     };
                 }
             }
@@ -275,7 +275,7 @@ export class WebUSBDevice implements USBDevice {
             const type = this.controlTransferParamsToType(setup, usb.LIBUSB_ENDPOINT_OUT);
             const controlTransfer = promisify(this.device.controlTransfer).bind(this.device);
             const buffer = data ? Buffer.from(data) : Buffer.alloc(0);
-            const bytesWritten = <number> await controlTransfer(type, setup.request, setup.value, setup.index, buffer);
+            const bytesWritten = <number>await controlTransfer(type, setup.request, setup.value, setup.index, buffer);
 
             return {
                 bytesWritten,

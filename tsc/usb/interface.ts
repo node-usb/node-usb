@@ -28,7 +28,7 @@ export class Interface {
         this.interfaceNumber = this.descriptor.bInterfaceNumber;
         this.endpoints = [];
         const len = this.descriptor.endpoints.length;
-        for (let i=0; i<len; i++){
+        for (let i = 0; i < len; i++) {
             const desc = this.descriptor.endpoints[i];
             const c = (desc.bEndpointAddress & LIBUSB_ENDPOINT_IN) ? InEndpoint : OutEndpoint;
             this.endpoints[i] = new c(this.device, desc);
@@ -145,7 +145,7 @@ export class Interface {
      */
     public setAltSetting(altSetting: number, callback?: (error: LibUSBException | undefined) => void): void {
         this.device.__setInterface(this.id, altSetting, error => {
-            if (!error){
+            if (!error) {
                 this.altSetting = altSetting;
                 this.refresh();
             }

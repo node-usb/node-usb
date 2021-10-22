@@ -114,7 +114,7 @@ export class WebUSB extends TypedEventTarget<USBEvents> implements USB {
             }
 
             return device;
-        } catch(error) {
+        } catch (error) {
             throw new Error(`requestDevice error: ${error}`);
         }
     }
@@ -180,8 +180,8 @@ export class WebUSB extends TypedEventTarget<USBEvents> implements USB {
 
     private isSameDevice(device1: Device, device2: Device): boolean {
         return (device1.productId === device2.productId
-             && device1.vendorId === device2.vendorId
-             && device1.serialNumber === device2.serialNumber);
+            && device1.vendorId === device2.vendorId
+            && device1.serialNumber === device2.serialNumber);
     }
 
     private replaceAllowedDevice(device: USBDevice): boolean {
