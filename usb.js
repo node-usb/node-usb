@@ -1,6 +1,9 @@
 var usb = exports = module.exports = require('node-gyp-build')(__dirname);
-var events = require('events')
-var util = require('util')
+var events = require('events');
+var util = require('util');
+var os = require('os');
+
+var isWindows = os.platform() === 'win32';
 
 var isBuffer = function(obj) {
 	return obj && obj instanceof Uint8Array
@@ -512,13 +515,56 @@ var hotplugListeners = 0;
 exports.on('newListener', function(name) {
 	if (name !== 'attach' && name !== 'detach') return;
 	if (++hotplugListeners === 1) {
-		usb._enableHotplugEvents();
+		if (isWindows) {
+			exports._pollHotplug(true);
+		} else {
+			usb._enableHotplugEvents();
+		}
 	}
 });
 
 exports.on('removeListener', function(name) {
 	if (name !== 'attach' && name !== 'detach') return;
 	if (--hotplugListeners === 0) {
-		usb._disableHotplugEvents();
+		if (isWindows) {
+			exports._pollingHotplug = false;
+		} else {
+			usb._disableHotplugEvents();
+		}
 	}
 });
+
+// Polling mechanism for discovering device changes until this is fixed:
+// https://github.com/libusb/libusb/issues/86
+exports._pollHotplug = function(start) {
+	if (start) {
+		exports._pollingHotplug = true;
+	} else if (!exports._pollingHotplug) {
+		return;
+	}
+
+	var devices = usb.getDeviceList();
+
+	if (!start) {
+		// Find attached devices
+		for (var device of devices) {
+			var found = exports._windowsDevices.find(item => item.deviceAddress === device.deviceAddress);
+			if (!found) {
+				usb.emit('attach', device);
+			}
+		}
+
+		// Find detached devices
+		for (var device of exports._windowsDevices) {
+			var found = devices.find(item => item.deviceAddress === device.deviceAddress);
+			if (!found) {
+				usb.emit('detach', device);
+			}
+		}
+	}
+
+	exports._windowsDevices = devices;
+	setTimeout(() => {
+		exports._pollHotplug();
+	}, 500);
+}
