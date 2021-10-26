@@ -1,9 +1,9 @@
 {
   "name": "usb",
   "description": "Library to access USB devices",
-  "version": "1.6.3",
+  "version": "1.8.0",
   "engines": {
-    "node": ">=6"
+    "node": ">=10.16.0"
   },
   "keywords": [
     "usb",
@@ -21,33 +21,50 @@
       "url": "http://timryan.org"
     },
     {
+      "name": "Rob Moran",
+      "email": "github@thegecko.org",
+      "url": "https://github.com/thegecko"
+    },
+    {
       "name": "Christopher Klein"
     }
   ],
   "main": "./usb",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tessel/node-usb.git"
+    "url": "https://github.com/node-usb/node-usb.git"
   },
   "scripts": {
-    "install": "prebuild-install --verbose || node-gyp rebuild",
-    "prebuild": "prebuild --force --strip --verbose",
+    "install": "node-gyp-build",
     "test": "mocha --require coffeescript/register --grep Module test/*",
     "full-test": "mocha --require coffeescript/register test/*",
-    "valgrind": "coffee -c test/usb.coffee; valgrind --leak-check=full --show-possibly-lost=no node --expose-gc --trace-gc node_modules/mocha/bin/_mocha -R spec"
+    "valgrind": "coffee -c test/usb.coffee; valgrind --leak-check=full --show-possibly-lost=no node --expose-gc --trace-gc node_modules/mocha/bin/_mocha -R spec",
+    "prebuild": "prebuildify --napi --strip",
+    "prebuild-darwin": "prebuildify --napi --strip --arch x64+arm64",
+    "prebuild-win32-x86": "prebuildify --napi --strip",
+    "prebuild-win32-x64": "prebuildify --napi --strip",
+    "prebuild-linux-x86": "prebuildify-cross -i ghcr.io/node-usb/linux-x86 --napi --strip",
+    "prebuild-linux-x64": "prebuildify-cross -i ghcr.io/node-usb/centos7-devtoolset7 -i ghcr.io/node-usb/alpine --napi --strip --tag-libc",
+    "prebuild-linux-arm": "prebuildify-cross -i ghcr.io/node-usb/linux-arm64 -i ghcr.io/node-usb/linux-armv7 -i ghcr.io/node-usb/linux-armv6 --napi --strip --tag-armv",
+    "prebuild-android-arm": "prebuildify-cross -i ghcr.io/node-usb/android-arm64 -i ghcr.io/node-usb/android-armv7 --napi --strip --tag-armv",
+    "prebuild-download": "prebuildify-ci download"
   },
   "dependencies": {
-    "bindings": "^1.4.0",
-    "nan": "2.13.2",
-    "prebuild-install": "^5.3.3"
-  },
-  "resolutions": {
-    "**/nan": "2.13.2"
+    "node-addon-api": "^4.2.0",
+    "node-gyp-build": "^4.3.0"
   },
   "devDependencies": {
     "coffeescript": "~2.4.1",
-    "mocha": "~6.1.4",
-    "prebuild": "^9.1.1"
+    "mocha": "^8.3.2",
+    "node-gyp": "^7.1.2",
+    "prebuildify": "^4.2.1",
+    "prebuildify-ci": "^1.0.5",
+    "prebuildify-cross": "^4.0.1"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "binary": {
+    "napi_versions": [
+      4
+    ]
+  }
 }

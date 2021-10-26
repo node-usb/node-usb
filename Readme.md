@@ -1,7 +1,7 @@
 USB Library for Node.JS
 ===============================
 
-[![Build Status](https://travis-ci.org/tessel/node-usb.svg?branch=master)](https://travis-ci.org/tessel/node-usb)
+[![Build Status](https://github.com/node-usb/node-usb/workflows/prebuild/badge.svg)](https://github.com/node-usb/node-usb/actions)
 
 Node.JS library for communicating with USB devices in JavaScript / CoffeeScript.
 
@@ -112,6 +112,8 @@ Perform a control transfer with `libusb_control_transfer`.
 Parameter `data_or_length` can be a integer length for an IN transfer, or a Buffer for an out transfer. The type must match the direction specified in the MSB of bmRequestType.
 
 The `data` parameter of the callback is always undefined for OUT transfers, or will be passed a Buffer for IN transfers.
+
+A [package is available to calculate bmRequestType](https://www.npmjs.com/package/bmrequesttype) if needed.
 
 ### .setConfiguration(id, callback(error))
 Set the device configuration to something other than the default (0). To use this, first call `.open(false)` (which tells it not to auto configure), then before claiming an interface, call this method.
@@ -314,7 +316,7 @@ Development and testing
 
 To build from git:
 
-	git clone --recursive https://github.com/nonolith/node-usb.git
+	git clone --recursive https://github.com/node-usb/node-usb.git
 	cd node-usb
 	npm install
 
@@ -322,7 +324,10 @@ To execute the unit tests, [CoffeeScript](http://coffeescript.org) is required. 
 
 	npm test
 
-Some tests require an attached USB device -- firmware to be released soon.
+Some tests require an [attached STM32F103 Microprocessor USB device with specific firmware](https://github.com/thegecko/node-usb-test-firmware).
+
+	npm run --silent full-test
+	npm run --silent valgrind
 
 Limitations
 ===========

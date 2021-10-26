@@ -9,71 +9,104 @@
 #include <WinSock2.h>
 #endif
 #include <libusb.h>
-#include <v8.h>
 
-#include <node.h>
+#include <napi.h>
 #include <node_buffer.h>
-#include <uv.h>
-
-using namespace v8;
-using namespace node;
 
 #include "helpers.h"
 
-Local<Value> libusbException(int errorno);
+#ifndef USE_POLL
+#include "uv_async_queue.h"
+#endif
 
-struct Device: public Nan::ObjectWrap {
+struct Transfer;
+
+Napi::Error libusbException(napi_env env, int errorno);
+void handleCompletion(Transfer* self);
+
+struct Device: public Napi::ObjectWrap<Device> {
 	libusb_device* device;
 	libusb_device_handle* device_handle;
 
-	static void Init(Local<Object> exports);
-	static Local<Object> get(libusb_device* handle);
+	int refs_;
 
-	inline void ref(){Ref();}
-	inline void unref(){Unref();}
+#ifndef USE_POLL
+	UVQueue<Transfer*> completionQueue;
+#endif
+
+	static Napi::Object Init(Napi::Env env, Napi::Object exports);
+	static Napi::Object get(napi_env env, libusb_device* handle);
+
+	inline void ref(){ refs_ = Ref();}
+	inline void unref(){ refs_ = Unref();}
 	inline bool canClose(){return refs_ == 0;}
-	inline void attach(Local<Object> o){Wrap(o);}
 
+	Device(const Napi::CallbackInfo& info);
 	~Device();
 
-	static Local<Object> cdesc2V8(libusb_config_descriptor * cdesc);
+	static Napi::Object cdesc2V8(napi_env env, libusb_config_descriptor * cdesc);
 
-	protected:
-		static std::map<libusb_device*, Device*> byPtr;
-		Device(libusb_device* d);
+
+	Napi::Value GetConfigDescriptor(const Napi::CallbackInfo& info);
+	Napi::Value GetAllConfigDescriptors(const Napi::CallbackInfo& info);
+	Napi::Value SetConfiguration(const Napi::CallbackInfo& info);
+
+	Napi::Value GetParent(const Napi::CallbackInfo& info);
+	Napi::Value Open(const Napi::CallbackInfo& info);
+	Napi::Value Reset(const Napi::CallbackInfo& info);
+	Napi::Value Close(const Napi::CallbackInfo& info);
+
+	Napi::Value IsKernelDriverActive(const Napi::CallbackInfo& info);
+	Napi::Value DetachKernelDriver(const Napi::CallbackInfo& info);
+	Napi::Value AttachKernelDriver(const Napi::CallbackInfo& info);
+
+	Napi::Value ClaimInterface(const Napi::CallbackInfo& info);
+	Napi::Value SetInterface(const Napi::CallbackInfo& info);
+	Napi::Value ReleaseInterface(const Napi::CallbackInfo& info);
+
+	Napi::Value ClearHalt(const Napi::CallbackInfo& info);
+protected:
+	static std::map<libusb_device*, Device*> byPtr;
+	static Napi::FunctionReference constructor;
+	
+	Napi::Value Constructor(const Napi::CallbackInfo& info);
 };
 
 
-struct Transfer: public Nan::ObjectWrap {
+struct Transfer: public Napi::ObjectWrap<Transfer> {
 	libusb_transfer* transfer;
 	Device* device;
-	Nan::Persistent<Object> v8buffer;
-	Nan::Persistent<Function> v8callback;
+	Napi::ObjectReference v8buffer;
+	Napi::FunctionReference v8callback;
 
-	static void Init(Local<Object> exports);
+	static Napi::Object Init(Napi::Env env, Napi::Object exports);
 
 	inline void ref(){Ref();}
 	inline void unref(){Unref();}
-	inline void attach(Local<Object> o){Wrap(o);}
 
-	Transfer();
+	Transfer(const Napi::CallbackInfo& info);
 	~Transfer();
+
+	Napi::Value Submit(const Napi::CallbackInfo& info);
+	Napi::Value Cancel(const Napi::CallbackInfo& info);
+private:
+	Napi::Value Constructor(const Napi::CallbackInfo& info);
 };
 
 
 
 #define CHECK_USB(r) \
 	if (r < LIBUSB_SUCCESS) { \
-		return Nan::ThrowError(libusbException(r)); \
+		throw libusbException(env, r); \
 	}
 
 #define CALLBACK_ARG(CALLBACK_ARG_IDX) \
-	Local<Function> callback; \
+	Napi::Function callback; \
 	if (info.Length() > (CALLBACK_ARG_IDX)) { \
-		if (!info[CALLBACK_ARG_IDX]->IsFunction()) { \
-			return Nan::ThrowTypeError("Argument " #CALLBACK_ARG_IDX " must be a function"); \
+		if (!info[CALLBACK_ARG_IDX].IsFunction()) { \
+			throw Napi::TypeError::New(env, "Argument " #CALLBACK_ARG_IDX " must be a function"); \
 		} \
-		callback = Local<Function>::Cast(info[CALLBACK_ARG_IDX]); \
+		callback = info[CALLBACK_ARG_IDX].As<Napi::Function>(); \
 	} \
 
 #ifdef DEBUG
