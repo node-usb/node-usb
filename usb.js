@@ -516,7 +516,7 @@ exports.on('newListener', function(name) {
 	if (name !== 'attach' && name !== 'detach') return;
 	if (++hotplugListeners === 1) {
 		if (isWindows) {
-			exports._pollHotplug(true);
+			pollHotplug(true);
 		} else {
 			usb._enableHotplugEvents();
 		}
@@ -527,7 +527,7 @@ exports.on('removeListener', function(name) {
 	if (name !== 'attach' && name !== 'detach') return;
 	if (--hotplugListeners === 0) {
 		if (isWindows) {
-			exports._pollingHotplug = false;
+			pollingHotplug = false;
 		} else {
 			usb._disableHotplugEvents();
 		}
@@ -536,11 +536,13 @@ exports.on('removeListener', function(name) {
 
 // Polling mechanism for discovering Windows device changes until this is fixed:
 // https://github.com/libusb/libusb/issues/86
-exports._pollTimeout = 500;
-exports._pollHotplug = function(start) {
+exports._windowsPollTimeout = 500;
+var pollingHotplug = false;
+var windowsDevices = [];
+function pollHotplug(start) {
 	if (start) {
-		exports._pollingHotplug = true;
-	} else if (!exports._pollingHotplug) {
+		pollingHotplug = true;
+	} else if (!pollingHotplug) {
 		return;
 	}
 
@@ -549,14 +551,14 @@ exports._pollHotplug = function(start) {
 	if (!start) {
 		// Find attached devices
 		for (var device of devices) {
-			var found = exports._windowsDevices.find(item => item.deviceAddress === device.deviceAddress);
+			var found = windowsDevices.find(item => item.deviceAddress === device.deviceAddress);
 			if (!found) {
 				usb.emit('attach', device);
 			}
 		}
 
 		// Find detached devices
-		for (var device of exports._windowsDevices) {
+		for (var device of windowsDevices) {
 			var found = devices.find(item => item.deviceAddress === device.deviceAddress);
 			if (!found) {
 				usb.emit('detach', device);
@@ -564,8 +566,8 @@ exports._pollHotplug = function(start) {
 		}
 	}
 
-	exports._windowsDevices = devices;
+	windowsDevices = devices;
 	setTimeout(() => {
-		exports._pollHotplug();
-	}, exports._pollTimeout);
+		pollHotplug();
+	}, exports._windowsPollTimeout);
 }
