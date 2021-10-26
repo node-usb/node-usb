@@ -534,8 +534,9 @@ exports.on('removeListener', function(name) {
 	}
 });
 
-// Polling mechanism for discovering device changes until this is fixed:
+// Polling mechanism for discovering Windows device changes until this is fixed:
 // https://github.com/libusb/libusb/issues/86
+exports._pollTimeout = 500;
 exports._pollHotplug = function(start) {
 	if (start) {
 		exports._pollingHotplug = true;
@@ -566,5 +567,5 @@ exports._pollHotplug = function(start) {
 	exports._windowsDevices = devices;
 	setTimeout(() => {
 		exports._pollHotplug();
-	}, 500);
+	}, exports._pollTimeout);
 }
