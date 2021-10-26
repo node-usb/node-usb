@@ -18,6 +18,14 @@ class UVQueue{
 		void stop() {
     		tsfn.Release();
 		}
+
+		void ref(Napi::Env env) {
+			tsfn.Ref(env);
+		}
+
+		void unref(Napi::Env env) {
+			tsfn.Unref(env);
+		}
 		
 		void post(T value){
 			auto cb = callback;

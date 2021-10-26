@@ -6,6 +6,8 @@ Napi::Value SetDebugLevel(const Napi::CallbackInfo& info);
 Napi::Value GetDeviceList(const Napi::CallbackInfo& info);
 Napi::Value EnableHotplugEvents(const Napi::CallbackInfo& info);
 Napi::Value DisableHotplugEvents(const Napi::CallbackInfo& info);
+Napi::Value RefHotplugEvents(const Napi::CallbackInfo &info);
+Napi::Value UnrefHotplugEvents(const Napi::CallbackInfo &info);
 void initConstants(Napi::Object target);
 
 libusb_context* usb_context;
@@ -96,6 +98,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
 	exports.Set("getDeviceList", Napi::Function::New(env, GetDeviceList));
 	exports.Set("_enableHotplugEvents", Napi::Function::New(env, EnableHotplugEvents));
 	exports.Set("_disableHotplugEvents", Napi::Function::New(env, DisableHotplugEvents));
+	exports.Set("refHotplugEvents", Napi::Function::New(env, RefHotplugEvents));
+	exports.Set("unrefHotplugEvents", Napi::Function::New(env, UnrefHotplugEvents));
 	return exports;
 }
 
@@ -195,6 +199,24 @@ Napi::Value DisableHotplugEvents(const Napi::CallbackInfo& info) {
 		libusb_hotplug_deregister_callback(usb_context, hotplugHandle);
 		hotplugQueue.stop();
 		hotplugEnabled = false;
+	}
+	return env.Undefined();
+}
+
+Napi::Value RefHotplugEvents(const Napi::CallbackInfo& info) {
+	Napi::Env env = info.Env();
+	Napi::HandleScope scope(env);
+	if (hotplugEnabled) {
+		hotplugQueue.ref(env);
+	}
+	return env.Undefined();
+}
+
+Napi::Value UnrefHotplugEvents(const Napi::CallbackInfo& info) {
+	Napi::Env env = info.Env();
+	Napi::HandleScope scope(env);
+	if (hotplugEnabled) {
+		hotplugQueue.unref(env);
 	}
 	return env.Undefined();
 }
