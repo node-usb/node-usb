@@ -305,7 +305,7 @@ Attaches a callback to plugging in a `device`.
 Attaches a callback to unplugging a `device`.
 
 ### usb.refHotplugEvents();
-Restore (re-reference) the hotplug events unreferenced by `unrefHotplugEvents()`
+Restores (re-references) hotplug events unreferenced by `unrefHotplugEvents()`
 
 ### usb.unrefHotplugEvents();
 Listening to events will prevent the process to exit. By calling this function, hotplug events will be unreferenced by the event loop, allowing the process to exit even when listening for the `attach` and `detach` events.
