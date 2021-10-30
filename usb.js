@@ -508,12 +508,12 @@ OutEndpoint.prototype.transferWithZLP = function (buf, cb) {
 	}
 }
 
-// Polling mechanism for discovering Windows device changes until this is fixed:
+// Polling mechanism for discovering device changes until this is fixed:
 // https://github.com/libusb/libusb/issues/86
-exports._windowsPollTimeout = 500;
+exports._pollTimeout = 500;
 var hotplugSupported = usb._getLibusbCapability(usb.LIBUSB_CAP_HAS_HOTPLUG) > 0;
 var pollingHotplug = false;
-var windowsDevices = [];
+var pollDevices = [];
 function pollHotplug(start) {
 	if (start) {
 		pollingHotplug = true;
@@ -526,14 +526,14 @@ function pollHotplug(start) {
 	if (!start) {
 		// Find attached devices
 		for (var device of devices) {
-			var found = windowsDevices.find(item => item.deviceAddress === device.deviceAddress);
+			var found = pollDevices.find(item => item.deviceAddress === device.deviceAddress);
 			if (!found) {
 				usb.emit('attach', device);
 			}
 		}
 
 		// Find detached devices
-		for (var device of windowsDevices) {
+		for (var device of pollDevices) {
 			var found = devices.find(item => item.deviceAddress === device.deviceAddress);
 			if (!found) {
 				usb.emit('detach', device);
@@ -541,10 +541,10 @@ function pollHotplug(start) {
 		}
 	}
 
-	windowsDevices = devices;
+	pollDevices = devices;
 	setTimeout(() => {
 		pollHotplug();
-	}, exports._windowsPollTimeout);
+	}, exports._pollTimeout);
 }
 
 var hotplugListeners = 0;
