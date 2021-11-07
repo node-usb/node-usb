@@ -16,6 +16,7 @@ struct HotPlug {
 
 #ifdef USE_POLL
 #include <poll.h>
+#include <uv.h>
 #include <sys/time.h>
 
 std::map<int, uv_poll_t*> pollByFD;
