@@ -29,6 +29,16 @@ export declare function setDebugLevel(level: number): void;
 export declare function _enableHotplugEvents(): void;
 export declare function _disableHotplugEvents(): void;
 
+/**
+ * Restore (re-reference) the hotplug events unreferenced by `unrefHotplugEvents()`
+ */
+export declare function refHotplugEvents(): void;
+
+/**
+ * Unreference the hotplug events from the event loop, allowing the process to exit even when listening for the `attach` and `detach` events
+ */
+export declare function unrefHotplugEvents(): void;
+
 /** Represents a USB transfer */
 export declare class Transfer {
     constructor(device: Device, endpointAddr: number, type: number, timeout: number, callback: (error: LibUSBException, buf: Buffer, actual: number) => void);
