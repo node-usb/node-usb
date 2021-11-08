@@ -1,6 +1,15 @@
 # Changelog
 
-## [1.8.0] - 2021-09-28
+## [1.8.1] - 2021-11-08
+
+### Added
+- Added functionality to ref/unref the hotplug events - [`455`](https://github.com/node-usb/node-usb/pull/455) ([Guilherme Francescon](https://github.com/gfcittolin))
+- Added CHANGELOG - [`454`](https://github.com/node-usb/node-usb/pull/454) ([Rob Moran](https://github.com/thegecko))
+
+### Fixed
+- Fixed delay when exiting program - [`455`](https://github.com/node-usb/node-usb/pull/455) ([Rob Moran](https://github.com/thegecko))
+
+## [1.8.0] - 2021-10-14
 
 ### Added
 - Added prebuildify and GitHub action for native binaries - [`450`](https://github.com/node-usb/node-usb/pull/450) ([Rob Moran](https://github.com/thegecko))
