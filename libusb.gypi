@@ -1,6 +1,9 @@
 {
   'variables': {
     'use_udev%': 1,
+    'use_system_libusb%': 'false',
+    'module_name': 'usb_bindings',
+    'module_path': './src/binding'
   },
   'targets': [
     {
@@ -46,6 +49,8 @@
             'libusb/libusb/os/threads_posix.h',
           ],
           'defines': [
+            'PLATFORM_POSIX=1',
+            'PRINTF_FORMAT(a, b)=__attribute__ ((__format__ (__printf__, a, b)))',
             'DEFAULT_VISIBILITY=',
             'HAVE_GETTIMEOFDAY=1',
             'HAVE_POLL_H=1',
@@ -61,6 +66,7 @@
             'libusb/libusb/os/linux_usbfs.h',
           ],
           'defines': [
+            'HAVE_CLOCK_GETTIME=1',
             'OS_LINUX=1',
             '_GNU_SOURCE=1',
             'USBI_TIMERFD_AVAILABLE=1',
@@ -111,8 +117,13 @@
             'libusb/libusb/os/threads_windows.c',
             'libusb/libusb/os/threads_windows.h',
             'libusb/libusb/os/windows_common.h',
-            'libusb/libusb/os/windows_usb.c',
-            'libusb/libusb/os/windows_usb.h',
+            'libusb/libusb/os/windows_nt_common.c',
+            'libusb/libusb/os/windows_nt_common.h',
+            'libusb/libusb/os/windows_nt_shared_types.h',
+            'libusb/libusb/os/windows_usbdk.c',
+            'libusb/libusb/os/windows_usbdk.h',
+            'libusb/libusb/os/windows_winusb.c',
+            'libusb/libusb/os/windows_winusb.h',
             'libusb/msvc/config.h',
             'libusb/msvc/inttypes.h',
             'libusb/msvc/stdint.h',
