@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.9.0] - 2021-11-08
+
+### Changed
+- Changed libusb dependency to upstream v1.0.23 - [`453`](https://github.com/node-usb/node-usb/pull/453) ([Rob Moran](https://github.com/thegecko))
+
 ## [1.8.1] - 2021-11-08
 
 ### Added
