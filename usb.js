@@ -1,6 +1,6 @@
 var usb = exports = module.exports = require('node-gyp-build')(__dirname);
-var events = require('events')
-var util = require('util')
+var events = require('events');
+var util = require('util');
 
 var isBuffer = function(obj) {
 	return obj && obj instanceof Uint8Array
@@ -510,17 +510,64 @@ OutEndpoint.prototype.transferWithZLP = function (buf, cb) {
 	}
 }
 
+// Polling mechanism for discovering device changes until this is fixed:
+// https://github.com/libusb/libusb/issues/86
+exports._pollTimeout = 500;
+var hotplugSupported = usb._getLibusbCapability(usb.LIBUSB_CAP_HAS_HOTPLUG) > 0;
+var pollingHotplug = false;
+var pollDevices = [];
+function pollHotplug(start) {
+	if (start) {
+		pollingHotplug = true;
+	} else if (!pollingHotplug) {
+		return;
+	}
+
+	var devices = usb.getDeviceList();
+
+	if (!start) {
+		// Find attached devices
+		for (var device of devices) {
+			var found = pollDevices.find(item => item.deviceAddress === device.deviceAddress);
+			if (!found) {
+				usb.emit('attach', device);
+			}
+		}
+
+		// Find detached devices
+		for (var device of pollDevices) {
+			var found = devices.find(item => item.deviceAddress === device.deviceAddress);
+			if (!found) {
+				usb.emit('detach', device);
+			}
+		}
+	}
+
+	pollDevices = devices;
+	setTimeout(() => {
+		pollHotplug();
+	}, exports._pollTimeout);
+}
+
 var hotplugListeners = 0;
 exports.on('newListener', function(name) {
 	if (name !== 'attach' && name !== 'detach') return;
 	if (++hotplugListeners === 1) {
-		usb._enableHotplugEvents();
+		if (hotplugSupported) {
+			usb._enableHotplugEvents();
+		} else {
+			pollHotplug(true);
+		}
 	}
 });
 
 exports.on('removeListener', function(name) {
 	if (name !== 'attach' && name !== 'detach') return;
 	if (--hotplugListeners === 0) {
-		usb._disableHotplugEvents();
+		if (hotplugSupported) {
+			usb._disableHotplugEvents();
+		} else {
+			pollingHotplug = false;
+		}
 	}
 });

@@ -4,6 +4,7 @@
 
 Napi::Value SetDebugLevel(const Napi::CallbackInfo& info);
 Napi::Value GetDeviceList(const Napi::CallbackInfo& info);
+Napi::Value GetLibusbCapability(const Napi::CallbackInfo& info);
 Napi::Value EnableHotplugEvents(const Napi::CallbackInfo& info);
 Napi::Value DisableHotplugEvents(const Napi::CallbackInfo& info);
 Napi::Value RefHotplugEvents(const Napi::CallbackInfo& info);
@@ -97,6 +98,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
 
 	exports.Set("setDebugLevel", Napi::Function::New(env, SetDebugLevel));
 	exports.Set("getDeviceList", Napi::Function::New(env, GetDeviceList));
+	exports.Set("_getLibusbCapability", Napi::Function::New(env, GetLibusbCapability));
 	exports.Set("_enableHotplugEvents", Napi::Function::New(env, EnableHotplugEvents));
 	exports.Set("_disableHotplugEvents", Napi::Function::New(env, DisableHotplugEvents));
 	exports.Set("refHotplugEvents", Napi::Function::New(env, RefHotplugEvents));
@@ -131,6 +133,17 @@ Napi::Value GetDeviceList(const Napi::CallbackInfo& info) {
 	}
 	libusb_free_device_list(devs, true);
 	return arr;
+}
+
+Napi::Value GetLibusbCapability(const Napi::CallbackInfo& info) {
+	Napi::Env env = info.Env();
+
+	if (info.Length() != 1 || !info[0].IsNumber()) {
+		THROW_BAD_ARGS("Usb::GetLibusbCapability argument is invalid!")
+	}
+
+	int res = libusb_has_capability(info[0].As<Napi::Number>().Int32Value());
+	return Napi::Number::New(env, res);
 }
 
 Napi::ObjectReference hotplugThis;
@@ -303,6 +316,12 @@ void initConstants(Napi::Object target){
 
 	DEFINE_CONSTANT(target, LIBUSB_CONTROL_SETUP_SIZE);
 	DEFINE_CONSTANT(target, LIBUSB_DT_BOS_SIZE);
+
+	// libusb_capability
+	DEFINE_CONSTANT(target, LIBUSB_CAP_HAS_CAPABILITY);
+	DEFINE_CONSTANT(target, LIBUSB_CAP_HAS_HOTPLUG);
+	DEFINE_CONSTANT(target, LIBUSB_CAP_HAS_HID_ACCESS);
+	DEFINE_CONSTANT(target, LIBUSB_CAP_SUPPORTS_DETACH_KERNEL_DRIVER);
 
 	// libusb_error
 	// Input/output error
