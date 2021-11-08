@@ -6,6 +6,8 @@ Napi::Value SetDebugLevel(const Napi::CallbackInfo& info);
 Napi::Value GetDeviceList(const Napi::CallbackInfo& info);
 Napi::Value EnableHotplugEvents(const Napi::CallbackInfo& info);
 Napi::Value DisableHotplugEvents(const Napi::CallbackInfo& info);
+Napi::Value RefHotplugEvents(const Napi::CallbackInfo& info);
+Napi::Value UnrefHotplugEvents(const Napi::CallbackInfo& info);
 void initConstants(Napi::Object target);
 
 libusb_context* usb_context;
@@ -16,6 +18,7 @@ struct HotPlug {
 
 #ifdef USE_POLL
 #include <poll.h>
+#include <uv.h>
 #include <sys/time.h>
 
 std::map<int, uv_poll_t*> pollByFD;
@@ -96,6 +99,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
 	exports.Set("getDeviceList", Napi::Function::New(env, GetDeviceList));
 	exports.Set("_enableHotplugEvents", Napi::Function::New(env, EnableHotplugEvents));
 	exports.Set("_disableHotplugEvents", Napi::Function::New(env, DisableHotplugEvents));
+	exports.Set("refHotplugEvents", Napi::Function::New(env, RefHotplugEvents));
+	exports.Set("unrefHotplugEvents", Napi::Function::New(env, UnrefHotplugEvents));
 	return exports;
 }
 
@@ -199,9 +204,26 @@ Napi::Value DisableHotplugEvents(const Napi::CallbackInfo& info) {
 	return env.Undefined();
 }
 
+Napi::Value RefHotplugEvents(const Napi::CallbackInfo& info) {
+	Napi::Env env = info.Env();
+	Napi::HandleScope scope(env);
+	if (hotplugEnabled) {
+		hotplugQueue.ref(env);
+	}
+	return env.Undefined();
+}
+
+Napi::Value UnrefHotplugEvents(const Napi::CallbackInfo& info) {
+	Napi::Env env = info.Env();
+	Napi::HandleScope scope(env);
+	if (hotplugEnabled) {
+		hotplugQueue.unref(env);
+	}
+	return env.Undefined();
+}
+
 #define DEFINE_CONSTANT(OBJ, VALUE) \
 	OBJ.DefineProperty(Napi::PropertyDescriptor::Value(#VALUE, Napi::Number::New(OBJ.Env(), VALUE), static_cast<napi_property_attributes>(napi_enumerable | napi_configurable)));
-
 
 void initConstants(Napi::Object target){
 	DEFINE_CONSTANT(target, LIBUSB_CLASS_PER_INTERFACE);

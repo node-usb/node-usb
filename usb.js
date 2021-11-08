@@ -14,6 +14,8 @@ if (usb.INIT_ERROR) {
 	usb.getDeviceList = function () { return []; };
 	usb._enableHotplugEvents = function () { };
 	usb._disableHotplugEvents = function () { };
+	usb.refHotplugEvents = function () { };
+	usb.unrefHotplugEvents = function () { };
 }
 
 Object.keys(events.EventEmitter.prototype).forEach(function (key) {
