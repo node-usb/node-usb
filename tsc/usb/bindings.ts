@@ -28,6 +28,7 @@ export declare function setDebugLevel(level: number): void;
 
 export declare function _enableHotplugEvents(): void;
 export declare function _disableHotplugEvents(): void;
+export declare function _getLibusbCapability(capability: number): number;
 
 /**
  * Restore (re-reference) the hotplug events unreferenced by `unrefHotplugEvents()`
@@ -267,6 +268,12 @@ export declare const LIBUSB_RECIPIENT_OTHER: number;
 
 export declare const LIBUSB_CONTROL_SETUP_SIZE: number;
 export declare const LIBUSB_DT_BOS_SIZE: number;
+
+// libusb_capability
+export declare const LIBUSB_CAP_HAS_CAPABILITY: number;
+export declare const LIBUSB_CAP_HAS_HOTPLUG: number;
+export declare const LIBUSB_CAP_HAS_HID_ACCESS: number;
+export declare const LIBUSB_CAP_SUPPORTS_DETACH_KERNEL_DRIVER: number;
 
 // libusb_error
 /** Input/output error */

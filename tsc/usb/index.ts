@@ -40,13 +40,57 @@ declare module './bindings' {
     function listenerCount<K extends keyof DeviceEvents>(event: K): number;
 }
 
+// Polling mechanism for discovering device changes until this is fixed:
+// https://github.com/libusb/libusb/issues/86
+const pollTimeout = 500;
+const hotplugSupported = usb._getLibusbCapability(usb.LIBUSB_CAP_HAS_HOTPLUG) > 0;
+let pollingHotplug = false;
+let pollDevices: usb.Device[] = [];
+
+const pollHotplug = (start = false) => {
+    if (start) {
+        pollingHotplug = true;
+    } else if (!pollingHotplug) {
+        return;
+    }
+
+    const devices = usb.getDeviceList();
+
+    if (!start) {
+        // Find attached devices
+        for (const device of devices) {
+            const found = pollDevices.find(item => item.deviceAddress === device.deviceAddress);
+            if (!found) {
+                usb.emit('attach', device);
+            }
+        }
+
+        // Find detached devices
+        for (const device of pollDevices) {
+            const found = devices.find(item => item.deviceAddress === device.deviceAddress);
+            if (!found) {
+                usb.emit('detach', device);
+            }
+        }
+    }
+
+    pollDevices = devices;
+    setTimeout(() => {
+        pollHotplug();
+    }, pollTimeout);
+};
+
 usb.on('newListener', event => {
     if (event !== 'attach' && event !== 'detach') {
         return;
     }
     const listenerCount = usb.listenerCount('attach') + usb.listenerCount('detach');
     if (listenerCount === 0) {
-        usb._enableHotplugEvents();
+        if (hotplugSupported) {
+            usb._enableHotplugEvents();
+        } else {
+            pollHotplug(true);
+        }
     }
 });
 
@@ -56,7 +100,11 @@ usb.on('removeListener', event => {
     }
     const listenerCount = usb.listenerCount('attach') + usb.listenerCount('detach');
     if (listenerCount === 0) {
-        usb._disableHotplugEvents();
+        if (hotplugSupported) {
+            usb._disableHotplugEvents();
+        } else {
+            pollingHotplug = false;
+        }
     }
 });
 
