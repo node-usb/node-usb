@@ -21,8 +21,6 @@ Device::Device(const Napi::CallbackInfo & info) : Napi::ObjectWrap<Device>(info)
 	byPtr.insert(std::make_pair(device, this));
 #ifndef USE_POLL
 	completionQueue.start(info.Env());
-	// Unref threadsafe function immediately to avoid delay in program exit
-	completionQueue.unref(info.Env());
 #endif
 	DEBUG_LOG("Created device %p", this);
 	Constructor(info);
@@ -30,6 +28,9 @@ Device::Device(const Napi::CallbackInfo & info) : Napi::ObjectWrap<Device>(info)
 
 Device::~Device(){
 	DEBUG_LOG("Freed device %p", this);
+#ifndef USE_POLL
+	completionQueue.stop();
+#endif
 	byPtr.erase(device);
 	libusb_close(device_handle);
 	libusb_unref_device(device);
