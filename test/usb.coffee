@@ -3,6 +3,7 @@ util = require('util')
 usb = require('../').usb
 getDeviceList = require('../').getDeviceList
 findByIds = require('../').findByIds
+findBySerialNumber = require('../').findBySerialNumber
 
 if typeof gc is 'function'
 	# running with --expose-gc, do a sweep between tests so valgrind blames the right one
@@ -37,6 +38,13 @@ describe 'findByIds', ->
 	it 'should return an array with length > 0', ->
 		dev = findByIds(0x59e3, 0x0a23)
 		assert.ok(dev, "Demo device is not attached")
+
+describe 'findBySerialNumber', ->
+	it 'should return a single device ', (done) ->
+		findBySerialNumber 'TEST_DEVICE', (e, d) ->
+			assert.ok(e == undefined, e)
+			assert.ok(d, "Demo device is not attached")
+			done()
 
 describe 'Device', ->
 	device = null
