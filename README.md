@@ -134,7 +134,8 @@ import { WebUSB } from 'usb';
 
 (async () => {
     const customWebUSB = new WebUSB({
-        // This function can return a promise which allows a UI to be displayed to pick a device if required
+        // This function can return a promise which allows a UI to be displayed
+        // to pick a device if required
         devicesFound: (devices => devices.find(device => device.serialNumber === 'TEST_DEVICE'))
     });
 
@@ -164,7 +165,7 @@ import { webusb } from 'usb';
 ```
 
 ## Electron
-Please refer to the maintained examplke for using `node-usb` in electron:
+Please refer to the maintained example for using `node-usb` in electron:
 
 https://github.com/node-usb/node-usb-example-electron
 
@@ -174,7 +175,7 @@ Since `v2.0.0`, the `node-usb` library supports two APIs:
 - `WebUSB` which follows the [WebUSB Specification](https://wicg.github.io/webusb/) (recommended)
 - `Legacy API` which retains the previous 'non-blocking' API
 
-Convenience methods also exist to easily list or find devices as well as convert between a legacy USB device and WebUSB decice.
+Convenience methods also exist to easily list or find devices as well as convert between a legacy usb.Device device and WebUSB device.
 
 Full auto-generated API documentation can be seen here:
 
@@ -514,7 +515,7 @@ The library is based on native bindings wrapping the [libusb](https://github.com
 Libusb is included as a submodule, clone this repository and then the submodule as follows:
 
 ```bash
-https://github.com/node-usb/node-usb
+git clone https://github.com/node-usb/node-usb
 cd node-usb
 git submodule update --init
 ```
@@ -523,7 +524,7 @@ git submodule update --init
 The package uses `yarn` for the typescript code and `prebuildify` to generate the native binaries. These can be executed as follows:
 
 ```bash
-yarn build
+yarn
 yarn prebuild
 ```
 
