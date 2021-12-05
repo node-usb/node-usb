@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.9.1] - 2021-11-14
+
+### Fixed
+- Reverted fix for exit delay fixing a segfault issue it introduced - [`456`](https://github.com/node-usb/node-usb/pull/456) ([Rob Moran](https://github.com/thegecko))
+
 ## [1.9.0] - 2021-11-08
 
 ### Changed
