@@ -3,5 +3,6 @@ node_modules
 build
 *~
 *.log
+docs
 test/*.js
 .github

@@ -36,15 +36,15 @@
     "hardware"
   ],
   "scripts": {
-    "prepare": "yarn build",
+    "prepare": "yarn compile",
     "install": "node-gyp-build",
     "clean": "git clean -dfx",
-    "build": "tsc && yarn lint && yarn docs",
+    "compile": "tsc && yarn lint && yarn docs",
     "lint": "eslint . --ext .ts",
     "watch": "tsc -w --preserveWatchOutput",
     "test": "mocha --require coffeescript/register --grep Module test/*",
     "full-test": "mocha --require coffeescript/register test/*.coffee",
-    "valgrind": "coffee -c test/usb.coffee; valgrind --leak-check=full --show-possibly-lost=no node --expose-gc --trace-gc node_modules/mocha/bin/_mocha -R spec",
+    "valgrind": "coffee -c test/*.coffee; valgrind --leak-check=full --show-possibly-lost=no node --expose-gc --trace-gc node_modules/mocha/bin/_mocha -R spec",
     "docs": "typedoc",
     "prebuild": "prebuildify --napi --strip",
     "prebuild-darwin": "prebuildify --napi --strip --arch x64+arm64",

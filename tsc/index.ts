@@ -62,6 +62,6 @@ export {
     // WebUSB class for creating custom webusb instances
     WebUSB,
 
-    // WebUSB Device class for turning a core usb.Device into a webusb device
+    // WebUSB Device class for turning a legacy usb.Device into a webusb device
     WebUSBDevice
 };
