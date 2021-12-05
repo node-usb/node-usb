@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.9.2] - 2021-12-05
+
+### Fixed
+- Fixed exit delay and hang by moving queue start/stop to device open/close  - [`460`](https://github.com/node-usb/node-usb/pull/460) ([MikeColeGuru](https://github.com/MikeColeGuru))
+
 ## [1.9.1] - 2021-11-14
 
 ### Fixed
