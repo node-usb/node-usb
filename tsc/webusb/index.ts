@@ -10,6 +10,11 @@ export interface USBOptions {
      * A `device found` callback function to allow the user to select a device
      */
     devicesFound?: (devices: Array<USBDevice>) => Promise<USBDevice | void>;
+
+    /**
+     * Optional timeout (in milliseconds) to use for the device control transfers
+     */
+    deviceTimeout?: number;
 }
 
 /**
@@ -157,6 +162,10 @@ export class WebUSB extends TypedEventTarget<USBEvents> implements USB {
         const webDevices: USBDevice[] = [];
 
         for (const device of devices) {
+            if (this.options.deviceTimeout) {
+                device.timeout = this.options.deviceTimeout;
+            }
+
             const webDevice = await WebUSBDevice.createInstance(device);
             webDevices.push(webDevice);
         }
