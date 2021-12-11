@@ -12,10 +12,14 @@ const ENDPOINT_HALT = 0x00;
  * Wrapper to make a node-usb device look like a webusb device
  */
 export class WebUSBDevice implements USBDevice {
-    public static async createInstance(device: usb.Device): Promise<WebUSBDevice> {
-        const instance = new WebUSBDevice(device);
-        await instance.initialize();
-        return instance;
+    public static async createInstance(device: usb.Device): Promise<WebUSBDevice | undefined> {
+        try {
+            const instance = new WebUSBDevice(device);
+            await instance.initialize();
+            return instance;
+        } catch {
+            return undefined;
+        }
     }
 
     public readonly usbVersionMajor: number;

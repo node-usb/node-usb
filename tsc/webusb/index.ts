@@ -1,15 +1,25 @@
 import * as usb from '../usb';
+import { EventEmitter } from 'events';
 import { WebUSBDevice } from './webusb-device';
-import { TypedEventTarget } from './typed-event-target';
 
 /**
  * USB Options
  */
 export interface USBOptions {
     /**
-     * A `device found` callback function to allow the user to select a device
+     * Optional `device found` callback function to allow the user to select a device
      */
-    devicesFound?: (devices: Array<USBDevice>) => Promise<USBDevice | void>;
+    devicesFound?: (devices: USBDevice[]) => Promise<USBDevice | void>;
+
+    /**
+     * Optional array of preconfigured allowed devices
+     */
+    allowedDevices?: USBDeviceFilter[];
+
+    /**
+     * Optional flag to automatically allow all devices
+     */
+    allowAllDevices?: boolean;
 
     /**
      * Optional timeout (in milliseconds) to use for the device control transfers
@@ -17,43 +27,122 @@ export interface USBOptions {
     deviceTimeout?: number;
 }
 
-/**
- * @hidden
- */
-interface Device {
-    vendorId?: number;
-    productId?: number;
-    serialNumber?: string;
-}
+export class WebUSB implements USB {
 
-/**
- * @hidden
- */
-export type USBEvents = {
-    /**
-     * USBDevice connected event
-     */
-    connect: USBConnectionEvent;
-    /**
-     * USBDevice disconnected event
-     */
-    disconnect: USBConnectionEvent;
-};
-
-export class WebUSB extends TypedEventTarget<USBEvents> implements USB {
-
-    private allowedDevices: Array<Device> = [];
+    protected emitter = new EventEmitter();
+    protected knownDevices: Map<string, USBDevice> = new Map();
+    protected allowedDevices: USBDeviceFilter[];
 
     constructor(private options: USBOptions = {}) {
-        super();
+        this.allowedDevices = options.allowedDevices || [];
+
+        const deviceConnectCallback = async (device: usb.Device) => {
+            const webDevice = await WebUSBDevice.createInstance(device);
+
+            // When connected, emit an event if it is an allowed device
+            if (webDevice && this.isAllowedDevice(webDevice)) {
+                const deviceId = this.getDeviceId(device);
+                if (deviceId) {
+                    this.knownDevices.set(deviceId, webDevice);
+                }
+
+                const event = {
+                    type: 'connect',
+                    device: webDevice
+                };
+
+                this.emitter.emit('connect', event);
+            }
+        };
+
+        const deviceDisconnectCallback = async (device: usb.Device) => {
+            const deviceId = this.getDeviceId(device);
+
+            // When disconnected, emit an event if the device was a known allowed device
+            if (deviceId !== undefined && this.knownDevices.has(deviceId)) {
+                const webDevice = this.knownDevices.get(deviceId);
+
+                if (webDevice && this.isAllowedDevice(webDevice)) {
+                    const event = {
+                        type: 'disconnect',
+                        device: webDevice
+                    };
+
+                    this.emitter.emit('disconnect', event);
+                }
+            }
+        };
+
+        this.emitter.on('newListener', event => {
+            const listenerCount = this.emitter.listenerCount(event);
+
+            if (listenerCount !== 0) {
+                return;
+            }
+
+            if (event === 'connect') {
+                usb.addListener('attach', deviceConnectCallback);
+            } else if (event === 'disconnect') {
+                usb.addListener('detach', deviceDisconnectCallback);
+            }
+        });
+
+        this.emitter.on('removeListener', event => {
+            const listenerCount = this.emitter.listenerCount(event);
+
+            if (listenerCount !== 0) {
+                return;
+            }
+
+            if (event === 'connect') {
+                usb.removeListener('attach', deviceConnectCallback);
+            } else if (event === 'disconnect') {
+                usb.removeListener('detach', deviceDisconnectCallback);
+            }
+        });
     }
 
-    public set onconnect(listener: (event: USBConnectionEvent) => void) {
-        this.addEventListener('connect', listener);
+    private _onconnect: ((ev: USBConnectionEvent) => void) | undefined;
+    public set onconnect(fn: (ev: USBConnectionEvent) => void) {
+        if (this._onconnect) {
+            this.removeEventListener('connect', this._onconnect);
+            this._onconnect = undefined;
+        }
+
+        if (fn) {
+            this._onconnect = fn;
+            this.addEventListener('connect', this._onconnect);
+        }
     }
 
-    public set ondisconnect(listener: (event: USBConnectionEvent) => void) {
-        this.addEventListener('disconnect', listener);
+    private _ondisconnect: ((ev: USBConnectionEvent) => void) | undefined;
+    public set ondisconnect(fn: (ev: USBConnectionEvent) => void) {
+        if (this._ondisconnect) {
+            this.removeEventListener('disconnect', this._ondisconnect);
+            this._ondisconnect = undefined;
+        }
+
+        if (fn) {
+            this._ondisconnect = fn;
+            this.addEventListener('disconnect', this._ondisconnect);
+        }
+    }
+
+    public addEventListener(type: 'connect' | 'disconnect', listener: (this: this, ev: USBConnectionEvent) => void): void;
+    public addEventListener(type: 'connect' | 'disconnect', listener: EventListener): void;
+    public addEventListener(type: string, listener: (ev: USBConnectionEvent) => void): void {
+        this.emitter.addListener(type, listener);
+    }
+
+    public removeEventListener(type: 'connect' | 'disconnect', callback: (this: this, ev: USBConnectionEvent) => void): void;
+    public removeEventListener(type: 'connect' | 'disconnect', callback: EventListener): void;
+    public removeEventListener(type: string, callback: (this: this, ev: USBConnectionEvent) => void): void {
+        this.emitter.removeListener(type, callback);
+    }
+
+    public dispatchEvent(_event: Event): boolean {
+        // Don't dispatch from here
+        return false;
     }
 
     /**
@@ -110,7 +199,7 @@ export class WebUSB extends TypedEventTarget<USBEvents> implements USB {
                 throw new Error('selected device not found');
             }
 
-            if (!this.replaceAllowedDevice(device)) {
+            if (!this.isAllowedDevice(device)) {
                 this.allowedDevices.push({
                     vendorId: device.vendorId,
                     productId: device.productId,
@@ -129,35 +218,27 @@ export class WebUSB extends TypedEventTarget<USBEvents> implements USB {
      * @returns Promise containing an array of devices
      */
     public async getDevices(): Promise<USBDevice[]> {
-        // Create pre-filters
-        const preFilters = this.allowedDevices.map(device => ({
-            vendorId: device.vendorId || undefined,
-            productId: device.productId || undefined,
-            serialNumber: device.serialNumber || undefined
-        }));
+        let preFilters: USBDeviceFilter[] | undefined;
+
+        if (!this.options.allowAllDevices) {
+            // Create pre-filters
+            preFilters = this.allowedDevices.map(device => ({
+                vendorId: device.vendorId || undefined,
+                productId: device.productId || undefined,
+                serialNumber: device.serialNumber || undefined
+            }));
+        }
 
         // Refresh devices and filter for allowed ones
-        let devices = await this.loadDevices(preFilters);
-        devices = devices.filter(device => {
-            for (const i in this.allowedDevices) {
-                if (this.isSameDevice(device, this.allowedDevices[i])) {
-                    return true;
-                }
-            }
-
-            return false;
-        });
-
-        return devices;
+        const devices = await this.loadDevices(preFilters);
+        return devices.filter(device => this.isAllowedDevice(device));
     }
 
-    private async loadDevices(preFilters?: Array<Device>): Promise<USBDevice[]> {
+    private async loadDevices(preFilters?: USBDeviceFilter[]): Promise<USBDevice[]> {
         let devices = usb.getDeviceList();
 
-        if (preFilters) {
-            // Pre-filter devices
-            devices = this.preFilterDevices(devices, preFilters);
-        }
+        // Pre-filter devices
+        devices = this.preFilterDevices(devices, preFilters);
 
         const webDevices: USBDevice[] = [];
 
@@ -167,13 +248,24 @@ export class WebUSB extends TypedEventTarget<USBEvents> implements USB {
             }
 
             const webDevice = await WebUSBDevice.createInstance(device);
-            webDevices.push(webDevice);
+            if (webDevice) {
+                webDevices.push(webDevice);
+
+                const deviceId = this.getDeviceId(device);
+                if (deviceId) {
+                    this.knownDevices.set(deviceId, webDevice);
+                }
+            }
         }
 
         return webDevices;
     }
 
-    private preFilterDevices(devices: Array<usb.Device>, preFilters: Array<Device>): Array<usb.Device> {
+    private preFilterDevices(devices: usb.Device[], preFilters?: USBDeviceFilter[]): usb.Device[] {
+        if (!preFilters || !preFilters.length) {
+            return devices;
+        }
+
         // Just pre-filter on vid/pid
         return devices.filter(device => preFilters.some(filter => {
             // Vendor
@@ -187,28 +279,11 @@ export class WebUSB extends TypedEventTarget<USBEvents> implements USB {
         }));
     }
 
-    private isSameDevice(device1: Device, device2: Device): boolean {
-        return (device1.productId === device2.productId
-            && device1.vendorId === device2.vendorId
-            && device1.serialNumber === device2.serialNumber);
-    }
-
-    private replaceAllowedDevice(device: USBDevice): boolean {
-        for (const i in this.allowedDevices) {
-            if (this.isSameDevice(device, this.allowedDevices[i])) {
-                this.allowedDevices[i] = {
-                    vendorId: device.vendorId,
-                    productId: device.productId,
-                    serialNumber: device.serialNumber
-                };
-                return true;
-            }
+    private filterDevice(options: USBDeviceRequestOptions, device: USBDevice): boolean {
+        if (!options.filters || !options.filters.length) {
+            return true;
         }
 
-        return false;
-    }
-
-    private filterDevice(options: USBDeviceRequestOptions, device: USBDevice): boolean {
         return options.filters.some(filter => {
             // Vendor
             if (filter.vendorId && filter.vendorId !== device.vendorId) return false;
@@ -256,5 +331,33 @@ export class WebUSB extends TypedEventTarget<USBEvents> implements USB {
 
             return true;
         });
+    }
+
+    private getDeviceId(device: usb.Device): string | undefined {
+        if (device.busNumber === undefined || device.deviceAddress === undefined) {
+            return undefined;
+        }
+
+        return `${device.busNumber}.${device.deviceAddress}`;
+    }
+
+    private isAllowedDevice(device: USBDeviceFilter): boolean {
+        if (this.options.allowAllDevices) {
+            return true;
+        }
+
+        const isSameDevice = (device1: USBDeviceFilter, device2: USBDeviceFilter): boolean => {
+            return (device1.productId === device2.productId
+                && device1.vendorId === device2.vendorId
+                && device1.serialNumber === device2.serialNumber);
+        };
+
+        for (const i in this.allowedDevices) {
+            if (isSameDevice(device, this.allowedDevices[i])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

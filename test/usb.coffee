@@ -40,11 +40,9 @@ describe 'findByIds', ->
 		assert.ok(dev, "Demo device is not attached")
 
 describe 'findBySerialNumber', ->
-	it 'should return a single device ', (done) ->
-		findBySerialNumber 'TEST_DEVICE', (e, d) ->
-			assert.ok(e == undefined, e)
-			assert.ok(d, "Demo device is not attached")
-			done()
+	it 'should return a single device ', ->
+		dev = findBySerialNumber('TEST_DEVICE')
+		assert.ok(dev, "Demo device is not attached")
 
 describe 'Device', ->
 	device = null

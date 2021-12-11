@@ -104,10 +104,10 @@ import { findBySerialNumber, WebUSBDevice } from 'usb';
     const device = await findBySerialNumber('TEST_DEVICE');
 
     // Uses blocking calls, so is async
-    const webdevice = await WebUSBDevice.createInstance(device);
+    const webDevice = await WebUSBDevice.createInstance(device);
 
-    if (webdevice) {
-        console.log(webdevice); // WebUSB device
+    if (webDevice) {
+        console.log(webDevice); // WebUSB device
     }
 })();
 ```
@@ -134,9 +134,8 @@ import { WebUSB } from 'usb';
 
 (async () => {
     const customWebUSB = new WebUSB({
-        // This function can return a promise which allows a UI to be displayed
-        // to pick a device if required
-        devicesFound: (devices => devices.find(device => device.serialNumber === 'TEST_DEVICE'))
+        // This function can return a promise which allows a UI to be displayed if required
+        devicesFound: devices => devices.find(device => device.serialNumber === 'TEST_DEVICE')
     });
 
     // Returns device based on injected 'devicesFound' function
@@ -155,8 +154,27 @@ import { WebUSB } from 'usb';
 import { webusb } from 'usb';
 
 (async () => {
-    // Uses blocking calls, so is async
+    // The default webusb instance follows the WebUSB spec and only returns authorised devices
     const devices = await webusb.getDevices();
+
+    for (const device of devices) {
+        console.log(device); // WebUSB device
+    }
+})();
+```
+
+## Use WebUSB approach to list all devices
+```typescript
+import { WebUSB } from 'usb';
+
+(async () => {
+    const customWebUSB = new WebUSB({
+        // Bypass cheking for authorised devices
+        allowAllDevices: true
+    });
+
+    // Uses blocking calls, so is async
+    const devices = await customWebUSB.getDevices();
 
     for (const device of devices) {
         console.log(device); // WebUSB device
@@ -196,7 +214,7 @@ Convenience method to get a promise of the legacy device with the specified seri
 WebUSB Device class for wrapping a legacy Device into a WebUSB device
 
 #### WebUSBDevice.createInstance(device)
-Convenience methods to return a promise of a WebUSB device based on a legacy device
+Convenience method to return a promise of a WebUSB device based on a legacy device
 
 ## WebUSB
 
