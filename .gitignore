@@ -1,6 +1,9 @@
-build/*
-prebuilds/
+.DS_Store
 node_modules
+build
 *~
 *.log
+docs
 test/*.js
+dist
+prebuilds

@@ -1,6 +1,8 @@
-build/*
+.DS_Store
 node_modules
+build
 *~
 *.log
+docs
 test/*.js
 .github

@@ -189,7 +189,7 @@ Napi::Value Device::Open(const Napi::CallbackInfo& info) {
 	if (!self->device_handle){
 		CHECK_USB(libusb_open(self->device, &self->device_handle));
 #ifndef USE_POLL
-    	completionQueue.start(info.Env());
+		completionQueue.start(info.Env());
 #endif
 	}
 	return env.Undefined();
@@ -201,7 +201,7 @@ Napi::Value Device::Close(const Napi::CallbackInfo& info) {
 		libusb_close(self->device_handle);
 		self->device_handle = NULL;
 #ifndef USE_POLL
-	    completionQueue.stop();
+		completionQueue.stop();
 #endif        
 	}else{
 		THROW_ERROR("Can't close device with a pending request");

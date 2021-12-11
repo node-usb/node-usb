@@ -44,8 +44,8 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
-      - run: npm install --ignore-scripts
-      - run: npm run prebuild-${{ matrix.name }}      
+      - run: yarn install --ignore-scripts
+      - run: yarn prebuild-${{ matrix.name }}      
       - run: tar -zcvf ${{ matrix.name }}.tar.gz -C prebuilds .
       - uses: actions/upload-artifact@v2
         with:

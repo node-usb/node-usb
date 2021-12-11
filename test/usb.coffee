@@ -1,12 +1,15 @@
 assert = require('assert')
 util = require('util')
-usb = require("../usb.js")
+usb = require('../').usb
+getDeviceList = require('../').getDeviceList
+findByIds = require('../').findByIds
+findBySerialNumber = require('../').findBySerialNumber
 
 if typeof gc is 'function'
 	# running with --expose-gc, do a sweep between tests so valgrind blames the right one
 	afterEach -> gc()
 
-describe 'Module', ->
+describe 'USB Module', ->
 	it 'should describe basic constants', ->
 		assert.notEqual(usb, undefined, "usb must be undefined")
 		assert.ok((usb.LIBUSB_CLASS_PER_INTERFACE != undefined), "Constants must be described")
@@ -28,19 +31,23 @@ describe 'Module', ->
 
 describe 'getDeviceList', ->
 	it 'should return at least one device', ->
-		l = usb.getDeviceList()
+		l = getDeviceList()
 		assert.ok((l.length > 0))
 
 describe 'findByIds', ->
 	it 'should return an array with length > 0', ->
-		dev = usb.findByIds(0x59e3, 0x0a23)
+		dev = findByIds(0x59e3, 0x0a23)
 		assert.ok(dev, "Demo device is not attached")
 
+describe 'findBySerialNumber', ->
+	it 'should return a single device ', ->
+		dev = findBySerialNumber('TEST_DEVICE')
+		assert.ok(dev, "Demo device is not attached")
 
 describe 'Device', ->
 	device = null
 	before ->
-		device = usb.findByIds(0x59e3, 0x0a23)
+		device = findByIds(0x59e3, 0x0a23)
 
 	it 'should have sane properties', ->
 		assert.ok((device.busNumber > 0), "busNumber must be larger than 0")
@@ -70,7 +77,7 @@ describe 'Device', ->
 				assert.ok(e == undefined, e)
 				done()
 
-		it "should fail when bmRequestType doesn't match buffer / length", ->
+		it 'should fail when bmRequestType doesn\'t match buffer / length', ->
 			assert.throws(-> device.controlTransfer(0x40, 0x81, 0, 0, 64))
 
 		it 'should IN transfer when the IN bit is set', (done) ->
@@ -157,7 +164,6 @@ describe 'Device', ->
 				inEndpoint.on 'end', ->
 					#console.log("Stream stopped")
 					done()
-
 
 		describe 'OUT endpoint', ->
 			outEndpoint = null
