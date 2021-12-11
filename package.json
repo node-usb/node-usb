@@ -72,7 +72,7 @@
     "prebuildify": "^4.2.1",
     "prebuildify-ci": "^1.0.5",
     "prebuildify-cross": "^4.0.1",
-    "typedoc": "^0.20.36",
+    "typedoc": "^0.22.10",
     "typescript": "~4.2.4"
   },
   "binary": {
