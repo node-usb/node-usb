@@ -1,9 +1,0 @@
-{
-    "name": "Node USB",
-    "entryPoints": [
-        "tsc"
-    ],
-    "excludeExternals": true,
-    "excludePrivate": true,
-    "hideGenerator": true
-}
