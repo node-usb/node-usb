@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.0] - 2021-12-11
+
+### Added
+- Added new WebUSB API - [`443`](https://github.com/node-usb/node-usb/pull/443) ([Rob Moran](https://github.com/thegecko))
+- Switched to TypeScript
+- Switched to yarn instead of npm
+- Added docs using Typedoc
+
 ## [1.9.2] - 2021-12-05
 
 ### Fixed
