@@ -19,10 +19,13 @@ const findByIds = (vid: number, pid: number): usb.Device | undefined => {
  */
 const findBySerialNumber = async (serialNumber: string): Promise<usb.Device | undefined> => {
     const devices = usb.getDeviceList();
+    const opened = (device: usb.Device): boolean => !!device.interfaces;
 
     for (const device of devices) {
         try {
-            device.open();
+            if (!opened(device)) {
+                device.open();
+            }
 
             const getStringDescriptor = promisify(device.getStringDescriptor).bind(device);
             const buffer = await getStringDescriptor(device.deviceDescriptor.iSerialNumber);
@@ -34,7 +37,9 @@ const findBySerialNumber = async (serialNumber: string): Promise<usb.Device | un
             // Ignore any errors, device may be a system device or inaccessible
         } finally {
             try {
-                device.close();
+                if (opened(device)) {
+                    device.close();
+                }
             } catch {
                 // Ignore any errors, device may be a system device or inaccessible
             }

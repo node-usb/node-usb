@@ -391,13 +391,20 @@ export class WebUSBDevice implements USBDevice {
     private async initialize(): Promise<void> {
         try {
             await this.deviceMutex.lock();
-            this.device.open();
+
+            if (!this.opened) {
+                this.device.open();
+            }
+
             this.manufacturerName = await this.getStringDescriptor(this.device.deviceDescriptor.iManufacturer);
             this.productName = await this.getStringDescriptor(this.device.deviceDescriptor.iProduct);
             this.serialNumber = await this.getStringDescriptor(this.device.deviceDescriptor.iSerialNumber);
             this.configurations = await this.getConfigurations();
         } finally {
-            this.device.close();
+            if (this.opened) {
+                this.device.close();
+            }
+
             this.deviceMutex.unlock();
         }
     }
