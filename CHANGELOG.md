@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.0.2] - 2021-12-12
+
+### Fixed
+- Fixed error with trying to close WebUSB devices after they had failed to open - ([Rob Moran](https://github.com/thegecko))
+
 ## [2.0.1] - 2021-12-11
 
 ### Added
