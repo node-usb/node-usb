@@ -10,6 +10,7 @@
 #endif
 #include <libusb.h>
 
+#define NAPI_VERSION 4
 #include <napi.h>
 #include <node_buffer.h>
 
