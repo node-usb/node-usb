@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.0.3] - 2021-12-13
+
+### Added
+- Added definition for `NAPI_VERSION 4` and added N-API v4 target to prebuildify - ([Rob Moran](https://github.com/thegecko))
+
 ## [2.0.2] - 2021-12-12
 
 ### Fixed
