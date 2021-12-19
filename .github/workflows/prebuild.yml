@@ -19,20 +19,27 @@ jobs:
           - name: darwin
             os: macos-11
             node: x64
+            command: prebuild --arch x64+arm64
           - name: win32-x86
             os: windows-latest
             node: x86
+            command: prebuild
           - name: win32-x64
             os: windows-latest
             node: x64
-          - name: linux-x86
-            os: ubuntu-latest
+            command: prebuild
           - name: linux-x64
             os: ubuntu-latest
+            command: prebuild-cross -i ghcr.io/node-usb/centos7-devtoolset7 -i ghcr.io/node-usb/alpine
           - name: linux-arm
             os: ubuntu-latest
+            command: prebuild-cross -i ghcr.io/node-usb/linux-arm64 -i ghcr.io/node-usb/linux-armv7 -i ghcr.io/node-usb/linux-armv6
           - name: android-arm
             os: ubuntu-latest
+            command: prebuild-cross -i ghcr.io/node-usb/android-arm64 -i ghcr.io/node-usb/android-armv7
+          - name: linux-x86
+            os: ubuntu-latest
+            command: prebuild-cross -i ghcr.io/node-usb/linux-x86
     name: Build ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     steps:
@@ -45,7 +52,7 @@ jobs:
         with:
           submodules: recursive
       - run: npm install --ignore-scripts
-      - run: npm run prebuild-${{ matrix.name }}      
+      - run: npm run ${{ matrix.command }}
       - run: tar -zcvf ${{ matrix.name }}.tar.gz -C prebuilds .
       - uses: actions/upload-artifact@v2
         with:
