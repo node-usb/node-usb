@@ -15,7 +15,6 @@ jobs:
           node-version: 14.x
       - uses: actions/checkout@v2
         with:
-          submodules: recursive
           fetch-depth: 0
       - run: yarn install --ignore-scripts
       - run: yarn compile
