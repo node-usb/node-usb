@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.8.2] - 2022-01-07
+
+### Added
+- Added definition for `NAPI_VERSION 4` and added N-API v4 target to prebuildify - ([Rob Moran](https://github.com/thegecko))
+
+### Fixed
+- Fixed exit delay and hang by moving queue start/stop to device open/close  - [`460`](https://github.com/node-usb/node-usb/pull/460) ([MikeColeGuru](https://github.com/MikeColeGuru))
+
 ## [1.8.1] - 2021-11-08
 
 ### Added
