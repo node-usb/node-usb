@@ -3,6 +3,20 @@ import { WebUSB } from './webusb';
 import { WebUSBDevice } from './webusb/webusb-device';
 import * as usb from './usb';
 
+const webusb = new WebUSB();
+const getDeviceList = usb.getDeviceList;
+
+/**
+ * Convenience method to get the WebUSB interface available
+ */
+const getUsb = (): USB => {
+    if (navigator && navigator.usb) {
+        return navigator.usb;
+    }
+
+    return webusb;
+};
+
 /**
  * Convenience method to get the first device with the specified VID and PID, or `undefined` if no such device is present.
  * @param vid
@@ -49,14 +63,12 @@ const findBySerialNumber = async (serialNumber: string): Promise<usb.Device | un
     return undefined;
 };
 
-const webusb = new WebUSB();
-const getDeviceList = usb.getDeviceList;
-
 export {
     // Core usb object for quick access
     usb,
 
     // Convenience methods
+    getUsb,
     getDeviceList,
     findByIds,
     findBySerialNumber,
