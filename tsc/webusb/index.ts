@@ -27,6 +27,17 @@ export interface USBOptions {
     deviceTimeout?: number;
 }
 
+/**
+ * Convenience method to get the WebUSB interface available
+ */
+export const getWebUsb = (): USB => {
+    if (navigator && navigator.usb) {
+        return navigator.usb;
+    }
+
+    return new WebUSB();
+};
+
 export class WebUSB implements USB {
 
     protected emitter = new EventEmitter();

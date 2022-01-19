@@ -210,6 +210,9 @@ Convenience method to get the first legacy device with the specified VID and PID
 ### findBySerialNumber(serialNumber)
 Convenience method to get a promise of the legacy device with the specified serial number, or `undefined` if no such device is present.
 
+### getWebUsb()
+Return the `navigator.usb` instance if it exists, otherwise a `webusb` instance.
+
 ### WebUSBDevice
 WebUSB Device class for wrapping a legacy Device into a WebUSB device
 
