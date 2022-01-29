@@ -10,7 +10,7 @@
       'cflags_cc!': [ '-fno-exceptions' ],
       'xcode_settings': { 'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
         'CLANG_CXX_LIBRARY': 'libc++',
-        'MACOSX_DEPLOYMENT_TARGET': '10.11',
+        'MACOSX_DEPLOYMENT_TARGET': '10.7',
       },
       'msvs_settings': {
         'VCCLCompilerTool': { 'ExceptionHandling': 1 },
@@ -49,10 +49,20 @@
           }],
           ['OS=="mac"', {
             'xcode_settings': {
-              'OTHER_CFLAGS': [ '-std=c++1y', '-stdlib=libc++' ],
-              'OTHER_LDFLAGS': [ '-framework', 'CoreFoundation', '-framework', 'IOKit' ],
+              'OTHER_CFLAGS': [
+                '-std=c++1y',
+                '-stdlib=libc++',
+                '-arch x86_64',
+                '-arch arm64'
+              ],
+              'OTHER_LDFLAGS': [
+                '-framework', 'CoreFoundation',
+                '-framework', 'IOKit',
+                '-arch x86_64',
+                '-arch arm64'
+              ],
               'SDKROOT': 'macosx',
-              'MACOSX_DEPLOYMENT_TARGET': '10.11',
+              'MACOSX_DEPLOYMENT_TARGET': '10.7',
             },
           }],
           ['OS=="win"', {
