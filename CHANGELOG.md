@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.8.3] - 2022-01-29
+
+### Fixed
+- Fixed lack of universal binary for MacOS darwin arm64 - [`473`](https://github.com/node-usb/node-usb/pull/473) ([Rob Moran](https://github.com/thegecko))
+
 ## [1.8.2] - 2022-01-07
 
 ### Added
