@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.1.0] - 2022-01-29
+
+### Added
+- Added `getWebUsb()` convenience method - [`467`](https://github.com/node-usb/node-usb/pull/467) ([Rob Moran](https://github.com/thegecko))
+- Added initialize() error - [`470`](https://github.com/node-usb/node-usb/pull/470) ([Gerrit Niezen](https://github.com/gniezen))
+
+### Fixed
+- Fixed lack of universal binary for MacOS darwin arm64 - [`473`](https://github.com/node-usb/node-usb/pull/473) ([Rob Moran](https://github.com/thegecko))
+
 ## [2.0.3] - 2021-12-13
 
 ### Added
