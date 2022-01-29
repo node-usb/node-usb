@@ -400,6 +400,8 @@ export class WebUSBDevice implements USBDevice {
             this.productName = await this.getStringDescriptor(this.device.deviceDescriptor.iProduct);
             this.serialNumber = await this.getStringDescriptor(this.device.deviceDescriptor.iSerialNumber);
             this.configurations = await this.getConfigurations();
+        } catch (error) {
+            throw new Error(`initialize error: ${error}`);
         } finally {
             if (this.opened) {
                 this.device.close();
