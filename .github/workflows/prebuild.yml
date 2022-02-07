@@ -30,13 +30,13 @@ jobs:
             command: prebuild
           - name: linux-x64
             os: ubuntu-latest
-            command: prebuild-cross -- -i ghcr.io/node-usb/centos7-devtoolset7 -i ghcr.io/node-usb/alpine
+            command: prebuild-cross -- --tag-libc -i ghcr.io/node-usb/centos7-devtoolset7 -i ghcr.io/node-usb/alpine
           - name: linux-arm
             os: ubuntu-latest
-            command: prebuild-cross -- -i ghcr.io/node-usb/linux-arm64 -i ghcr.io/node-usb/linux-armv7 -i ghcr.io/node-usb/linux-armv6
+            command: prebuild-cross -- --tag-armv -i ghcr.io/node-usb/linux-arm64 -i ghcr.io/node-usb/linux-armv7 -i ghcr.io/node-usb/linux-armv6
           - name: android-arm
             os: ubuntu-latest
-            command: prebuild-cross -- -i ghcr.io/node-usb/android-arm64 -i ghcr.io/node-usb/android-armv7
+            command: prebuild-cross -- --tag-armv -i ghcr.io/node-usb/android-arm64 -i ghcr.io/node-usb/android-armv7
           - name: linux-x86
             os: ubuntu-latest
             command: prebuild-cross -- -i ghcr.io/node-usb/linux-x86
