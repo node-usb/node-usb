@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.1.1] - 2022-02-07
+
+### Fixed
+- Fixed prebuildify tags which lead to missing binaries - [`477`](https://github.com/node-usb/node-usb/pull/477) ([Rob Moran](https://github.com/thegecko))
+
 ## [2.1.0] - 2022-01-29
 
 ### Added
