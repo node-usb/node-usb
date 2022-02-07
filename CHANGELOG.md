@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.8.8] - 2022-02-07
+
+### Fixed
+- Reverted exit delay and hang by moving queue start/stop to device open/close  - [`460`](https://github.com/node-usb/node-usb/pull/460) ([MikeColeGuru](https://github.com/MikeColeGuru))
+
 ## [1.8.7] - 2022-02-07
 
 ### Fixed
