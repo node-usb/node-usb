@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.1.2] - 2022-02-09
+
+### Fixed
+- Fixed error being thrown when searching for interface endpoint - [`479`](https://github.com/node-usb/node-usb/pull/479) ([Rob Moran](https://github.com/thegecko))
+
 ## [2.1.1] - 2022-02-07
 
 ### Fixed
