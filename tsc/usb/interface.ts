@@ -161,12 +161,7 @@ export class Interface {
      * The device must be open to use this method.
      * @param addr
      */
-    public endpoint(addr: number): Endpoint {
-        const endpoint = this.endpoints.find(item => item.address === addr);
-        if (!endpoint) {
-            throw new Error(`Endpoint not found for address: ${addr}`);
-        }
-
-        return endpoint;
+    public endpoint(addr: number): Endpoint | undefined {
+        return this.endpoints.find(item => item.address === addr);
     }
 }
