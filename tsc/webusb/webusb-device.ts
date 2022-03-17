@@ -368,14 +368,6 @@ export class WebUSBDevice implements USBDevice {
         }
     }
 
-    public async isochronousTransferIn(_endpointNumber: number, _packetLengths: number[]): Promise<USBIsochronousInTransferResult> {
-        throw new Error('isochronousTransferIn error: method not implemented');
-    }
-
-    public async isochronousTransferOut(_endpointNumber: number, _data: BufferSource, _packetLengths: number[]): Promise<USBIsochronousOutTransferResult> {
-        throw new Error('isochronousTransferOut error: method not implemented');
-    }
-
     public async reset(): Promise<void> {
         try {
             await this.deviceMutex.lock();
@@ -386,6 +378,18 @@ export class WebUSBDevice implements USBDevice {
         } finally {
             this.deviceMutex.unlock();
         }
+    }
+
+    public async isochronousTransferIn(_endpointNumber: number, _packetLengths: number[]): Promise<USBIsochronousInTransferResult> {
+        throw new Error('isochronousTransferIn error: method not implemented');
+    }
+
+    public async isochronousTransferOut(_endpointNumber: number, _data: BufferSource, _packetLengths: number[]): Promise<USBIsochronousOutTransferResult> {
+        throw new Error('isochronousTransferOut error: method not implemented');
+    }
+
+    public async forget(): Promise<void> {
+        throw new Error('forget error: method not implemented');
     }
 
     private async initialize(): Promise<void> {

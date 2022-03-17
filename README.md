@@ -265,6 +265,7 @@ https://wicg.github.io/webusb/
 - [x] reset()
 - [ ] isochronousTransferIn()
 - [ ] isochronousTransferOut()
+- [ ] forget()
 
 #### Events
 
