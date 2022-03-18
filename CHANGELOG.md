@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.1.3] - 2022-03-18
+
+### Fixed
+- Fixed update to @types/w3c-web-usb - [`485`](https://github.com/node-usb/node-usb/pull/485) ([Rob Moran](https://github.com/thegecko))
+
 ## [2.1.2] - 2022-02-09
 
 ### Fixed
