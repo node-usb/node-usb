@@ -52,7 +52,7 @@
     "prebuild-download": "prebuildify-ci download"
   },
   "dependencies": {
-    "@types/w3c-web-usb": "^1.0.4",
+    "@types/w3c-web-usb": "1.0.6",
     "node-addon-api": "^4.2.0",
     "node-gyp-build": "^4.3.0"
   },
