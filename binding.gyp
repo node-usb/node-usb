@@ -66,6 +66,12 @@
             },
           }],
           ['OS=="win"', {
+            'sources': [
+              './src/detection.cpp',
+              './src/detection.h',
+              './src/deviceList.cpp'
+              './src/detection_win.cpp'
+            ],
             'defines':[
               'WIN32_LEAN_AND_MEAN'
             ],
