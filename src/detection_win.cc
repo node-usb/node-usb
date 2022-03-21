@@ -15,7 +15,7 @@
 #include <dbt.h>
 
 #include "detection.h"
-#include "deviceList.h"
+#include "device_list.h"
 
 using namespace std;
 
