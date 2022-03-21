@@ -75,7 +75,7 @@
             'sources': [
               'src/detection.cc',
               'src/detection.h',
-              'src/device_list.cc'
+              'src/device_list.cc',
               'src/detection_win.cc'
             ],
             'defines':[
