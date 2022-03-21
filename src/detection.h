@@ -8,7 +8,7 @@
 #include <string>
 #include <stdio.h>
 
-#include "deviceList.h"
+#include "device_list.h"
 
 void InitializeDetection(Napi::Env &env, Napi::Object &target);
 
