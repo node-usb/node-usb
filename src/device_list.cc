@@ -1,4 +1,4 @@
-#include "deviceList.h"
+#include "device_list.h"
 
 void DeviceMap::addItem(std::string key, std::shared_ptr<ListResultItem_t> item)
 {
