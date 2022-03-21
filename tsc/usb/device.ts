@@ -203,6 +203,12 @@ export class ExtendedDevice {
      * @param callback
      */
     public getStringDescriptor(this: usb.Device, desc_index: number, callback: (error?: usb.LibUSBException, value?: string) => void): void {
+        // Index 0 indicates null
+        if (desc_index === 0) {
+            callback();
+            return;
+        }
+
         const langid = 0x0409;
         const length = 255;
         this.controlTransfer(
