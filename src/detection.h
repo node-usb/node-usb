@@ -2,6 +2,7 @@
 #ifndef _USB_DETECTION_H
 #define _USB_DETECTION_H
 
+#define NAPI_VERSION 4
 #include <napi.h>
 #include <list>
 #include <string>
