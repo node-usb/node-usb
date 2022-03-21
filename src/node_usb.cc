@@ -3,6 +3,7 @@
 #include <thread>
 
 Napi::Value SetDebugLevel(const Napi::CallbackInfo& info);
+Napi::Value UseUsbDkBackend(const Napi::CallbackInfo& info);
 Napi::Value GetDeviceList(const Napi::CallbackInfo& info);
 Napi::Value GetLibusbCapability(const Napi::CallbackInfo& info);
 Napi::Value EnableHotplugEvents(const Napi::CallbackInfo& info);
@@ -97,6 +98,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
 	Transfer::Init(env, exports);
 
 	exports.Set("setDebugLevel", Napi::Function::New(env, SetDebugLevel));
+	exports.Set("useUsbDkBackend", Napi::Function::New(env, UseUsbDkBackend));
 	exports.Set("getDeviceList", Napi::Function::New(env, GetDeviceList));
 	exports.Set("_getLibusbCapability", Napi::Function::New(env, GetLibusbCapability));
 	exports.Set("_enableHotplugEvents", Napi::Function::New(env, EnableHotplugEvents));
@@ -116,6 +118,14 @@ Napi::Value SetDebugLevel(const Napi::CallbackInfo& info) {
 	}
 
 	libusb_set_debug(usb_context, info[0].As<Napi::Number>().Int32Value());
+	return env.Undefined();
+}
+
+Napi::Value UseUsbDkBackend(const Napi::CallbackInfo& info) {
+	Napi::Env env = info.Env();
+	Napi::HandleScope scope(env);
+
+	libusb_set_option(usb_context, LIBUSB_OPTION_USE_USBDK);
 	return env.Undefined();
 }
 
