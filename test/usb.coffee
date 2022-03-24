@@ -70,6 +70,12 @@ describe 'Device', ->
 			assert.equal(s, 'Nonolith Labs')
 			done()
 
+	it 'supports null string descriptors', (done) ->
+		device.getStringDescriptor device.configDescriptor.iConfiguration, (e, s) ->
+			assert.ok(e == undefined, e)
+			assert.equal(s, undefined)
+			done()
+
 	describe 'control transfer', ->
 		b = Buffer.from([0x30...0x40])
 		it 'should OUT transfer when the IN bit is not set', (done) ->

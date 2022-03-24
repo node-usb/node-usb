@@ -26,6 +26,11 @@ export declare class LibUSBException extends Error {
  */
 export declare function setDebugLevel(level: number): void;
 
+/**
+ * Use USBDK Backend (Windows only)
+ */
+export declare function useUsbDkBackend(): void;
+
 export declare function _enableHotplugEvents(): void;
 export declare function _disableHotplugEvents(): void;
 export declare function _getLibusbCapability(capability: number): number;
