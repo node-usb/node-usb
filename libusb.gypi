@@ -15,14 +15,13 @@
         'libusb/libusb/core.c',
         'libusb/libusb/descriptor.c',
         'libusb/libusb/hotplug.c',
-        'libusb/libusb/hotplug.h',
         'libusb/libusb/io.c',
         'libusb/libusb/libusb.h',
         'libusb/libusb/libusbi.h',
         'libusb/libusb/strerror.c',
         'libusb/libusb/sync.c',
-        'libusb/libusb/version.h',
         'libusb/libusb/version_nano.h',
+        'libusb/libusb/version.h',
       ],
       'include_dirs': [
         'libusb_config',
@@ -43,8 +42,8 @@
       'conditions': [
         [ 'OS == "linux" or OS == "android" or OS == "mac"', {
           'sources': [
-            'libusb/libusb/os/poll_posix.c',
-            'libusb/libusb/os/poll_posix.h',
+            'libusb/libusb/os/events_posix.c',
+            'libusb/libusb/os/events_posix.h',
             'libusb/libusb/os/threads_posix.c',
             'libusb/libusb/os/threads_posix.h',
           ],
@@ -105,6 +104,10 @@
           'sources': [
             'libusb/libusb/os/darwin_usb.c',
             'libusb/libusb/os/darwin_usb.h',
+            'libusb/Xcode/config.h',
+          ],
+          'include_dirs': [
+            'libusb/Xcode',
           ],
           'defines': [
             'OS_DARWIN=1',
@@ -120,21 +123,17 @@
         }],
         [ 'OS == "win"', {
           'sources': [
-            'libusb/libusb/os/poll_windows.c',
-            'libusb/libusb/os/poll_windows.h',
+            'libusb/libusb/os/events_windows.c',
+            'libusb/libusb/os/events_windows.h',
             'libusb/libusb/os/threads_windows.c',
             'libusb/libusb/os/threads_windows.h',
+            'libusb/libusb/os/windows_common.c',
             'libusb/libusb/os/windows_common.h',
-            'libusb/libusb/os/windows_nt_common.c',
-            'libusb/libusb/os/windows_nt_common.h',
-            'libusb/libusb/os/windows_nt_shared_types.h',
             'libusb/libusb/os/windows_usbdk.c',
             'libusb/libusb/os/windows_usbdk.h',
             'libusb/libusb/os/windows_winusb.c',
             'libusb/libusb/os/windows_winusb.h',
             'libusb/msvc/config.h',
-            'libusb/msvc/inttypes.h',
-            'libusb/msvc/stdint.h',
           ],
           'include_dirs!': [
             'libusb_config',
