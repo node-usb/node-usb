@@ -283,6 +283,9 @@ Constant properties from libusb
 #### usb.setDebugLevel(level : int)
 Set the libusb debug level (between 0 and 4)
 
+#### usb.useUsbDkBackend()
+On Windows, use the USBDK backend of libusb instead of WinUSB
+
 ### Device
 Represents a USB device.
 
