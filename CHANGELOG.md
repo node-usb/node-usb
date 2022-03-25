@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.2.0] - 2022-03-25
+
+### Added
+- Added `useUsbDkBackend()` method for switching libusb backend on Windows - [`489`](https://github.com/node-usb/node-usb/pull/489) ([Rob Moran](https://github.com/thegecko))
+
+### Changed
+- Changed libusb dependency to upstream v1.0.25 - [`490`](https://github.com/node-usb/node-usb/pull/490) ([Rob Moran](https://github.com/thegecko))
+
+### Fixed
+- Shortcut getStringDescriptor() to return undefined when passed index 0 - [`487`](https://github.com/node-usb/node-usb/pull/487) ([Rob Moran](https://github.com/thegecko))
+- Fixed race issue with garbage collected devices - [`492`](https://github.com/node-usb/node-usb/pull/492) ([Alba Mendez](https://github.com/mildsunrise))
+
 ## [2.1.3] - 2022-03-18
 
 ### Fixed

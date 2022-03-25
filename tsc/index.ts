@@ -5,6 +5,7 @@ import * as usb from './usb';
 
 const webusb = new WebUSB();
 const getDeviceList = usb.getDeviceList;
+const useUsbDkBackend = usb.useUsbDkBackend;
 
 /**
  * Convenience method to get the first device with the specified VID and PID, or `undefined` if no such device is present.
@@ -57,6 +58,7 @@ export {
     usb,
 
     // Convenience methods
+    useUsbDkBackend,
     getDeviceList,
     findByIds,
     findBySerialNumber,
