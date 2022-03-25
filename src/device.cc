@@ -18,14 +18,16 @@ Device::Device(const Napi::CallbackInfo & info) : Napi::ObjectWrap<Device>(info)
 {
 	device = info[0].As<Napi::External<libusb_device>>().Data();
 	libusb_ref_device(device);
-	byPtr.insert(std::make_pair(device, this));
+	byPtr[device] = this;
 	DEBUG_LOG("Created device %p", this);
 	Constructor(info);
 }
 
 Device::~Device(){
 	DEBUG_LOG("Freed device %p", this);
-	byPtr.erase(device);
+	auto it = byPtr.find(device);
+	if (it != byPtr.end() && it->second == this)
+		byPtr.erase(it);
 	libusb_close(device_handle);
 	libusb_unref_device(device);
 }
@@ -37,12 +39,15 @@ std::map<libusb_device*, Device*> Device::byPtr;
 // or create a new one and add it to the map.
 Napi::Object Device::get(napi_env env, libusb_device* dev){
 	auto it = byPtr.find(dev);
-	if (it != byPtr.end()){
-		return it->second->Value();
-	} else {
-		Napi::Object obj = Device::constructor.New({ Napi::External<libusb_device>::New(env, dev) });
-		return obj;
+	if (it != byPtr.end()) {
+		auto value = it->second->Value();
+		// JS object may have already been garbage collected
+		if (!value.IsEmpty())
+			return value;
 	}
+
+	Napi::Object obj = Device::constructor.New({ Napi::External<libusb_device>::New(env, dev) });
+	return obj;
 }
 
 Napi::Value Device::Constructor(const Napi::CallbackInfo& info) {
