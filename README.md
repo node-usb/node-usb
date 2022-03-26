@@ -12,7 +12,19 @@ This is a refactoring / rewrite of Christopher Klein's [node-usb](https://github
 
 [Node.js >= v10.16.0](https://nodejs.org), which includes `npm`.
 
-On Windows, use [Zadig](http://zadig.akeo.ie/) to install the WinUSB driver for your USB device. Otherwise you will get `LIBUSB_ERROR_NOT_SUPPORTED` when attempting to open devices.
+## Windows
+
+On Windows, you may need to use [Zadig](http://zadig.akeo.ie/) to install the WinUSB driver for your USB device. This is often the case if you get `LIBUSB_ERROR_NOT_SUPPORTED` when attempting to open devices.
+
+Another approach is to use the [UsbDK Backend](https://github.com/daynix/UsbDk) of libusb by immediately calling `usb.useUsbDkBackend()`.
+
+## Linux
+
+On Linux, you'll need libudev to build libusb if a prebuild is not available. On Ubuntu/Debian:
+
+```bash
+sudo apt-get install build-essential libudev-dev
+```
 
 # Installation
 
@@ -30,7 +42,7 @@ With `yarn`:
 yarn add usb
 ```
 
-__Note:__ the library is now written in `TypeScript`, so a separate types file is not longer required to be installed.
+__Note:__ the library is now written in `TypeScript`, so a separate types file is not longer required to be installed (e.g. don't install `@types/usb`).
 
 # License
 [MIT](LICENSE.md)
