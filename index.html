@@ -12,7 +12,19 @@
   <h1>Prerequisites</h1>
 </a>
 <p><a href="https://nodejs.org">Node.js &gt;= v10.16.0</a>, which includes <code>npm</code>.</p>
-<p>On Windows, use <a href="http://zadig.akeo.ie/">Zadig</a> to install the WinUSB driver for your USB device. Otherwise you will get <code>LIBUSB_ERROR_NOT_SUPPORTED</code> when attempting to open devices.</p>
+
+<a href="#windows" id="windows" style="color: inherit; text-decoration: none;">
+  <h2>Windows</h2>
+</a>
+<p>On Windows, you may need to use <a href="http://zadig.akeo.ie/">Zadig</a> to install the WinUSB driver for your USB device. This is often the case if you get <code>LIBUSB_ERROR_NOT_SUPPORTED</code> when attempting to open devices.</p>
+<p>Another approach is to use the <a href="https://github.com/daynix/UsbDk">UsbDK Backend</a> of libusb by immediately calling <code>usb.useUsbDkBackend()</code>.</p>
+
+<a href="#linux" id="linux" style="color: inherit; text-decoration: none;">
+  <h2>Linux</h2>
+</a>
+<p>On Linux, you&#39;ll need libudev to build libusb if a prebuild is not available. On Ubuntu/Debian:</p>
+<pre><code class="language-bash"><span class="hl-0">sudo apt-get install build-essential libudev-dev</span>
+</code></pre>
 
 <a href="#installation" id="installation" style="color: inherit; text-decoration: none;">
   <h1>Installation</h1>
@@ -24,7 +36,7 @@
 <p>With <code>yarn</code>:</p>
 <pre><code class="language-bash"><span class="hl-0">yarn add usb</span>
 </code></pre>
-<p><strong>Note:</strong> the library is now written in <code>TypeScript</code>, so a separate types file is not longer required to be installed.</p>
+<p><strong>Note:</strong> the library is now written in <code>TypeScript</code>, so a separate types file is not longer required to be installed (e.g. don&#39;t install <code>@types/usb</code>).</p>
 
 <a href="#license" id="license" style="color: inherit; text-decoration: none;">
   <h1>License</h1>
