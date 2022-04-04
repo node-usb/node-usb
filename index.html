@@ -16,8 +16,9 @@
 <a href="#windows" id="windows" style="color: inherit; text-decoration: none;">
   <h2>Windows</h2>
 </a>
-<p>On Windows, you may need to use <a href="http://zadig.akeo.ie/">Zadig</a> to install the WinUSB driver for your USB device. This is often the case if you get <code>LIBUSB_ERROR_NOT_SUPPORTED</code> when attempting to open devices.</p>
-<p>Another approach is to use the <a href="https://github.com/daynix/UsbDk">UsbDK Backend</a> of libusb by immediately calling <code>usb.useUsbDkBackend()</code>.</p>
+<p>On Windows, if you get <code>LIBUSB_ERROR_NOT_SUPPORTED</code> when attempting to open your device, it&#39;s possible your device doesn&#39;t have a WinUSB driver for libusb to use.</p>
+<p>You can install one using <a href="http://zadig.akeo.ie/">Zadig</a> or another approach is to use the <a href="https://github.com/daynix/UsbDk">UsbDK Backend</a> of libusb by immediately calling <code>usb.useUsbDkBackend()</code>.</p>
+<p>Note that you cannot use multiple drivers on Windows as they get exclusive access to the device. So if you want to switch between drivers (e.g. using a printer with this software or the system), you will need to uninstall/install drivers as required.</p>
 
 <a href="#linux" id="linux" style="color: inherit; text-decoration: none;">
   <h2>Linux</h2>
