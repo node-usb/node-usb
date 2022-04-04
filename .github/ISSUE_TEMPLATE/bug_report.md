@@ -6,7 +6,7 @@ about: Create a report to help us improve Node USB
 <!-- Please provide a detailed description of the bug. -->
 ## Bug Description:
 
-<!-- Please provide clear steps to reproduce the bug. -->
+<!-- Please provide clear steps to reproduce the bug, using a small Node.js script if possible. -->
 ## Steps to Reproduce:
 1.
 2.
