@@ -14,9 +14,11 @@ This is a refactoring / rewrite of Christopher Klein's [node-usb](https://github
 
 ## Windows
 
-On Windows, you may need to use [Zadig](http://zadig.akeo.ie/) to install the WinUSB driver for your USB device. This is often the case if you get `LIBUSB_ERROR_NOT_SUPPORTED` when attempting to open devices.
+On Windows, if you get `LIBUSB_ERROR_NOT_SUPPORTED` when attempting to open your device, it's possible your device doesn't have a WinUSB driver for libusb to use.
 
-Another approach is to use the [UsbDK Backend](https://github.com/daynix/UsbDk) of libusb by immediately calling `usb.useUsbDkBackend()`.
+You can install one using [Zadig](http://zadig.akeo.ie/) or another approach is to use the [UsbDK Backend](https://github.com/daynix/UsbDk) of libusb by immediately calling `usb.useUsbDkBackend()`.
+
+Note that you cannot use multiple drivers on Windows as they get exclusive access to the device. So if you want to switch between drivers (e.g. using a printer with this software or the system), you will need to uninstall/install drivers as required.
 
 ## Linux
 
