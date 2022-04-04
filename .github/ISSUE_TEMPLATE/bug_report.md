@@ -16,6 +16,6 @@ about: Create a report to help us improve Node USB
 <!-- Additional information can be in the form of logs, screenshots, screencasts. -->
 <!-- If possible, help to bisect the issue by outlining versions the issue didn't occur in. -->
 ## Additional Information
-- Operating System:
-- Runtime (e.g. Node, Electron):
-- Node USB Version:
+- Operating System: <!-- example: Ubuntu 16.04, Windows 10, macOS Big Sur -->
+- Runtime (`node -v` or `electron -v`):
+- Node USB Version (`npm ls usb`):
