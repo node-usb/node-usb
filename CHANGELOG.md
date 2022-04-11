@@ -1,10 +1,14 @@
 # Changelog
 
+## [2.3.1] - 2022-04-11
+
+### Changed
+- Removed device access mutex from WebUSB API - [`501`](https://github.com/node-usb/node-usb/pull/501) ([Rob Moran](https://github.com/thegecko))
+
 ## [2.3.0] - 2022-04-11
 
 ### Changed
 - Changed libusb dependency to upstream v1.0.26 - [`505`](https://github.com/node-usb/node-usb/pull/505) ([Rob Moran](https://github.com/thegecko))
-
 - Cleaned up Windows device polling method - [`496`](https://github.com/node-usb/node-usb/pull/496) ([Alba Mendez](https://github.com/mildsunrise))
 
 ## [2.2.0] - 2022-03-25
