@@ -8,9 +8,8 @@
 #ifdef _WIN32
 #include <WinSock2.h>
 #endif
-#include <libusb.h>
 
-#define NAPI_VERSION 4
+#include <libusb.h>
 #include <napi.h>
 #include <node_buffer.h>
 

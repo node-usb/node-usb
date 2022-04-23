@@ -26,7 +26,7 @@
       'defines': [
         '_FILE_OFFSET_BITS=64',
         '_LARGEFILE_SOURCE',
-        'NAPI_VERSION=<(napi_build_version)',
+        'NAPI_VERSION=4',
       ],
       'include_dirs+': [
         'src/',
