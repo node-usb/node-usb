@@ -26,13 +26,12 @@
       'defines': [
         '_FILE_OFFSET_BITS=64',
         '_LARGEFILE_SOURCE',
-        'NAPI_VERSION=4',
+        'NAPI_VERSION=6',
       ],
       'include_dirs+': [
         'src/',
         "<!@(node -p \"require('node-addon-api').include\")"
       ],
-
       'conditions' : [
           ['use_system_libusb=="false" and OS!="freebsd"', {
             'dependencies': [
@@ -93,7 +92,8 @@
                 'AdditionalOptions': [ '/EHsc' ],
               },
             },
-          }]
+          }
+        ]
       ]
     },
   ]
