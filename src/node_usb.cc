@@ -18,53 +18,11 @@ struct HotPlug {
 	libusb_hotplug_event event;
 };
 
-#ifdef USE_POLL
-#include <poll.h>
-#include <uv.h>
-#include <sys/time.h>
-
-std::map<int, uv_poll_t*> pollByFD;
-
-struct timeval zero_tv = {0, 0};
-
-void onPollSuccess(uv_poll_t* handle, int status, int events){
-	libusb_handle_events_timeout(usb_context, &zero_tv);
-}
-
-void LIBUSB_CALL onPollFDAdded(int fd, short events, void *user_data){
-	uv_poll_t *poll_fd;
-	auto it = pollByFD.find(fd);
-	if (it != pollByFD.end()){
-		poll_fd = it->second;
-	}else{
-		poll_fd = (uv_poll_t*) malloc(sizeof(uv_poll_t));
-		uv_poll_init(uv_default_loop(), poll_fd, fd);
-		pollByFD.insert(std::make_pair(fd, poll_fd));
-	}
-
-	DEBUG_LOG("Added pollfd %i, %p", fd, poll_fd);
-	unsigned flags = ((events&POLLIN) ? UV_READABLE:0)
-	               | ((events&POLLOUT)? UV_WRITABLE:0);
-	uv_poll_start(poll_fd, flags, onPollSuccess);
-}
-
-void LIBUSB_CALL onPollFDRemoved(int fd, void *user_data){
-	auto it = pollByFD.find(fd);
-	if (it != pollByFD.end()){
-		DEBUG_LOG("Removed pollfd %i, %p", fd, it->second);
-		uv_poll_stop(it->second);
-		uv_close((uv_handle_t*) it->second, (uv_close_cb) free);
-		pollByFD.erase(it);
-	}
-}
-
-#else
 std::thread usb_thread;
 
 void USBThreadFn(){
 	while(1) libusb_handle_events(usb_context);
 }
-#endif
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
 	Napi::HandleScope scope(env);
@@ -78,21 +36,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
 		return exports;
 	}
 
-	#ifdef USE_POLL
-	assert(libusb_pollfds_handle_timeouts(usb_context));
-	libusb_set_pollfd_notifiers(usb_context, onPollFDAdded, onPollFDRemoved, NULL);
-
-	const struct libusb_pollfd** pollfds = libusb_get_pollfds(usb_context);
-	assert(pollfds);
-	for(const struct libusb_pollfd** i=pollfds; *i; i++){
-		onPollFDAdded((*i)->fd, (*i)->events, NULL);
-	}
-	free(pollfds);
-
-	#else
 	usb_thread = std::thread(USBThreadFn);
 	usb_thread.detach();
-	#endif
 
 	Device::Init(env, exports);
 	Transfer::Init(env, exports);
