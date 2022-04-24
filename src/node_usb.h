@@ -21,7 +21,7 @@
 
 struct Transfer;
 
-Napi::Error libusbException(napi_env env, int errorno);
+Napi::Error libusbException(Napi::Env env, int errorno);
 void handleCompletion(Transfer* self);
 
 struct Device: public Napi::ObjectWrap<Device> {
@@ -35,7 +35,7 @@ struct Device: public Napi::ObjectWrap<Device> {
 #endif
 
 	static Napi::Object Init(Napi::Env env, Napi::Object exports);
-	static Napi::Object get(napi_env env, libusb_device* handle);
+	static Napi::Object get(Napi::Env env, libusb_device* handle);
 
 	inline void ref(){ refs_ = Ref();}
 	inline void unref(){ refs_ = Unref();}
@@ -44,7 +44,7 @@ struct Device: public Napi::ObjectWrap<Device> {
 	Device(const Napi::CallbackInfo& info);
 	~Device();
 
-	static Napi::Object cdesc2V8(napi_env env, libusb_config_descriptor * cdesc);
+	static Napi::Object cdesc2V8(Napi::Env env, libusb_config_descriptor * cdesc);
 
 
 	Napi::Value GetConfigDescriptor(const Napi::CallbackInfo& info);
