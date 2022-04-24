@@ -117,7 +117,7 @@ Napi::Value SetDebugLevel(const Napi::CallbackInfo& info) {
 		THROW_BAD_ARGS("Usb::SetDebugLevel argument is invalid. [uint:[0-4]]!")
 	}
 
-	libusb_set_debug(usb_context, info[0].As<Napi::Number>().Int32Value());
+	libusb_set_option(usb_context, LIBUSB_OPTION_LOG_LEVEL, info[0].As<Napi::Number>().Int32Value());
 	return env.Undefined();
 }
 
