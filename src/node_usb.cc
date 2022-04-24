@@ -118,7 +118,7 @@ Napi::Value SetDebugLevel(const Napi::CallbackInfo& info) {
 	}
 
 	libusb_context* usb_context = env.GetInstanceData<ModuleData>()->usb_context;
-	libusb_set_debug(usb_context, info[0].As<Napi::Number>().Int32Value());
+	libusb_set_option(usb_context, LIBUSB_OPTION_LOG_LEVEL, info[0].As<Napi::Number>().Int32Value());
 	return env.Undefined();
 }
 
@@ -340,7 +340,7 @@ void initConstants(Napi::Object target){
 	DEFINE_CONSTANT(target, LIBUSB_ERROR_OTHER);
 }
 
-Napi::Error libusbException(napi_env env, int errorno) {
+Napi::Error libusbException(Napi::Env env, int errorno) {
 	const char* err = libusb_error_name(errorno);
 	Napi::Error e  = Napi::Error::New(env, err);
 	e.Set("errno", (double)errorno);
