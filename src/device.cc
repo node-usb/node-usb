@@ -37,7 +37,7 @@ std::map<libusb_device*, Device*> Device::byPtr;
 
 // Get a V8 instance for a libusb_device: either the existing one from the map,
 // or create a new one and add it to the map.
-Napi::Object Device::get(napi_env env, libusb_device* dev){
+Napi::Object Device::get(Napi::Env env, libusb_device* dev){
 	auto it = byPtr.find(dev);
 	if (it != byPtr.end()) {
 		auto value = it->second->Value();
@@ -90,7 +90,7 @@ Napi::Value Device::Constructor(const Napi::CallbackInfo& info) {
 	return info.This();
 }
 
-Napi::Object Device::cdesc2V8(napi_env env, libusb_config_descriptor * cdesc){
+Napi::Object Device::cdesc2V8(Napi::Env env, libusb_config_descriptor * cdesc){
 	Napi::Object v8cdesc = Napi::Object::New(env);
 
 	STRUCT_TO_V8(v8cdesc, *cdesc, bLength)

@@ -362,7 +362,7 @@ void initConstants(Napi::Object target){
 	DEFINE_CONSTANT(target, LIBUSB_ERROR_OTHER);
 }
 
-Napi::Error libusbException(napi_env env, int errorno) {
+Napi::Error libusbException(Napi::Env env, int errorno) {
 	const char* err = libusb_error_name(errorno);
 	Napi::Error e  = Napi::Error::New(env, err);
 	e.Set("errno", (double)errorno);
