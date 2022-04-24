@@ -84,12 +84,7 @@ extern "C" void LIBUSB_CALL usbCompletionCb(libusb_transfer *transfer){
 	Transfer* t = static_cast<Transfer*>(transfer->user_data);
 	DEBUG_LOG("Completion callback %p", t);
 	assert(t != NULL);
-
-	#ifdef USE_POLL
-	handleCompletion(t);
-	#else
 	t->device->completionQueue.post(t);
-	#endif
 }
 
 void handleCompletion(Transfer* self){

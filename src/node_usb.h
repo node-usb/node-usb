@@ -14,10 +14,7 @@
 #include <node_buffer.h>
 
 #include "helpers.h"
-
-#ifndef USE_POLL
 #include "uv_async_queue.h"
-#endif
 
 struct Transfer;
 
@@ -29,10 +26,7 @@ struct Device: public Napi::ObjectWrap<Device> {
 	libusb_device_handle* device_handle;
 
 	int refs_;
-
-#ifndef USE_POLL
 	UVQueue<Transfer*> completionQueue;
-#endif
 
 	static Napi::Object Init(Napi::Env env, Napi::Object exports);
 	static Napi::Object get(Napi::Env env, libusb_device* handle);

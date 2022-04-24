@@ -11,10 +11,7 @@
 
 Napi::FunctionReference Device::constructor;
 
-Device::Device(const Napi::CallbackInfo & info) : Napi::ObjectWrap<Device>(info), device_handle(0), refs_(0)
-#ifndef USE_POLL
-, completionQueue(handleCompletion)
-#endif
+Device::Device(const Napi::CallbackInfo & info) : Napi::ObjectWrap<Device>(info), device_handle(0), refs_(0), completionQueue(handleCompletion)
 {
 	device = info[0].As<Napi::External<libusb_device>>().Data();
 	libusb_ref_device(device);
@@ -193,9 +190,7 @@ Napi::Value Device::Open(const Napi::CallbackInfo& info) {
 	ENTER_METHOD(Device, 0);
 	if (!self->device_handle){
 		CHECK_USB(libusb_open(self->device, &self->device_handle));
-#ifndef USE_POLL
 		completionQueue.start(info.Env());
-#endif
 	}
 	return env.Undefined();
 }
@@ -205,9 +200,7 @@ Napi::Value Device::Close(const Napi::CallbackInfo& info) {
 	if (self->canClose()){
 		libusb_close(self->device_handle);
 		self->device_handle = NULL;
-#ifndef USE_POLL
 		completionQueue.stop();
-#endif        
 	}else{
 		THROW_ERROR("Can't close device with a pending request");
 	}
