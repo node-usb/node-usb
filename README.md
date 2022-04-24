@@ -10,7 +10,7 @@ This is a refactoring / rewrite of Christopher Klein's [node-usb](https://github
 
 # Prerequisites
 
-[Node.js >= v10.16.0](https://nodejs.org), which includes `npm`.
+[Node.js >= v10.20.0](https://nodejs.org), which includes `npm`.
 
 ## Windows
 
