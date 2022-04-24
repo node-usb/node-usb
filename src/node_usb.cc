@@ -1,6 +1,4 @@
 #include "node_usb.h"
-#include "uv_async_queue.h"
-#include <thread>
 
 Napi::Value SetDebugLevel(const Napi::CallbackInfo& info);
 Napi::Value UseUsbDkBackend(const Napi::CallbackInfo& info);
@@ -11,12 +9,6 @@ Napi::Value DisableHotplugEvents(const Napi::CallbackInfo& info);
 Napi::Value RefHotplugEvents(const Napi::CallbackInfo& info);
 Napi::Value UnrefHotplugEvents(const Napi::CallbackInfo& info);
 void initConstants(Napi::Object target);
-
-struct HotPlug {
-	libusb_device* device;
-	libusb_hotplug_event event;
-	Napi::ObjectReference* hotplugThis;
-};
 
 void handleHotplug(HotPlug* info){
 	Napi::ObjectReference* hotplugThis = info->hotplugThis;
@@ -49,19 +41,6 @@ void handleHotplug(HotPlug* info){
 	delete info;
 }
 
-struct ModuleData {
-	libusb_context* usb_context;
-	std::thread usb_thread;
-
-	bool hotplugEnabled = 0;
-	libusb_hotplug_callback_handle hotplugHandle;
-	UVQueue<HotPlug*> hotplugQueue;
-	Napi::ObjectReference hotplugThis;
-
-    ModuleData(Napi::Env env): hotplugQueue(handleHotplug) {
-    }
-};
-
 int LIBUSB_CALL hotplug_callback(libusb_context* ctx, libusb_device* device,
                      libusb_hotplug_event event, void* user_data) {
 	libusb_ref_device(device);
@@ -77,7 +56,7 @@ void USBThreadFn(Napi::Env env) {
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
 	Napi::HandleScope scope(env);
-	env.SetInstanceData(new ModuleData(env));
+	env.SetInstanceData(new ModuleData());
 	ModuleData* instanceData = env.GetInstanceData<ModuleData>();
 
 	initConstants(exports);
