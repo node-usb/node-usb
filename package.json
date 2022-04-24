@@ -38,6 +38,7 @@
   "scripts": {
     "prepare": "yarn compile",
     "install": "node-gyp-build",
+    "rebuild": "node-gyp rebuild",
     "clean": "git clean -dfx",
     "compile": "tsc && yarn lint && yarn docs",
     "lint": "eslint . --ext .ts",
