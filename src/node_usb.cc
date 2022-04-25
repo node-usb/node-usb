@@ -62,7 +62,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
 	initConstants(exports);
 
 	// Initialize libusb. On error, halt initialization.
-	libusb_context* usb_context;
+	libusb_context* usb_context = nullptr;
 	int res = libusb_init(&usb_context);
 	instanceData->usb_context = usb_context;
 	exports.Set("INIT_ERROR", Napi::Number::New(env, res));
