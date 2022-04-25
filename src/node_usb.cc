@@ -49,8 +49,8 @@ int LIBUSB_CALL hotplug_callback(libusb_context* ctx, libusb_device* device,
 	return 0;
 }
 
-void USBThreadFn(Napi::Env env) {
-	libusb_context* usb_context = env.GetInstanceData<ModuleData>()->usb_context;
+void USBThreadFn(ModuleData* instanceData) {
+	libusb_context* usb_context = instanceData->usb_context;
 	while(1) libusb_handle_events(usb_context);
 }
 
@@ -70,7 +70,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
 		return exports;
 	}
 
-	instanceData->usb_thread = std::thread(USBThreadFn, env);
+	instanceData->usb_thread = std::thread(USBThreadFn, instanceData);
 	instanceData->usb_thread.detach();
 
 	Device::Init(env, exports);
