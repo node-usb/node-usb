@@ -146,7 +146,6 @@ Napi::Value EnableHotplugEvents(const Napi::CallbackInfo& info) {
 
 	if (!instanceData->hotplugEnabled) {
 		instanceData->hotplugThis.Reset(info.This().As<Napi::Object>(), 1);
-		instanceData->hotplugThis.SuppressDestruct();
 
 		libusb_context* usb_context = instanceData->usb_context;
 		CHECK_USB(libusb_hotplug_register_callback(

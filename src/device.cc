@@ -410,7 +410,6 @@ Napi::Object Device::Init(Napi::Env env, Napi::Object exports) {
 
 	ModuleData* instanceData = env.GetInstanceData<ModuleData>();
 	instanceData->deviceConstructor = Napi::Persistent(func);
-	instanceData->deviceConstructor.SuppressDestruct();
 
 	return exports;
 }
