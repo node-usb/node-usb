@@ -41,6 +41,32 @@ void handleHotplug(HotPlug* info){
 	delete info;
 }
 
+void USBThreadFn(ModuleData* instanceData) {
+	libusb_context* usb_context = instanceData->usb_context;
+
+	while(true) {
+		if (instanceData->handlingEvents == false) {
+			break;
+		}
+		libusb_handle_events(usb_context);
+	}
+}
+
+ModuleData::ModuleData(libusb_context* usb_context) : hotplugQueue(handleHotplug) {
+	handlingEvents = true;
+	usb_thread = std::thread(USBThreadFn, this);
+}
+
+ModuleData::~ModuleData() {
+	handlingEvents = false;
+	usb_thread.join();
+
+	if (usb_context != nullptr) {
+		libusb_exit(usb_context);
+		usb_context = nullptr;
+	}
+}
+
 int LIBUSB_CALL hotplug_callback(libusb_context* ctx, libusb_device* device,
                      libusb_hotplug_event event, void* user_data) {
 	libusb_ref_device(device);
@@ -49,29 +75,20 @@ int LIBUSB_CALL hotplug_callback(libusb_context* ctx, libusb_device* device,
 	return 0;
 }
 
-void USBThreadFn(ModuleData* instanceData) {
-	libusb_context* usb_context = instanceData->usb_context;
-	while(1) libusb_handle_events(usb_context);
-}
-
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
 	Napi::HandleScope scope(env);
-	env.SetInstanceData(new ModuleData());
-	ModuleData* instanceData = env.GetInstanceData<ModuleData>();
-
 	initConstants(exports);
 
 	// Initialize libusb. On error, halt initialization.
 	libusb_context* usb_context = nullptr;
 	int res = libusb_init(&usb_context);
-	instanceData->usb_context = usb_context;
+
 	exports.Set("INIT_ERROR", Napi::Number::New(env, res));
 	if (res != 0) {
 		return exports;
 	}
 
-	instanceData->usb_thread = std::thread(USBThreadFn, instanceData);
-	instanceData->usb_thread.detach();
+	env.SetInstanceData(new ModuleData(usb_context));
 
 	Device::Init(env, exports);
 	Transfer::Init(env, exports);

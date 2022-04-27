@@ -27,7 +27,6 @@ struct Transfer;
 
 Napi::Error libusbException(Napi::Env env, int errorno);
 void handleCompletion(Transfer* self);
-void handleHotplug(HotPlug* info);
 
 struct Device: public Napi::ObjectWrap<Device> {
 	Napi::Env env;
@@ -74,6 +73,7 @@ protected:
 struct ModuleData {
 	libusb_context* usb_context;
 	std::thread usb_thread;
+	std::atomic<bool> handlingEvents;
 
 	bool hotplugEnabled = 0;
 	libusb_hotplug_callback_handle hotplugHandle;
@@ -82,8 +82,8 @@ struct ModuleData {
 	std::map<libusb_device*, Device*> byPtr;
 	Napi::FunctionReference deviceConstructor;
 
-    ModuleData(): hotplugQueue(handleHotplug) {
-    }
+    ModuleData(libusb_context* usb_context);
+	~ModuleData();
 };
 
 struct Transfer: public Napi::ObjectWrap<Transfer> {
