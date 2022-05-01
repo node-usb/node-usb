@@ -52,13 +52,14 @@ void USBThreadFn(ModuleData* instanceData) {
 	}
 }
 
-ModuleData::ModuleData(libusb_context* usb_context) : hotplugQueue(handleHotplug) {
+ModuleData::ModuleData(libusb_context* usb_context) : usb_context(usb_context), hotplugQueue(handleHotplug) {
 	handlingEvents = true;
 	usb_thread = std::thread(USBThreadFn, this);
 }
 
 ModuleData::~ModuleData() {
 	handlingEvents = false;
+	libusb_interrupt_event_handler(usb_context);
 	usb_thread.join();
 
 	if (usb_context != nullptr) {
