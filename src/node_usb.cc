@@ -1,6 +1,7 @@
 #include "node_usb.h"
 #include "uv_async_queue.h"
 #include <thread>
+#include "thread_name.h"
 
 Napi::Value SetDebugLevel(const Napi::CallbackInfo& info);
 Napi::Value UseUsbDkBackend(const Napi::CallbackInfo& info);
@@ -21,6 +22,7 @@ struct HotPlug {
 std::thread usb_thread;
 
 void USBThreadFn(){
+	SetThreadName("node-usb events");
 	while(1) libusb_handle_events(usb_context);
 }
 
