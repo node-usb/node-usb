@@ -9,6 +9,7 @@
 #include <WinSock2.h>
 #endif
 
+#include <thread>
 #include <libusb.h>
 #include <napi.h>
 #include <node_buffer.h>
@@ -16,12 +17,19 @@
 #include "helpers.h"
 #include "uv_async_queue.h"
 
+struct HotPlug {
+	libusb_device* device;
+	libusb_hotplug_event event;
+	Napi::ObjectReference* hotplugThis;
+};
+
 struct Transfer;
 
 Napi::Error libusbException(Napi::Env env, int errorno);
 void handleCompletion(Transfer* self);
 
 struct Device: public Napi::ObjectWrap<Device> {
+	Napi::Env env;
 	libusb_device* device;
 	libusb_device_handle* device_handle;
 
@@ -39,7 +47,6 @@ struct Device: public Napi::ObjectWrap<Device> {
 	~Device();
 
 	static Napi::Object cdesc2V8(Napi::Env env, libusb_config_descriptor * cdesc);
-
 
 	Napi::Value GetConfigDescriptor(const Napi::CallbackInfo& info);
 	Napi::Value GetAllConfigDescriptors(const Napi::CallbackInfo& info);
@@ -60,12 +67,24 @@ struct Device: public Napi::ObjectWrap<Device> {
 
 	Napi::Value ClearHalt(const Napi::CallbackInfo& info);
 protected:
-	static std::map<libusb_device*, Device*> byPtr;
-	static Napi::FunctionReference constructor;
-	
 	Napi::Value Constructor(const Napi::CallbackInfo& info);
 };
 
+struct ModuleData {
+	libusb_context* usb_context;
+	std::thread usb_thread;
+	std::atomic<bool> handlingEvents;
+
+	bool hotplugEnabled = 0;
+	libusb_hotplug_callback_handle hotplugHandle;
+	UVQueue<HotPlug*> hotplugQueue;
+	Napi::ObjectReference hotplugThis;
+	std::map<libusb_device*, Device*> byPtr;
+	Napi::FunctionReference deviceConstructor;
+
+    ModuleData(libusb_context* usb_context);
+	~ModuleData();
+};
 
 struct Transfer: public Napi::ObjectWrap<Transfer> {
 	libusb_transfer* transfer;
