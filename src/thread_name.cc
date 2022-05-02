@@ -43,7 +43,7 @@
 
     extern "C" typedef HRESULT (WINAPI *SetThreadDescriptionFn)(HANDLE, PCWSTR);
 
-    static auto RetrieveSymbol(const char* objectName) {
+    static SetThreadDescriptionFn RetrieveSymbol(const char* objectName) {
         auto mod = GetModuleHandleA(objectName);
         if (mod == nullptr) return nullptr;
         auto symbol = GetProcAddress(mod, "SetThreadDescription");
