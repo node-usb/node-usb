@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.4.0] - 2022-05-02
+
+### Fixed
+- Made addon context aware - [`512`](https://github.com/node-usb/node-usb/pull/512) ([Rob Moran](https://github.com/thegecko) & [Alba Mendez](https://github.com/mildsunrise))
+- Fixed deprecation of `libusb_set_option` - [`510`](https://github.com/node-usb/node-usb/pull/510) ([Rob Moran](https://github.com/thegecko))
+
+### Changed
+- **Breaking:** Updated to N-API version 6 (Node >=10.20.0 <11.x, >=12.17.0 <13.0, >=14.0.0) - [`509`](https://github.com/node-usb/node-usb/pull/509) ([Rob Moran](https://github.com/thegecko))
+
+### Added
+- Added `rebuild` command - [`511`](https://github.com/node-usb/node-usb/pull/511) ([Rob Moran](https://github.com/thegecko))
+
+### Removed
+- Removed `USE_POLL` build definition to simplify code - [`507`](https://github.com/node-usb/node-usb/pull/507) ([Rob Moran](https://github.com/thegecko))
+
 ## [2.3.1] - 2022-04-11
 
 ### Changed
