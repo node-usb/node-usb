@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.4.1] - 2022-05-07
+
+### Fixed
+- Fixed node engine ranges in package.json - ([Rob Moran](https://github.com/thegecko))
+
 ## [2.4.0] - 2022-05-02
 
 ### Fixed
