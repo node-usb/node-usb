@@ -21,15 +21,6 @@ describe 'USB Module', ->
 		assert.throws -> usb.Device()
 		assert.throws -> usb.Device.prototype.open.call({})
 
-describe 'Context Aware', ->
-	it 'should handle opening the same device from different contexts', ->
-		for n in [1..5]
-			worker = new Worker('./test/worker.cjs')
-			worker.on 'message', (serial) ->
-				assert.equal(serial, 'TEST_DEVICE')
-			worker.on 'exit', (code) ->
-				assert.equal(code, 0)
-
 describe 'setDebugLevel', ->
 	it 'should throw when passed invalid args', ->
 		assert.throws((-> usb.setDebugLevel()), TypeError)
@@ -211,3 +202,13 @@ describe 'Device', ->
 
 	after ->
 		device.close()
+
+if process.platform != 'win32'
+	describe 'Context Aware', ->
+		it 'should handle opening the same device from different contexts', ->
+			for n in [1..5]
+				worker = new Worker('./test/worker.cjs')
+				worker.on 'message', (serial) ->
+					assert.equal(serial, 'TEST_DEVICE')
+				worker.on 'exit', (code) ->
+					assert.equal(code, 0)
