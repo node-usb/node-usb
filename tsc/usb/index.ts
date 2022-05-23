@@ -45,7 +45,7 @@ declare module './bindings' {
 const pollTimeout = 500;
 const hotplugSupported = usb._getLibusbCapability(usb.LIBUSB_CAP_HAS_HOTPLUG) > 0;
 let pollingHotplug = false;
-let pollDevices = new Set<usb.Device>();
+let pollDevices = new Map<number, usb.Device>();
 
 const pollHotplug = (start = false) => {
     if (start) {
@@ -55,26 +55,27 @@ const pollHotplug = (start = false) => {
     }
 
     // Collect current devices
-    const devices = new Set(usb.getDeviceList());
+    const list = usb.getDeviceList();
+    const devices = new Map(list.map(device => [ device.deviceAddress, device ]));
 
     if (!start) {
         // Find attached devices
-        for (const device of devices) {
-            if (!pollDevices.has(device))
+        for (const [ address, device ] of devices) {
+            if (!pollDevices.has(address)) {
                 usb.emit('attach', device);
+            }
         }
 
         // Find detached devices
-        for (const device of pollDevices) {
-            if (!devices.has(device))
+        for (const [ address, device ] of pollDevices) {
+            if (!devices.has(address)) {
                 usb.emit('detach', device);
+            }
         }
     }
 
     pollDevices = devices;
-    setTimeout(() => {
-        pollHotplug();
-    }, pollTimeout);
+    setTimeout(() => pollHotplug(), pollTimeout);
 };
 
 usb.on('newListener', event => {
