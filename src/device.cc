@@ -14,7 +14,7 @@ Device::Device(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Device>(info),
 	device = info[0].As<Napi::External<libusb_device>>().Data();
 	libusb_ref_device(device);
 
-	std::map<libusb_device*, Device*> byPtr = env.GetInstanceData<ModuleData>()->byPtr;
+	std::map<libusb_device*, Device*>& byPtr = env.GetInstanceData<ModuleData>()->byPtr;
 	byPtr[device] = this;
 
 	DEBUG_LOG("Created device %p", this);
@@ -25,7 +25,7 @@ Device::~Device() {
 	DEBUG_LOG("Freed device %p", this);
 
 	ModuleData* instanceData = env.GetInstanceData<ModuleData>();
-	std::map<libusb_device*, Device*> byPtr = instanceData->byPtr;
+	std::map<libusb_device*, Device*>& byPtr = instanceData->byPtr;
 
 	auto it = byPtr.find(device);
 	if (it != byPtr.end() && it->second == this)
@@ -38,7 +38,7 @@ Device::~Device() {
 // or create a new one and add it to the map.
 Napi::Object Device::get(Napi::Env env, libusb_device* dev) {
 	ModuleData* instanceData = env.GetInstanceData<ModuleData>();
-	std::map<libusb_device*, Device*> byPtr = instanceData->byPtr;
+	std::map<libusb_device*, Device*>& byPtr = instanceData->byPtr;
 
 	auto it = byPtr.find(dev);
 	if (it != byPtr.end()) {
