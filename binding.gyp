@@ -19,6 +19,7 @@
         './src/node_usb.cc',
         './src/device.cc',
         './src/transfer.cc',
+        './src/thread_name.cc',
       ],
       'cflags_cc': [
         '-std=c++14'

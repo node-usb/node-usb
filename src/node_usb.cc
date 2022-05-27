@@ -1,4 +1,5 @@
 #include "node_usb.h"
+#include "thread_name.h"
 
 Napi::Value SetDebugLevel(const Napi::CallbackInfo& info);
 Napi::Value UseUsbDkBackend(const Napi::CallbackInfo& info);
@@ -42,6 +43,7 @@ void handleHotplug(HotPlug* info){
 }
 
 void USBThreadFn(ModuleData* instanceData) {
+	SetThreadName("node-usb events");
 	libusb_context* usb_context = instanceData->usb_context;
 
 	while(true) {
