@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.4.2] - 2022-05-27
+
+### Fixed
+- Fixed multiple events with device detection on Windows - [`512`](https://github.com/node-usb/node-usb/pull/512) ([Alba Mendez](https://github.com/mildsunrise))
+
 ## [2.4.1] - 2022-05-07
 
 ### Fixed
