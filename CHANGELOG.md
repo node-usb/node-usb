@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.4.3] - 2022-06-21
+
+### Fixed
+- Fixed poll transfer tracking - [`522`](https://github.com/node-usb/node-usb/pull/522) ([Rob Moran](https://github.com/thegecko))
+
 ## [2.4.2] - 2022-05-27
 
 ### Fixed

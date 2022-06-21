@@ -2,7 +2,7 @@
   "name": "usb",
   "description": "Library to access USB devices",
   "license": "MIT",
-  "version": "2.4.2",
+  "version": "2.4.3",
   "main": "dist/index.js",
   "engines": {
     "node": ">=10.20.0 <11.x || >=12.17.0 <13.0 || >=14.0.0"
