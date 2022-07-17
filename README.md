@@ -10,9 +10,23 @@ This is a refactoring / rewrite of Christopher Klein's [node-usb](https://github
 
 # Prerequisites
 
-[Node.js >= v10.16.0](https://nodejs.org), which includes `npm`.
+[Node.js >= v10.20.0](https://nodejs.org), which includes `npm`.
 
-On Windows, use [Zadig](http://zadig.akeo.ie/) to install the WinUSB driver for your USB device. Otherwise you will get `LIBUSB_ERROR_NOT_SUPPORTED` when attempting to open devices.
+## Windows
+
+On Windows, if you get `LIBUSB_ERROR_NOT_SUPPORTED` when attempting to open your device, it's possible your device doesn't have a WinUSB driver for libusb to use.
+
+You can install one using [Zadig](http://zadig.akeo.ie/) or another approach is to use the [UsbDK Backend](https://github.com/daynix/UsbDk) of libusb by immediately calling `usb.useUsbDkBackend()`.
+
+Note that you cannot use multiple drivers on Windows as they get exclusive access to the device. So if you want to switch between drivers (e.g. using a printer with this software or the system), you will need to uninstall/install drivers as required.
+
+## Linux
+
+On Linux, you'll need libudev to build libusb if a prebuild is not available. On Ubuntu/Debian:
+
+```bash
+sudo apt-get install build-essential libudev-dev
+```
 
 # Installation
 
@@ -30,7 +44,7 @@ With `yarn`:
 yarn add usb
 ```
 
-__Note:__ the library is now written in `TypeScript`, so a separate types file is not longer required to be installed.
+__Note:__ the library is now written in `TypeScript`, so a separate types file is not longer required to be installed (e.g. don't install `@types/usb`).
 
 # License
 [MIT](LICENSE.md)
@@ -282,6 +296,9 @@ Constant properties from libusb
 
 #### usb.setDebugLevel(level : int)
 Set the libusb debug level (between 0 and 4)
+
+#### usb.useUsbDkBackend()
+On Windows, use the USBDK backend of libusb instead of WinUSB
 
 ### Device
 Represents a USB device.

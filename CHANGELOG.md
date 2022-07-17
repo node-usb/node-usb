@@ -1,5 +1,58 @@
 # Changelog
 
+## [2.4.3] - 2022-06-21
+
+### Fixed
+- Fixed poll transfer tracking - [`522`](https://github.com/node-usb/node-usb/pull/522) ([Rob Moran](https://github.com/thegecko))
+
+## [2.4.2] - 2022-05-27
+
+### Fixed
+- Fixed multiple events with device detection on Windows - [`512`](https://github.com/node-usb/node-usb/pull/512) ([Alba Mendez](https://github.com/mildsunrise))
+
+## [2.4.1] - 2022-05-07
+
+### Fixed
+- Fixed node engine ranges in package.json - ([Rob Moran](https://github.com/thegecko))
+
+## [2.4.0] - 2022-05-02
+
+### Fixed
+- Made addon context aware - [`512`](https://github.com/node-usb/node-usb/pull/512) ([Rob Moran](https://github.com/thegecko) & [Alba Mendez](https://github.com/mildsunrise))
+- Fixed deprecation of `libusb_set_option` - [`510`](https://github.com/node-usb/node-usb/pull/510) ([Rob Moran](https://github.com/thegecko))
+
+### Changed
+- **Breaking:** Updated to N-API version 6 (Node >=10.20.0 <11.x, >=12.17.0 <13.0, >=14.0.0) - [`509`](https://github.com/node-usb/node-usb/pull/509) ([Rob Moran](https://github.com/thegecko))
+
+### Added
+- Added `rebuild` command - [`511`](https://github.com/node-usb/node-usb/pull/511) ([Rob Moran](https://github.com/thegecko))
+
+### Removed
+- Removed `USE_POLL` build definition to simplify code - [`507`](https://github.com/node-usb/node-usb/pull/507) ([Rob Moran](https://github.com/thegecko))
+
+## [2.3.1] - 2022-04-11
+
+### Changed
+- Removed device access mutex from WebUSB API - [`501`](https://github.com/node-usb/node-usb/pull/501) ([Rob Moran](https://github.com/thegecko))
+
+## [2.3.0] - 2022-04-11
+
+### Changed
+- Changed libusb dependency to upstream v1.0.26 - [`505`](https://github.com/node-usb/node-usb/pull/505) ([Rob Moran](https://github.com/thegecko))
+- Cleaned up Windows device polling method - [`496`](https://github.com/node-usb/node-usb/pull/496) ([Alba Mendez](https://github.com/mildsunrise))
+
+## [2.2.0] - 2022-03-25
+
+### Added
+- Added `useUsbDkBackend()` method for switching libusb backend on Windows - [`489`](https://github.com/node-usb/node-usb/pull/489) ([Rob Moran](https://github.com/thegecko))
+
+### Changed
+- Changed libusb dependency to upstream v1.0.25 - [`490`](https://github.com/node-usb/node-usb/pull/490) ([Rob Moran](https://github.com/thegecko))
+
+### Fixed
+- Shortcut getStringDescriptor() to return undefined when passed index 0 - [`487`](https://github.com/node-usb/node-usb/pull/487) ([Rob Moran](https://github.com/thegecko))
+- Fixed race issue with garbage collected devices - [`492`](https://github.com/node-usb/node-usb/pull/492) ([Alba Mendez](https://github.com/mildsunrise))
+
 ## [2.1.3] - 2022-03-18
 
 ### Fixed

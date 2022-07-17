@@ -52,7 +52,7 @@ export class InEndpoint extends Endpoint {
     /** Endpoint direction. */
     public direction: 'in' | 'out' = 'in';
 
-    protected pollTransfers: Transfer[] | undefined;
+    protected pollTransfers: Transfer[] = [];
     protected pollTransferSize = 0;
     protected pollPending = 0;
     public pollActive = false;
@@ -113,6 +113,7 @@ export class InEndpoint extends Endpoint {
 
                 if (this.pollPending === 0) {
                     this.pollTransfers = [];
+                    this.pollActive = false;
                     this.emit('end');
                 }
             }
@@ -138,7 +139,7 @@ export class InEndpoint extends Endpoint {
     }
 
     protected startPollTransfers(nTransfers = 3, transferSize = this.descriptor.wMaxPacketSize, callback: (error: LibUSBException | undefined, buffer: Buffer, actualLength: number) => void): Transfer[] {
-        if (this.pollTransfers) {
+        if (this.pollActive) {
             throw new Error('Polling already active');
         }
 
@@ -163,7 +164,7 @@ export class InEndpoint extends Endpoint {
      * @param callback
      */
     public stopPoll(callback?: () => void): void {
-        if (!this.pollTransfers) {
+        if (!this.pollActive) {
             throw new Error('Polling is not active.');
         }
         for (let i = 0; i < this.pollTransfers.length; i++) {

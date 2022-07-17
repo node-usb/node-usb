@@ -1,7 +1,6 @@
 import * as usb from '../usb';
 import { promisify } from 'util';
 import { Endpoint, InEndpoint, OutEndpoint } from '../usb/endpoint';
-import { Mutex } from './mutex';
 
 const LIBUSB_TRANSFER_TYPE_MASK = 0x03;
 const ENDPOINT_NUMBER_MASK = 0x7f;
@@ -39,8 +38,6 @@ export class WebUSBDevice implements USBDevice {
     public serialNumber?: string | undefined;
     public configurations: USBConfiguration[] = [];
 
-    private deviceMutex = new Mutex();
-
     private constructor(private device: usb.Device) {
         const usbVersion = this.decodeVersion(device.deviceDescriptor.bcdUSB);
         this.usbVersionMajor = usbVersion.major;
@@ -73,8 +70,6 @@ export class WebUSBDevice implements USBDevice {
 
     public async open(): Promise<void> {
         try {
-            await this.deviceMutex.lock();
-
             if (this.opened) {
                 return;
             }
@@ -82,15 +77,11 @@ export class WebUSBDevice implements USBDevice {
             this.device.open();
         } catch (error) {
             throw new Error(`open error: ${error}`);
-        } finally {
-            this.deviceMutex.unlock();
         }
     }
 
     public async close(): Promise<void> {
         try {
-            await this.deviceMutex.lock();
-
             if (!this.opened) {
                 return;
             }
@@ -115,137 +106,110 @@ export class WebUSBDevice implements USBDevice {
             this.device.close();
         } catch (error) {
             throw new Error(`close error: ${error}`);
-        } finally {
-            this.deviceMutex.unlock();
         }
     }
 
     public async selectConfiguration(configurationValue: number): Promise<void> {
+        if (!this.opened || !this.device.configDescriptor) {
+            throw new Error('selectConfiguration error: invalid state');
+        }
+
+        if (this.device.configDescriptor.bConfigurationValue === configurationValue) {
+            return;
+        }
+
+        const config = this.configurations.find(configuration => configuration.configurationValue === configurationValue);
+        if (!config) {
+            throw new Error('selectConfiguration error: configuration not found');
+        }
+
         try {
-            await this.deviceMutex.lock();
-
-            if (!this.opened || !this.device.configDescriptor) {
-                throw new Error('selectConfiguration error: invalid state');
-            }
-
-            if (this.device.configDescriptor.bConfigurationValue === configurationValue) {
-                return;
-            }
-
-            const config = this.configurations.find(configuration => configuration.configurationValue === configurationValue);
-            if (!config) {
-                throw new Error('selectConfiguration error: configuration not found');
-            }
-
-            try {
-                const setConfiguration = promisify(this.device.setConfiguration).bind(this.device);
-                await setConfiguration(configurationValue);
-            } catch (error) {
-                throw new Error(`selectConfiguration error: ${error}`);
-            }
-        } finally {
-            this.deviceMutex.unlock();
+            const setConfiguration = promisify(this.device.setConfiguration).bind(this.device);
+            await setConfiguration(configurationValue);
+        } catch (error) {
+            throw new Error(`selectConfiguration error: ${error}`);
         }
     }
 
     public async claimInterface(interfaceNumber: number): Promise<void> {
+        if (!this.opened) {
+            throw new Error('claimInterface error: invalid state');
+        }
+
+        if (!this.configuration) {
+            throw new Error('claimInterface error: interface not found');
+        }
+
+        const iface = this.configuration.interfaces.find(usbInterface => usbInterface.interfaceNumber === interfaceNumber);
+        if (!iface) {
+            throw new Error('claimInterface error: interface not found');
+        }
+
+        if (iface.claimed) {
+            return;
+        }
+
         try {
-            await this.deviceMutex.lock();
+            this.device.interface(interfaceNumber).claim();
 
-            if (!this.opened) {
-                throw new Error('claimInterface error: invalid state');
-            }
+            // Re-create the USBInterface to set the claimed attribute
+            this.configuration.interfaces[this.configuration.interfaces.indexOf(iface)] = {
+                interfaceNumber,
+                alternate: iface.alternate,
+                alternates: iface.alternates,
+                claimed: true
+            };
+        } catch (error) {
+            throw new Error(`claimInterface error: ${error}`);
+        }
+    }
 
-            if (!this.configuration) {
-                throw new Error('claimInterface error: interface not found');
-            }
+    public async releaseInterface(interfaceNumber: number): Promise<void> {
+        await this._releaseInterface(interfaceNumber);
 
+        if (this.configuration) {
             const iface = this.configuration.interfaces.find(usbInterface => usbInterface.interfaceNumber === interfaceNumber);
-            if (!iface) {
-                throw new Error('claimInterface error: interface not found');
-            }
-
-            if (iface.claimed) {
-                return;
-            }
-
-            try {
-                this.device.interface(interfaceNumber).claim();
-
+            if (iface) {
                 // Re-create the USBInterface to set the claimed attribute
                 this.configuration.interfaces[this.configuration.interfaces.indexOf(iface)] = {
                     interfaceNumber,
                     alternate: iface.alternate,
                     alternates: iface.alternates,
-                    claimed: true
+                    claimed: false
                 };
-            } catch (error) {
-                throw new Error(`claimInterface error: ${error}`);
             }
-        } finally {
-            this.deviceMutex.unlock();
-        }
-    }
-
-    public async releaseInterface(interfaceNumber: number): Promise<void> {
-        try {
-            await this.deviceMutex.lock();
-            await this._releaseInterface(interfaceNumber);
-
-            if (this.configuration) {
-                const iface = this.configuration.interfaces.find(usbInterface => usbInterface.interfaceNumber === interfaceNumber);
-                if (iface) {
-                    // Re-create the USBInterface to set the claimed attribute
-                    this.configuration.interfaces[this.configuration.interfaces.indexOf(iface)] = {
-                        interfaceNumber,
-                        alternate: iface.alternate,
-                        alternates: iface.alternates,
-                        claimed: false
-                    };
-                }
-            }
-
-        } finally {
-            this.deviceMutex.unlock();
         }
     }
 
     public async selectAlternateInterface(interfaceNumber: number, alternateSetting: number): Promise<void> {
+        if (!this.opened) {
+            throw new Error('selectAlternateInterface error: invalid state');
+        }
+
+        if (!this.configuration) {
+            throw new Error('selectAlternateInterface error: interface not found');
+        }
+
+        const iface = this.configuration.interfaces.find(usbInterface => usbInterface.interfaceNumber === interfaceNumber);
+        if (!iface) {
+            throw new Error('selectAlternateInterface error: interface not found');
+        }
+
+        if (!iface.claimed) {
+            throw new Error('selectAlternateInterface error: invalid state');
+        }
+
         try {
-            await this.deviceMutex.lock();
-
-            if (!this.opened) {
-                throw new Error('selectAlternateInterface error: invalid state');
-            }
-
-            if (!this.configuration) {
-                throw new Error('selectAlternateInterface error: interface not found');
-            }
-
-            const iface = this.configuration.interfaces.find(usbInterface => usbInterface.interfaceNumber === interfaceNumber);
-            if (!iface) {
-                throw new Error('selectAlternateInterface error: interface not found');
-            }
-
-            if (!iface.claimed) {
-                throw new Error('selectAlternateInterface error: invalid state');
-            }
-
-            try {
-                const iface = this.device.interface(interfaceNumber);
-                const setAltSetting = promisify(iface.setAltSetting).bind(iface);
-                await setAltSetting(alternateSetting);
-            } catch (error) {
-                throw new Error(`selectAlternateInterface error: ${error}`);
-            }
-        } finally {
-            this.deviceMutex.unlock();
+            const iface = this.device.interface(interfaceNumber);
+            const setAltSetting = promisify(iface.setAltSetting).bind(iface);
+            await setAltSetting(alternateSetting);
+        } catch (error) {
+            throw new Error(`selectAlternateInterface error: ${error}`);
         }
     }
 
     public async controlTransferIn(setup: USBControlTransferParameters, length: number): Promise<USBInTransferResult> {
         try {
-            await this.deviceMutex.lock();
             const type = this.controlTransferParamsToType(setup, usb.LIBUSB_ENDPOINT_IN);
             const controlTransfer = promisify(this.device.controlTransfer).bind(this.device);
             const result = await controlTransfer(type, setup.request, setup.value, setup.index, length);
@@ -268,14 +232,11 @@ export class WebUSBDevice implements USBDevice {
             }
 
             throw new Error(`controlTransferIn error: ${error}`);
-        } finally {
-            this.deviceMutex.unlock();
         }
     }
 
     public async controlTransferOut(setup: USBControlTransferParameters, data?: ArrayBuffer): Promise<USBOutTransferResult> {
         try {
-            await this.deviceMutex.lock();
             const type = this.controlTransferParamsToType(setup, usb.LIBUSB_ENDPOINT_OUT);
             const controlTransfer = promisify(this.device.controlTransfer).bind(this.device);
             const buffer = data ? Buffer.from(data) : Buffer.alloc(0);
@@ -294,27 +255,21 @@ export class WebUSBDevice implements USBDevice {
             }
 
             throw new Error(`controlTransferOut error: ${error}`);
-        } finally {
-            this.deviceMutex.unlock();
         }
     }
 
     public async clearHalt(direction: USBDirection, endpointNumber: number): Promise<void> {
         try {
-            await this.deviceMutex.lock();
             const wIndex = endpointNumber | (direction === 'in' ? usb.LIBUSB_ENDPOINT_IN : usb.LIBUSB_ENDPOINT_OUT);
             const controlTransfer = promisify(this.device.controlTransfer).bind(this.device);
             await controlTransfer(usb.LIBUSB_RECIPIENT_ENDPOINT, CLEAR_FEATURE, ENDPOINT_HALT, wIndex, 0);
         } catch (error) {
             throw new Error(`clearHalt error: ${error}`);
-        } finally {
-            this.deviceMutex.unlock();
         }
     }
 
     public async transferIn(endpointNumber: number, length: number): Promise<USBInTransferResult> {
         try {
-            await this.deviceMutex.lock();
             const endpoint = this.getEndpoint(endpointNumber | usb.LIBUSB_ENDPOINT_IN) as InEndpoint;
             const transfer = promisify(endpoint.transfer).bind(endpoint);
             const result = await transfer(length);
@@ -337,14 +292,11 @@ export class WebUSBDevice implements USBDevice {
             }
 
             throw new Error(`transferIn error: ${error}`);
-        } finally {
-            this.deviceMutex.unlock();
         }
     }
 
     public async transferOut(endpointNumber: number, data: ArrayBuffer): Promise<USBOutTransferResult> {
         try {
-            await this.deviceMutex.lock();
             const endpoint = this.getEndpoint(endpointNumber | usb.LIBUSB_ENDPOINT_OUT) as OutEndpoint;
             const transfer = promisify(endpoint.transfer).bind(endpoint);
             const buffer = Buffer.from(data);
@@ -363,20 +315,15 @@ export class WebUSBDevice implements USBDevice {
             }
 
             throw new Error(`transferOut error: ${error}`);
-        } finally {
-            this.deviceMutex.unlock();
         }
     }
 
     public async reset(): Promise<void> {
         try {
-            await this.deviceMutex.lock();
             const reset = promisify(this.device.reset).bind(this.device);
             await reset();
         } catch (error) {
             throw new Error(`reset error: ${error}`);
-        } finally {
-            this.deviceMutex.unlock();
         }
     }
 
@@ -394,8 +341,6 @@ export class WebUSBDevice implements USBDevice {
 
     private async initialize(): Promise<void> {
         try {
-            await this.deviceMutex.lock();
-
             if (!this.opened) {
                 this.device.open();
             }
@@ -410,8 +355,6 @@ export class WebUSBDevice implements USBDevice {
             if (this.opened) {
                 this.device.close();
             }
-
-            this.deviceMutex.unlock();
         }
     }
 

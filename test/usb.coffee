@@ -4,6 +4,7 @@ usb = require('../').usb
 getDeviceList = require('../').getDeviceList
 findByIds = require('../').findByIds
 findBySerialNumber = require('../').findBySerialNumber
+Worker = require('worker_threads').Worker
 
 if typeof gc is 'function'
 	# running with --expose-gc, do a sweep between tests so valgrind blames the right one
@@ -20,14 +21,14 @@ describe 'USB Module', ->
 		assert.throws -> usb.Device()
 		assert.throws -> usb.Device.prototype.open.call({})
 
-	describe 'setDebugLevel', ->
-		it 'should throw when passed invalid args', ->
-			assert.throws((-> usb.setDebugLevel()), TypeError)
-			assert.throws((-> usb.setDebugLevel(-1)), TypeError)
-			assert.throws((-> usb.setDebugLevel(5)), TypeError)
+describe 'setDebugLevel', ->
+	it 'should throw when passed invalid args', ->
+		assert.throws((-> usb.setDebugLevel()), TypeError)
+		assert.throws((-> usb.setDebugLevel(-1)), TypeError)
+		assert.throws((-> usb.setDebugLevel(5)), TypeError)
 
-		it 'should succeed with good args', ->
-			assert.doesNotThrow(-> usb.setDebugLevel(0))
+	it 'should succeed with good args', ->
+		assert.doesNotThrow(-> usb.setDebugLevel(0))
 
 describe 'getDeviceList', ->
 	it 'should return at least one device', ->
@@ -201,3 +202,13 @@ describe 'Device', ->
 
 	after ->
 		device.close()
+
+if process.platform != 'win32'
+	describe 'Context Aware', ->
+		it 'should handle opening the same device from different contexts', ->
+			for n in [1..5]
+				worker = new Worker('./test/worker.cjs')
+				worker.on 'message', (serial) ->
+					assert.equal(serial, 'TEST_DEVICE')
+				worker.on 'exit', (code) ->
+					assert.equal(code, 0)

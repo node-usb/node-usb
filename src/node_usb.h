@@ -8,35 +8,36 @@
 #ifdef _WIN32
 #include <WinSock2.h>
 #endif
-#include <libusb.h>
 
-#define NAPI_VERSION 4
+#include <thread>
+#include <libusb.h>
 #include <napi.h>
 #include <node_buffer.h>
 
 #include "helpers.h"
-
-#ifndef USE_POLL
 #include "uv_async_queue.h"
-#endif
+
+struct HotPlug {
+	libusb_device* device;
+	libusb_hotplug_event event;
+	Napi::ObjectReference* hotplugThis;
+};
 
 struct Transfer;
 
-Napi::Error libusbException(napi_env env, int errorno);
+Napi::Error libusbException(Napi::Env env, int errorno);
 void handleCompletion(Transfer* self);
 
 struct Device: public Napi::ObjectWrap<Device> {
+	Napi::Env env;
 	libusb_device* device;
 	libusb_device_handle* device_handle;
 
 	int refs_;
-
-#ifndef USE_POLL
 	UVQueue<Transfer*> completionQueue;
-#endif
 
 	static Napi::Object Init(Napi::Env env, Napi::Object exports);
-	static Napi::Object get(napi_env env, libusb_device* handle);
+	static Napi::Object get(Napi::Env env, libusb_device* handle);
 
 	inline void ref(){ refs_ = Ref();}
 	inline void unref(){ refs_ = Unref();}
@@ -45,8 +46,7 @@ struct Device: public Napi::ObjectWrap<Device> {
 	Device(const Napi::CallbackInfo& info);
 	~Device();
 
-	static Napi::Object cdesc2V8(napi_env env, libusb_config_descriptor * cdesc);
-
+	static Napi::Object cdesc2V8(Napi::Env env, libusb_config_descriptor * cdesc);
 
 	Napi::Value GetConfigDescriptor(const Napi::CallbackInfo& info);
 	Napi::Value GetAllConfigDescriptors(const Napi::CallbackInfo& info);
@@ -67,12 +67,24 @@ struct Device: public Napi::ObjectWrap<Device> {
 
 	Napi::Value ClearHalt(const Napi::CallbackInfo& info);
 protected:
-	static std::map<libusb_device*, Device*> byPtr;
-	static Napi::FunctionReference constructor;
-	
 	Napi::Value Constructor(const Napi::CallbackInfo& info);
 };
 
+struct ModuleData {
+	libusb_context* usb_context;
+	std::thread usb_thread;
+	std::atomic<bool> handlingEvents;
+
+	bool hotplugEnabled = 0;
+	libusb_hotplug_callback_handle hotplugHandle;
+	UVQueue<HotPlug*> hotplugQueue;
+	Napi::ObjectReference hotplugThis;
+	std::map<libusb_device*, Device*> byPtr;
+	Napi::FunctionReference deviceConstructor;
+
+    ModuleData(libusb_context* usb_context);
+	~ModuleData();
+};
 
 struct Transfer: public Napi::ObjectWrap<Transfer> {
 	libusb_transfer* transfer;

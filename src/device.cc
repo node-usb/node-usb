@@ -9,40 +9,47 @@
 
 #define MAX_PORTS 7
 
-Napi::FunctionReference Device::constructor;
-
-Device::Device(const Napi::CallbackInfo & info) : Napi::ObjectWrap<Device>(info), device_handle(0), refs_(0)
-#ifndef USE_POLL
-, completionQueue(handleCompletion)
-#endif
-{
+Device::Device(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Device>(info), env(0), device_handle(0), refs_(0), completionQueue(handleCompletion) {
+	env = info.Env();
 	device = info[0].As<Napi::External<libusb_device>>().Data();
 	libusb_ref_device(device);
-	byPtr.insert(std::make_pair(device, this));
+
+	std::map<libusb_device*, Device*>& byPtr = env.GetInstanceData<ModuleData>()->byPtr;
+	byPtr[device] = this;
+
 	DEBUG_LOG("Created device %p", this);
 	Constructor(info);
 }
 
-Device::~Device(){
+Device::~Device() {
 	DEBUG_LOG("Freed device %p", this);
-	byPtr.erase(device);
+
+	ModuleData* instanceData = env.GetInstanceData<ModuleData>();
+	std::map<libusb_device*, Device*>& byPtr = instanceData->byPtr;
+
+	auto it = byPtr.find(device);
+	if (it != byPtr.end() && it->second == this)
+		byPtr.erase(it);
 	libusb_close(device_handle);
 	libusb_unref_device(device);
 }
 
-// Map pinning each libusb_device to a particular V8 instance
-std::map<libusb_device*, Device*> Device::byPtr;
-
 // Get a V8 instance for a libusb_device: either the existing one from the map,
 // or create a new one and add it to the map.
-Napi::Object Device::get(napi_env env, libusb_device* dev){
+Napi::Object Device::get(Napi::Env env, libusb_device* dev) {
+	ModuleData* instanceData = env.GetInstanceData<ModuleData>();
+	std::map<libusb_device*, Device*>& byPtr = instanceData->byPtr;
+
 	auto it = byPtr.find(dev);
-	if (it != byPtr.end()){
-		return it->second->Value();
-	} else {
-		Napi::Object obj = Device::constructor.New({ Napi::External<libusb_device>::New(env, dev) });
-		return obj;
+	if (it != byPtr.end()) {
+		auto value = it->second->Value();
+		// JS object may have already been garbage collected
+		if (!value.IsEmpty())
+			return value;
 	}
+
+	Napi::Object obj = instanceData->deviceConstructor.New({ Napi::External<libusb_device>::New(env, dev) });
+	return obj;
 }
 
 Napi::Value Device::Constructor(const Napi::CallbackInfo& info) {
@@ -85,7 +92,7 @@ Napi::Value Device::Constructor(const Napi::CallbackInfo& info) {
 	return info.This();
 }
 
-Napi::Object Device::cdesc2V8(napi_env env, libusb_config_descriptor * cdesc){
+Napi::Object Device::cdesc2V8(Napi::Env env, libusb_config_descriptor * cdesc) {
 	Napi::Object v8cdesc = Napi::Object::New(env);
 
 	STRUCT_TO_V8(v8cdesc, *cdesc, bLength)
@@ -161,7 +168,7 @@ Napi::Value Device::GetConfigDescriptor(const Napi::CallbackInfo& info) {
 	return v8cdesc;
 }
 
-Napi::Value Device::GetAllConfigDescriptors(const Napi::CallbackInfo& info){
+Napi::Value Device::GetAllConfigDescriptors(const Napi::CallbackInfo& info) {
 	ENTER_METHOD(Device, 0);
 	libusb_config_descriptor * cdesc;
 	struct libusb_device_descriptor dd;
@@ -175,7 +182,7 @@ Napi::Value Device::GetAllConfigDescriptors(const Napi::CallbackInfo& info){
 	return v8cdescriptors;
 }
 
-Napi::Value Device::GetParent(const Napi::CallbackInfo& info){
+Napi::Value Device::GetParent(const Napi::CallbackInfo& info) {
 	ENTER_METHOD(Device, 0);
 	libusb_device* dev = libusb_get_parent(self->device);
 	if(dev)
@@ -188,9 +195,7 @@ Napi::Value Device::Open(const Napi::CallbackInfo& info) {
 	ENTER_METHOD(Device, 0);
 	if (!self->device_handle){
 		CHECK_USB(libusb_open(self->device, &self->device_handle));
-#ifndef USE_POLL
 		completionQueue.start(info.Env());
-#endif
 	}
 	return env.Undefined();
 }
@@ -200,9 +205,7 @@ Napi::Value Device::Close(const Napi::CallbackInfo& info) {
 	if (self->canClose()){
 		libusb_close(self->device_handle);
 		self->device_handle = NULL;
-#ifndef USE_POLL
 		completionQueue.stop();
-#endif        
 	}else{
 		THROW_ERROR("Can't close device with a pending request");
 	}
@@ -405,8 +408,8 @@ Napi::Object Device::Init(Napi::Env env, Napi::Object exports) {
 		});
 	exports.Set("Device", func);
 
-	Device::constructor = Napi::Persistent(func);
-	Device::constructor.SuppressDestruct();
+	ModuleData* instanceData = env.GetInstanceData<ModuleData>();
+	instanceData->deviceConstructor = Napi::Persistent(func);
 
 	return exports;
 }

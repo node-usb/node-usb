@@ -1,6 +1,5 @@
 #include "node_usb.h"
-#include "uv_async_queue.h"
-#include <thread>
+#include "thread_name.h"
 
 Napi::Value SetDebugLevel(const Napi::CallbackInfo& info);
 Napi::Value UseUsbDkBackend(const Napi::CallbackInfo& info);
@@ -12,87 +11,87 @@ Napi::Value RefHotplugEvents(const Napi::CallbackInfo& info);
 Napi::Value UnrefHotplugEvents(const Napi::CallbackInfo& info);
 void initConstants(Napi::Object target);
 
-libusb_context* usb_context;
-struct HotPlug {
-	libusb_device* device;
-	libusb_hotplug_event event;
-};
+void handleHotplug(HotPlug* info){
+	Napi::ObjectReference* hotplugThis = info->hotplugThis;
+	Napi::Env env = hotplugThis->Env();
+	Napi::HandleScope scope(env);
 
-#ifdef USE_POLL
-#include <poll.h>
-#include <uv.h>
-#include <sys/time.h>
+	libusb_device* dev = info->device;
+	libusb_hotplug_event event = info->event;
 
-std::map<int, uv_poll_t*> pollByFD;
+	DEBUG_LOG("HandleHotplug %p %i", dev, event);
 
-struct timeval zero_tv = {0, 0};
+	Napi::Value v8dev = Device::get(env, dev);
+	libusb_unref_device(dev);
 
-void onPollSuccess(uv_poll_t* handle, int status, int events){
-	libusb_handle_events_timeout(usb_context, &zero_tv);
-}
+	Napi::String eventName;
+	if (LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED == event) {
+		DEBUG_LOG("Device arrived");
+		eventName = Napi::String::New(env, "attach");
 
-void LIBUSB_CALL onPollFDAdded(int fd, short events, void *user_data){
-	uv_poll_t *poll_fd;
-	auto it = pollByFD.find(fd);
-	if (it != pollByFD.end()){
-		poll_fd = it->second;
-	}else{
-		poll_fd = (uv_poll_t*) malloc(sizeof(uv_poll_t));
-		uv_poll_init(uv_default_loop(), poll_fd, fd);
-		pollByFD.insert(std::make_pair(fd, poll_fd));
+	} else if (LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT == event) {
+		DEBUG_LOG("Device left");
+		eventName = Napi::String::New(env, "detach");
+
+	} else {
+		DEBUG_LOG("Unhandled hotplug event %d\n", event);
+		return;
 	}
 
-	DEBUG_LOG("Added pollfd %i, %p", fd, poll_fd);
-	unsigned flags = ((events&POLLIN) ? UV_READABLE:0)
-	               | ((events&POLLOUT)? UV_WRITABLE:0);
-	uv_poll_start(poll_fd, flags, onPollSuccess);
+	hotplugThis->Get("emit").As<Napi::Function>().MakeCallback(hotplugThis->Value(), { eventName, v8dev });
+	delete info;
 }
 
-void LIBUSB_CALL onPollFDRemoved(int fd, void *user_data){
-	auto it = pollByFD.find(fd);
-	if (it != pollByFD.end()){
-		DEBUG_LOG("Removed pollfd %i, %p", fd, it->second);
-		uv_poll_stop(it->second);
-		uv_close((uv_handle_t*) it->second, (uv_close_cb) free);
-		pollByFD.erase(it);
+void USBThreadFn(ModuleData* instanceData) {
+	SetThreadName("node-usb events");
+	libusb_context* usb_context = instanceData->usb_context;
+
+	while(true) {
+		if (instanceData->handlingEvents == false) {
+			break;
+		}
+		libusb_handle_events(usb_context);
 	}
 }
 
-#else
-std::thread usb_thread;
-
-void USBThreadFn(){
-	while(1) libusb_handle_events(usb_context);
+ModuleData::ModuleData(libusb_context* usb_context) : usb_context(usb_context), hotplugQueue(handleHotplug) {
+	handlingEvents = true;
+	usb_thread = std::thread(USBThreadFn, this);
 }
-#endif
+
+ModuleData::~ModuleData() {
+	handlingEvents = false;
+	libusb_interrupt_event_handler(usb_context);
+	usb_thread.join();
+
+	if (usb_context != nullptr) {
+		libusb_exit(usb_context);
+		usb_context = nullptr;
+	}
+}
+
+int LIBUSB_CALL hotplug_callback(libusb_context* ctx, libusb_device* device,
+                     libusb_hotplug_event event, void* user_data) {
+	libusb_ref_device(device);
+	ModuleData* instanceData = (ModuleData*)user_data;
+	instanceData->hotplugQueue.post(new HotPlug {device, event, &instanceData->hotplugThis});
+	return 0;
+}
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
 	Napi::HandleScope scope(env);
-
 	initConstants(exports);
 
 	// Initialize libusb. On error, halt initialization.
+	libusb_context* usb_context = nullptr;
 	int res = libusb_init(&usb_context);
+
 	exports.Set("INIT_ERROR", Napi::Number::New(env, res));
 	if (res != 0) {
 		return exports;
 	}
 
-	#ifdef USE_POLL
-	assert(libusb_pollfds_handle_timeouts(usb_context));
-	libusb_set_pollfd_notifiers(usb_context, onPollFDAdded, onPollFDRemoved, NULL);
-
-	const struct libusb_pollfd** pollfds = libusb_get_pollfds(usb_context);
-	assert(pollfds);
-	for(const struct libusb_pollfd** i=pollfds; *i; i++){
-		onPollFDAdded((*i)->fd, (*i)->events, NULL);
-	}
-	free(pollfds);
-
-	#else
-	usb_thread = std::thread(USBThreadFn);
-	usb_thread.detach();
-	#endif
+	env.SetInstanceData(new ModuleData(usb_context));
 
 	Device::Init(env, exports);
 	Transfer::Init(env, exports);
@@ -117,7 +116,8 @@ Napi::Value SetDebugLevel(const Napi::CallbackInfo& info) {
 		THROW_BAD_ARGS("Usb::SetDebugLevel argument is invalid. [uint:[0-4]]!")
 	}
 
-	libusb_set_debug(usb_context, info[0].As<Napi::Number>().Int32Value());
+	libusb_context* usb_context = env.GetInstanceData<ModuleData>()->usb_context;
+	libusb_set_option(usb_context, LIBUSB_OPTION_LOG_LEVEL, info[0].As<Napi::Number>().Int32Value());
 	return env.Undefined();
 }
 
@@ -125,6 +125,7 @@ Napi::Value UseUsbDkBackend(const Napi::CallbackInfo& info) {
 	Napi::Env env = info.Env();
 	Napi::HandleScope scope(env);
 
+	libusb_context* usb_context = env.GetInstanceData<ModuleData>()->usb_context;
 	libusb_set_option(usb_context, LIBUSB_OPTION_USE_USBDK);
 	return env.Undefined();
 }
@@ -132,7 +133,9 @@ Napi::Value UseUsbDkBackend(const Napi::CallbackInfo& info) {
 Napi::Value GetDeviceList(const Napi::CallbackInfo& info) {
 	Napi::Env env = info.Env();
 	Napi::HandleScope scope(env);
-	libusb_device **devs;
+	libusb_device** devs;
+
+	libusb_context* usb_context = env.GetInstanceData<ModuleData>()->usb_context;
 	int cnt = libusb_get_device_list(usb_context, &devs);
 	CHECK_USB(cnt);
 
@@ -156,62 +159,28 @@ Napi::Value GetLibusbCapability(const Napi::CallbackInfo& info) {
 	return Napi::Number::New(env, res);
 }
 
-Napi::ObjectReference hotplugThis;
-
-void handleHotplug(HotPlug* info){
-	Napi::Env env = hotplugThis.Env();
-	Napi::HandleScope scope(env);
-
-	libusb_device* dev = info->device;
-	libusb_hotplug_event event = info->event;
-	delete info;
-
-	DEBUG_LOG("HandleHotplug %p %i", dev, event);
-
-	Napi::Value v8dev = Device::get(env, dev);
-	libusb_unref_device(dev);
-
-	Napi::String eventName;
-	if (LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED == event) {
-		DEBUG_LOG("Device arrived");
-		eventName = Napi::String::New(env, "attach");
-
-	} else if (LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT == event) {
-		DEBUG_LOG("Device left");
-		eventName = Napi::String::New(env, "detach");
-
-	} else {
-		DEBUG_LOG("Unhandled hotplug event %d\n", event);
-		return;
-	}
-
-	hotplugThis.Get("emit").As<Napi::Function>().MakeCallback(hotplugThis.Value(), { eventName, v8dev });
-}
-
-bool hotplugEnabled = 0;
-libusb_hotplug_callback_handle hotplugHandle;
-UVQueue<HotPlug*> hotplugQueue(handleHotplug);
-
-int LIBUSB_CALL hotplug_callback(libusb_context *ctx, libusb_device *device,
-                     libusb_hotplug_event event, void *user_data) {
-	libusb_ref_device(device);
-	hotplugQueue.post(new HotPlug {device, event});
-	return 0;
-}
-
 Napi::Value EnableHotplugEvents(const Napi::CallbackInfo& info) {
 	Napi::Env env = info.Env();
 	Napi::HandleScope scope(env);
+	ModuleData* instanceData = env.GetInstanceData<ModuleData>();
 
-	if (!hotplugEnabled) {
-		hotplugThis.Reset(info.This().As<Napi::Object>(), 1);
-		hotplugThis.SuppressDestruct();
-		CHECK_USB(libusb_hotplug_register_callback(usb_context,
+	if (!instanceData->hotplugEnabled) {
+		instanceData->hotplugThis.Reset(info.This().As<Napi::Object>(), 1);
+
+		libusb_context* usb_context = instanceData->usb_context;
+		CHECK_USB(libusb_hotplug_register_callback(
+			usb_context,
 			(libusb_hotplug_event)(LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT),
-			(libusb_hotplug_flag)0, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY,
-			hotplug_callback, NULL, &hotplugHandle));
-		hotplugQueue.start(env);
-		hotplugEnabled = true;
+			(libusb_hotplug_flag)0,
+			LIBUSB_HOTPLUG_MATCH_ANY,
+			LIBUSB_HOTPLUG_MATCH_ANY,
+			LIBUSB_HOTPLUG_MATCH_ANY,
+			hotplug_callback,
+			instanceData,
+			&instanceData->hotplugHandle
+		));
+		instanceData->hotplugQueue.start(env);
+		instanceData->hotplugEnabled = true;
 	}
 	return env.Undefined();
 }
@@ -219,10 +188,13 @@ Napi::Value EnableHotplugEvents(const Napi::CallbackInfo& info) {
 Napi::Value DisableHotplugEvents(const Napi::CallbackInfo& info) {
 	Napi::Env env = info.Env();
 	Napi::HandleScope scope(env);
-	if (hotplugEnabled) {
-		libusb_hotplug_deregister_callback(usb_context, hotplugHandle);
-		hotplugQueue.stop();
-		hotplugEnabled = false;
+	ModuleData* instanceData = env.GetInstanceData<ModuleData>();
+
+	if (instanceData->hotplugEnabled) {
+		libusb_context* usb_context = instanceData->usb_context;
+		libusb_hotplug_deregister_callback(usb_context, instanceData->hotplugHandle);
+		instanceData->hotplugQueue.stop();
+		instanceData->hotplugEnabled = false;
 	}
 	return env.Undefined();
 }
@@ -230,8 +202,10 @@ Napi::Value DisableHotplugEvents(const Napi::CallbackInfo& info) {
 Napi::Value RefHotplugEvents(const Napi::CallbackInfo& info) {
 	Napi::Env env = info.Env();
 	Napi::HandleScope scope(env);
-	if (hotplugEnabled) {
-		hotplugQueue.ref(env);
+	ModuleData* instanceData = env.GetInstanceData<ModuleData>();
+
+	if (instanceData->hotplugEnabled) {
+		instanceData->hotplugQueue.ref(env);
 	}
 	return env.Undefined();
 }
@@ -239,8 +213,10 @@ Napi::Value RefHotplugEvents(const Napi::CallbackInfo& info) {
 Napi::Value UnrefHotplugEvents(const Napi::CallbackInfo& info) {
 	Napi::Env env = info.Env();
 	Napi::HandleScope scope(env);
-	if (hotplugEnabled) {
-		hotplugQueue.unref(env);
+	ModuleData* instanceData = env.GetInstanceData<ModuleData>();
+
+	if (instanceData->hotplugEnabled) {
+		instanceData->hotplugQueue.unref(env);
 	}
 	return env.Undefined();
 }
@@ -362,7 +338,7 @@ void initConstants(Napi::Object target){
 	DEFINE_CONSTANT(target, LIBUSB_ERROR_OTHER);
 }
 
-Napi::Error libusbException(napi_env env, int errorno) {
+Napi::Error libusbException(Napi::Env env, int errorno) {
 	const char* err = libusb_error_name(errorno);
 	Napi::Error e  = Napi::Error::New(env, err);
 	e.Set("errno", (double)errorno);

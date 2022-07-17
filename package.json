@@ -2,10 +2,10 @@
   "name": "usb",
   "description": "Library to access USB devices",
   "license": "MIT",
-  "version": "2.1.3",
+  "version": "2.4.3",
   "main": "dist/index.js",
   "engines": {
-    "node": ">=10.16.0"
+    "node": ">=10.20.0 <11.x || >=12.17.0 <13.0 || >=14.0.0"
   },
   "repository": {
     "type": "git",
@@ -38,6 +38,7 @@
   "scripts": {
     "prepare": "yarn compile",
     "install": "node-gyp-build",
+    "rebuild": "node-gyp rebuild",
     "clean": "git clean -dfx",
     "compile": "tsc && yarn lint && yarn docs",
     "lint": "eslint . --ext .ts",
@@ -46,8 +47,8 @@
     "full-test": "mocha --require coffeescript/register test/*.coffee",
     "valgrind": "coffee -c test/*.coffee; valgrind --leak-check=full --show-possibly-lost=no node --expose-gc --trace-gc node_modules/mocha/bin/_mocha -R spec",
     "docs": "typedoc",
-    "prebuild": "prebuildify --napi --target 10.16.0 --strip",
-    "prebuild-cross": "prebuildify-cross --napi --target 10.16.0 --strip",
+    "prebuild": "prebuildify --napi --strip",
+    "prebuild-cross": "prebuildify-cross --napi --strip",
     "prepublishOnly": "prebuildify-ci download",
     "prebuild-download": "prebuildify-ci download"
   },
@@ -72,7 +73,7 @@
   },
   "binary": {
     "napi_versions": [
-      4
+      6
     ]
   }
 }
