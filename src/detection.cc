@@ -152,4 +152,4 @@ Napi::Object init(Napi::Env env, Napi::Object exports)
 	return exports;
 }
 
-NODE_API_MODULE(detection, init);
+// NODE_API_MODULE(detection, init);

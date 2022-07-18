@@ -3,6 +3,7 @@
 #include <string>
 #include <cctype>
 #include <algorithm>
+#include <atomic>
 
 // Include Windows headers
 #include <windows.h>
@@ -188,6 +189,29 @@ bool LoadFunctions()
 
 LRESULT CALLBACK DetectCallback(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+
+DWORD MyCMInterfaceNotification( HCMNOTIFICATION hNotify, PVOID Context, CM_NOTIFY_ACTION Action, PCM_NOTIFY_EVENT_DATA EventData,DWORD EventDataSize )
+ {
+   switch (Action) {
+case CM_NOTIFY_ACTION_DEVICEINTERFACEARRIVAL:
+    wprintf(("MyCmInterfaceNotification: Arrival of %S\n",
+        EventData->u.DeviceInterface.SymbolicLink));
+
+    //
+    // Enqueue a work item to open target
+    //
+
+    break;
+case CM_NOTIFY_ACTION_DEVICEINTERFACEREMOVAL:
+    wprintf(("MyCmInterfaceNotification: removal of %S\n",
+        EventData->u.DeviceInterface.SymbolicLink));
+    break;
+default:
+    printf(("MyCmInterfaceNotification: Arrival unknown action\n"));
+    break;
+ }
+}
+
 /**********************************
  * Public Functions
  **********************************/
@@ -267,6 +291,12 @@ public:
 			wincl.lpszClassName = className;
 			wincl.lpfnWndProc = DetectCallback;
 			
+			CM_NOTIFY_FILTER cmNotifyFilter = { 0 };
+			cmNotifyFilter.cbSize = sizeof(cmNotifyFilter);
+			cmNotifyFilter.Flags = 0;
+			cmNotifyFilter.FilterType = CM_NOTIFY_FILTER_TYPE_DEVICEINTERFACE;
+			cmNotifyFilter.u.DeviceInterface.ClassGuid = GUID_DEVINTERFACE_USB_DEVICE;
+			
 			DEV_BROADCAST_DEVICEINTERFACE_A notifyFilter = {0};
 			notifyFilter.dbcc_size = sizeof(notifyFilter);
 			notifyFilter.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
@@ -290,11 +320,13 @@ public:
 			// Store a reference to this for the callback to use. Its a raw pointer, so will not extend the lifetime
             SetWindowLongPtrA( hwnd, GWLP_USERDATA, (LONG_PTR )this );
 
+
+			HCMNOTIFICATION hcm;
 			hDevNotify = RegisterDeviceNotificationA(hwnd, &notifyFilter, DEVICE_NOTIFY_WINDOW_HANDLE);
-			if (!hDevNotify)
+			if (CM_Register_Notification(&cmNotifyFilter, (PVOID)nullptr, (PCM_NOTIFY_CALLBACK)&MyCMInterfaceNotification, &hcm) != CR_SUCCESS)
 			{
 				DWORD le = GetLastError();
-				printf("RegisterDeviceNotificationA() failed [Error: %x]\r\n", le);
+				printf("CM_Register_Notification() failed [Error: %x]\r\n", le);
 				goto cleanup;
 			}
 

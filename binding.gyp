@@ -72,15 +72,20 @@
               'MACOSX_DEPLOYMENT_TARGET': '10.7'
             }
           }],
+          ['OS!="win"', {
+            'sources': [
+              'src/hotplug/libusb.cc'
+            ],
+          }],
           ['OS=="win"', {
             'sources': [
-              'src/detection.cc',
-              'src/detection.h',
-              'src/device_list.cc',
-              'src/detection_win.cc'
+              'src/hotplug/windows.cc'
             ],
             'defines':[
               'WIN32_LEAN_AND_MEAN'
+            ],
+            'libraries': [
+              'cfgmgr32.lib'
             ],
             'default_configuration': 'Debug',
             'configurations': {

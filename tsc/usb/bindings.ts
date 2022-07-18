@@ -31,6 +31,7 @@ export declare function setDebugLevel(level: number): void;
  */
 export declare function useUsbDkBackend(): void;
 
+export declare function _supportsHotplugEvents(): boolean;
 export declare function _enableHotplugEvents(): void;
 export declare function _disableHotplugEvents(): void;
 export declare function _getLibusbCapability(capability: number): number;

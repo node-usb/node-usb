@@ -43,7 +43,7 @@ declare module './bindings' {
 // Polling mechanism for discovering device changes until this is fixed:
 // https://github.com/libusb/libusb/issues/86
 const pollTimeout = 500;
-const hotplugSupported = usb._getLibusbCapability(usb.LIBUSB_CAP_HAS_HOTPLUG) > 0;
+const hotplugSupported = usb._supportsHotplugEvents();
 let pollingHotplug = false;
 let pollDevices = new Set<usb.Device>();
 
