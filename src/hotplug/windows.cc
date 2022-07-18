@@ -113,11 +113,11 @@ void handleHotplug(HotPlug* info) {
 	Napi::String eventName;
 	if (CM_NOTIFY_ACTION_DEVICEINTERFACEARRIVAL == event) {
 		DEBUG_LOG("Device arrived");
-		eventName = Napi::String::New(env, "attachPath");
+		eventName = Napi::String::New(env, "_attachPath");
 
 	} else if (CM_NOTIFY_ACTION_DEVICEINTERFACEREMOVAL == event) {
 		DEBUG_LOG("Device left");
-		eventName = Napi::String::New(env, "detachPath");
+		eventName = Napi::String::New(env, "_detachPath");
 
 	} else {
 		DEBUG_LOG("Unhandled hotplug event %d\n", event);
