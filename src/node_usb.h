@@ -17,13 +17,6 @@
 #include "helpers.h"
 #include "uv_async_queue.h"
 
-// struct HotPlug {
-// 	libusb_device* device;
-// 	char* path;
-// 	libusb_hotplug_event event;
-// 	Napi::ObjectReference* hotplugThis;
-// };
-
 struct Transfer;
 
 struct HotPlug;
