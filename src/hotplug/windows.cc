@@ -2,7 +2,9 @@
 
 // Include Windows headers
 #include <windows.h>
+#include <initguid.h>
 #include <Cfgmgr32.h>
+#include <usbiodef.h>
 
 #include <locale>
 #include <codecvt>
@@ -11,19 +13,6 @@
 #define VID_TAG L"VID_"
 #define PID_TAG L"PID_"
 
-GUID GUID_DEVINTERFACE_USB_DEVICE = {
-	0xA5DCBF10L,
-	0x6530,
-	0x11D2,
-	0x90,
-	0x1F,
-	0x00,
-	0xC0,
-	0x4F,
-	0xB9,
-	0x51,
-	0xED};
-	
 struct HotPlug {
 	int vid;
 	int pid;
@@ -79,7 +68,6 @@ DWORD MyCMInterfaceNotification(HCMNOTIFICATION hNotify, PVOID Context, CM_NOTIF
 		int pid = 0;
 		extractVidPid(EventData->u.DeviceInterface.SymbolicLink, &vid, &pid);
 
-		//auto str = std::wstring(EventData->u.DeviceInterface.SymbolicLink);
 		instanceData->hotplugQueue.post(new HotPlug {vid, pid, Action, &instanceData->hotplugThis});
 		break;
 	}
@@ -114,7 +102,7 @@ class HotPlugManagerWindows : public HotPlugManager
 		auto res = CM_Register_Notification(&cmNotifyFilter, (PVOID)instanceData, (PCM_NOTIFY_CALLBACK)&MyCMInterfaceNotification, &hcm);
 		if (res != CR_SUCCESS)
 		{
-			printf("CM_Register_Notification() failed [Error: %x]\r\n", res);
+			THROW_ERROR("RegisterNotification failed")
 		}
 	}
 
