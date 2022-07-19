@@ -6,7 +6,7 @@ Napi::Value SetDebugLevel(const Napi::CallbackInfo& info);
 Napi::Value UseUsbDkBackend(const Napi::CallbackInfo& info);
 Napi::Value GetDeviceList(const Napi::CallbackInfo& info);
 Napi::Value GetLibusbCapability(const Napi::CallbackInfo& info);
-Napi::Value SupportsHotplugEvents(const Napi::CallbackInfo& info);
+Napi::Value SupportedHotplugEvents(const Napi::CallbackInfo& info);
 Napi::Value EnableHotplugEvents(const Napi::CallbackInfo& info);
 Napi::Value DisableHotplugEvents(const Napi::CallbackInfo& info);
 Napi::Value RefHotplugEvents(const Napi::CallbackInfo& info);
@@ -64,7 +64,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
 	exports.Set("useUsbDkBackend", Napi::Function::New(env, UseUsbDkBackend));
 	exports.Set("getDeviceList", Napi::Function::New(env, GetDeviceList));
 	exports.Set("_getLibusbCapability", Napi::Function::New(env, GetLibusbCapability));
-	exports.Set("_supportsHotplugEvents", Napi::Function::New(env, SupportsHotplugEvents));
+	exports.Set("_supportedHotplugEvents", Napi::Function::New(env, SupportedHotplugEvents));
 	exports.Set("_enableHotplugEvents", Napi::Function::New(env, EnableHotplugEvents));
 	exports.Set("_disableHotplugEvents", Napi::Function::New(env, DisableHotplugEvents));
 	exports.Set("refHotplugEvents", Napi::Function::New(env, RefHotplugEvents));
@@ -124,13 +124,13 @@ Napi::Value GetLibusbCapability(const Napi::CallbackInfo& info) {
 	return Napi::Number::New(env, res);
 }
 
-Napi::Value SupportsHotplugEvents(const Napi::CallbackInfo& info) {
+Napi::Value SupportedHotplugEvents(const Napi::CallbackInfo& info) {
 	Napi::Env env = info.Env();
 	Napi::HandleScope scope(env);
 	ModuleData* instanceData = env.GetInstanceData<ModuleData>();
 
-	bool res = instanceData->hotplugManager->supportsHotplug();
-	return Napi::Boolean::New(env, res);
+	int res = instanceData->hotplugManager->supportedHotplugEvents();
+	return Napi::Number::New(env, res);
 }
 
 Napi::Value EnableHotplugEvents(const Napi::CallbackInfo& info) {

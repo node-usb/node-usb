@@ -15,10 +15,10 @@ int LIBUSB_CALL hotplug_callback(libusb_context* ctx, libusb_device* device,
 }
 
 class HotPlugManagerLibUsb: public HotPlugManager {
-    bool supportsHotplug() {
+    int supportedHotplugEvents() {
         int res = libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG);
 
-        return res > 0;
+        return res > 0 ? HOTPLUG_SUPPORTS_DEVICES : HOTPLUG_SUPPORTS_NONE;
     }
 
     void enableHotplug(const Napi::Env& env, ModuleData* instanceData) {

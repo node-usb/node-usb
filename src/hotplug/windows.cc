@@ -91,9 +91,9 @@ DWORD MyCMInterfaceNotification(HCMNOTIFICATION hNotify, PVOID Context, CM_NOTIF
 
 class HotPlugManagerWindows : public HotPlugManager
 {
-	bool supportsHotplug()
+	int supportedHotplugEvents()
 	{
-		return true;
+		return HOTPLUG_SUPPORTS_IDS;
 	}
 
 	void enableHotplug(const Napi::Env &env, ModuleData *instanceData)

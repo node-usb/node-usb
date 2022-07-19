@@ -43,7 +43,7 @@ declare module './bindings' {
 // Polling mechanism for discovering device changes until this is fixed:
 // https://github.com/libusb/libusb/issues/86
 const pollTimeout = 500;
-const hotplugSupported = usb._supportsHotplugEvents();
+const hotplugSupported = usb._supportedHotplugEvents();
 let pollingHotplug = false;
 let pollDevices = new Set<usb.Device>();
 
@@ -83,7 +83,7 @@ usb.on('newListener', event => {
     }
     const listenerCount = usb.listenerCount('attach') + usb.listenerCount('detach');
     if (listenerCount === 0) {
-        if (hotplugSupported) {
+        if (hotplugSupported > 0) {
             usb._enableHotplugEvents();
         } else {
             pollHotplug(true);
@@ -97,7 +97,7 @@ usb.on('removeListener', event => {
     }
     const listenerCount = usb.listenerCount('attach') + usb.listenerCount('detach');
     if (listenerCount === 0) {
-        if (hotplugSupported) {
+        if (hotplugSupported > 0) {
             usb._disableHotplugEvents();
         } else {
             pollingHotplug = false;
