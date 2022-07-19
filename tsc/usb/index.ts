@@ -14,8 +14,8 @@ Object.getOwnPropertyNames(ExtendedDevice.prototype).forEach(name => {
 });
 
 interface EventListeners<T> {
-    newListener: keyof T;
-    removeListener: keyof T;
+    newListener: [event: keyof T];
+    removeListener: [event: keyof T];
 }
 
 declare module './bindings' {
@@ -24,36 +24,31 @@ declare module './bindings' {
     interface Device extends ExtendedDevice { }
 
     interface DeviceEvents extends EventListeners<DeviceEvents> {
-        attach: Device;
-        detach: Device;
+        attach: [device: Device];
+        detach: [device: Device];
+        attachIds: [vendorId: number | null, productId: number | null]
+        detachIds: [vendorId: number | null, productId: number | null]
     }
 
-    function addListener<K extends keyof DeviceEvents>(event: K, listener: (arg: DeviceEvents[K]) => void): void;
-    function removeListener<K extends keyof DeviceEvents>(event: K, listener: (arg: DeviceEvents[K]) => void): void;
-    function on<K extends keyof DeviceEvents>(event: K, listener: (arg: DeviceEvents[K]) => void): void;
-    function off<K extends keyof DeviceEvents>(event: K, listener: (arg: DeviceEvents[K]) => void): void;
-    function once<K extends keyof DeviceEvents>(event: K, listener: (arg: DeviceEvents[K]) => void): void;
-    function listeners<K extends keyof DeviceEvents>(event: K): ((arg: DeviceEvents[K]) => void)[];
-    function rawListeners<K extends keyof DeviceEvents>(event: K): ((arg: DeviceEvents[K]) => void)[];
+    function addListener<K extends keyof DeviceEvents>(event: K, listener: (...args: DeviceEvents[K]) => void): void;
+    function removeListener<K extends keyof DeviceEvents>(event: K, listener: (...args: DeviceEvents[K]) => void): void;
+    function on<K extends keyof DeviceEvents>(event: K, listener: (...args: DeviceEvents[K]) => void): void;
+    function off<K extends keyof DeviceEvents>(event: K, listener: (...args: DeviceEvents[K]) => void): void;
+    function once<K extends keyof DeviceEvents>(event: K, listener: (...args: DeviceEvents[K]) => void): void;
+    function listeners<K extends keyof DeviceEvents>(event: K): ((...args: DeviceEvents[K]) => void)[];
+    function rawListeners<K extends keyof DeviceEvents>(event: K): ((...args: DeviceEvents[K]) => void)[];
     function removeAllListeners<K extends keyof DeviceEvents>(event?: K): void;
-    function emit<K extends keyof DeviceEvents>(event: K, arg: DeviceEvents[K]): boolean;
+    function emit<K extends keyof DeviceEvents>(event: K, ...args: DeviceEvents[K]): boolean;
     function listenerCount<K extends keyof DeviceEvents>(event: K): number;
 }
 
-// Polling mechanism for discovering device changes until this is fixed:
-// https://github.com/libusb/libusb/issues/86
+// Polling mechanism for discovering device changes where hotplug detection is not available
 const pollTimeout = 500;
 const hotplugSupported = usb._supportedHotplugEvents();
 let pollingHotplug = false;
 let pollDevices = new Set<usb.Device>();
 
-const pollHotplug = (start = false) => {
-    if (start) {
-        pollingHotplug = true;
-    } else if (!pollingHotplug) {
-        return;
-    }
-
+const pollOnce = (start: boolean) => {
     // Collect current devices
     const devices = new Set(usb.getDeviceList());
 
@@ -72,37 +67,81 @@ const pollHotplug = (start = false) => {
     }
 
     pollDevices = devices;
+};
+
+const pollHotplug = (start = false) => {
+    if (start) {
+        pollingHotplug = true;
+    } else if (!pollingHotplug) {
+        return;
+    }
+
+    pollOnce(start);
+
     setTimeout(() => {
         pollHotplug();
     }, pollTimeout);
 };
 
-usb.on('newListener', event => {
-    if (event !== 'attach' && event !== 'detach') {
+
+let hotplugEventConversionRunning = false;
+const hotplugEventConversion = () => {
+    // Future: This might want a debounce, to avoid doing multiple polls when attaching a usb hub or something
+    pollOnce(false);
+};
+
+function checkDeviceListeners(event: string, isAdding: boolean): void {
+    const isDeviceEvent = event === 'attach' || event === 'detach';
+    const isIdEvent = event === 'attachIds' || event === 'detachIds';
+
+    if (!isDeviceEvent && !isIdEvent) {
         return;
     }
-    const listenerCount = usb.listenerCount('attach') + usb.listenerCount('detach');
-    if (listenerCount === 0) {
-        if (hotplugSupported > 0) {
-            usb._enableHotplugEvents();
+
+    const deviceListenerCount = usb.listenerCount('attach') + usb.listenerCount('detach');
+    const idsListenerCount = usb.listenerCount('attachIds') + usb.listenerCount('detachIds');
+
+    const hotplugModeIsIdsOnly = hotplugSupported === 2;
+    if (isDeviceEvent && deviceListenerCount === 0 && hotplugModeIsIdsOnly) {
+        if (isAdding && !hotplugEventConversionRunning) {
+            hotplugEventConversionRunning = true;
+            pollOnce(true);
+
+            usb.on('attachIds', hotplugEventConversion);
+            usb.on('detachIds', hotplugEventConversion);
+        } else if (!isAdding && hotplugEventConversionRunning) {
+            hotplugEventConversionRunning = false;
+
+            usb.off('attachIds', hotplugEventConversion);
+            usb.off('detachIds', hotplugEventConversion);
+
+            pollDevices.clear();
+        }
+    } else if (deviceListenerCount === 0 && idsListenerCount === 0) {
+        if (isAdding) {
+            if (hotplugSupported > 0) {
+                usb._enableHotplugEvents();
+            } else {
+                pollHotplug(true);
+            }
         } else {
-            pollHotplug(true);
+            if (hotplugSupported > 0) {
+                usb._disableHotplugEvents();
+            } else {
+                pollingHotplug = false;
+            }
+
+            pollDevices.clear();
         }
     }
+}
+
+usb.on('newListener', event => {
+    checkDeviceListeners(event, true);
 });
 
 usb.on('removeListener', event => {
-    if (event !== 'attach' && event !== 'detach') {
-        return;
-    }
-    const listenerCount = usb.listenerCount('attach') + usb.listenerCount('detach');
-    if (listenerCount === 0) {
-        if (hotplugSupported > 0) {
-            usb._disableHotplugEvents();
-        } else {
-            pollingHotplug = false;
-        }
-    }
+    checkDeviceListeners(event, false);
 });
 
 export = usb;
