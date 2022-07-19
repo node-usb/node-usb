@@ -1,5 +1,19 @@
 #include "hotplug.h"
 
+struct HotPlug {
+	libusb_device* device;
+	libusb_hotplug_event event;
+	Napi::ObjectReference* hotplugThis;
+};
+
+int LIBUSB_CALL hotplug_callback(libusb_context* ctx, libusb_device* device,
+                     libusb_hotplug_event event, void* user_data) {
+	libusb_ref_device(device);
+	ModuleData* instanceData = (ModuleData*)user_data;
+	instanceData->hotplugQueue.post(new HotPlug {device, event, &instanceData->hotplugThis});
+	return 0;
+}
+
 class HotPlugManagerLibUsb: public HotPlugManager {
     bool supportsHotplug() {
         int res = libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG);
@@ -34,14 +48,6 @@ std::unique_ptr<HotPlugManager> HotPlugManager::create() {
     return std::make_unique<HotPlugManagerLibUsb>();
 }
 
-int LIBUSB_CALL hotplug_callback(libusb_context* ctx, libusb_device* device,
-                     libusb_hotplug_event event, void* user_data) {
-	libusb_ref_device(device);
-	ModuleData* instanceData = (ModuleData*)user_data;
-	instanceData->hotplugQueue.post(new HotPlug {device, nullptr, event, &instanceData->hotplugThis});
-	return 0;
-}
-
 void handleHotplug(HotPlug* info) {
 	Napi::ObjectReference* hotplugThis = info->hotplugThis;
 	Napi::Env env = hotplugThis->Env();
@@ -49,20 +55,27 @@ void handleHotplug(HotPlug* info) {
 
 	libusb_device* dev = info->device;
 	libusb_hotplug_event event = info->event;
+	delete info;
 
 	DEBUG_LOG("HandleHotplug %p %i", dev, event);
 
-	Napi::Value v8dev = Device::get(env, dev);
+	Napi::Object v8dev = Device::get(env, dev);
 	libusb_unref_device(dev);
 
+	Napi::Value v8Vid = v8dev.Get("idVendor");
+	Napi::Value v8Pid = v8dev.Get("idVendor");
+
 	Napi::String eventName;
+	Napi::String changeEventName;
 	if (LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED == event) {
 		DEBUG_LOG("Device arrived");
 		eventName = Napi::String::New(env, "attach");
+		changeEventName = Napi::String::New(env, "attachIds");
 
 	} else if (LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT == event) {
 		DEBUG_LOG("Device left");
 		eventName = Napi::String::New(env, "detach");
+		changeEventName = Napi::String::New(env, "detachIds");
 
 	} else {
 		DEBUG_LOG("Unhandled hotplug event %d\n", event);
@@ -70,5 +83,5 @@ void handleHotplug(HotPlug* info) {
 	}
 
 	hotplugThis->Get("emit").As<Napi::Function>().MakeCallback(hotplugThis->Value(), { eventName, v8dev });
-	delete info;
+	hotplugThis->Get("emit").As<Napi::Function>().MakeCallback(hotplugThis->Value(), { changedEventName, v8Vid, v8Pid });
 }

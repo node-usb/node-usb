@@ -6,10 +6,11 @@
 
 #include <locale>
 #include <codecvt>
+#include <cwctype>
 
-/**********************************
- * Local Variables
- **********************************/
+#define VID_TAG L"VID_"
+#define PID_TAG L"PID_"
+
 GUID GUID_DEVINTERFACE_USB_DEVICE = {
 	0xA5DCBF10L,
 	0x6530,
@@ -24,10 +25,46 @@ GUID GUID_DEVINTERFACE_USB_DEVICE = {
 	0xED};
 	
 struct HotPlug {
-	std::wstring path;
+	int vid;
+	int pid;
 	CM_NOTIFY_ACTION event;
 	Napi::ObjectReference* hotplugThis;
 };
+
+void extractVidPid(wchar_t *buf, int *vid, int *pid)
+{
+	// Example input: \\?\USB#VID_0FD9&PID_0060#000000000000#{a5dcbf10-6530-11d2-901f-00c04fb951ed}
+
+	*vid = 0;
+	*pid = 0;
+
+	if (buf == NULL)
+	{
+		return;
+	}
+	
+	auto string = std::wstring(buf);
+	std::transform(string.begin(), string.end(), string.begin(), std::towupper);
+
+	wchar_t* temp = new wchar_t[5];
+	temp[4] = L'\0';
+
+	const wchar_t *vidStr = wcsstr(string.data(), VID_TAG);
+	const wchar_t *pidStr = wcsstr(string.data(), PID_TAG);
+
+
+	if (vidStr != nullptr)
+	{
+		memcpy(temp, vidStr + wcslen(VID_TAG), 4 * sizeof(wchar_t));
+		*vid = wcstol(temp, NULL, 16);
+	}
+
+	if (pidStr != nullptr)
+	{
+		memcpy(temp, pidStr + wcslen(PID_TAG), 4 * sizeof(wchar_t));
+		*pid = wcstol(temp, NULL, 16);
+	}
+}
 
 DWORD MyCMInterfaceNotification(HCMNOTIFICATION hNotify, PVOID Context, CM_NOTIFY_ACTION Action, PCM_NOTIFY_EVENT_DATA EventData, DWORD EventDataSize)
 {
@@ -37,8 +74,13 @@ DWORD MyCMInterfaceNotification(HCMNOTIFICATION hNotify, PVOID Context, CM_NOTIF
 	case CM_NOTIFY_ACTION_DEVICEINTERFACEREMOVAL:
 	{
 		ModuleData* instanceData = (ModuleData*)Context;
-		auto str = std::wstring(EventData->u.DeviceInterface.SymbolicLink);
-		instanceData->hotplugQueue.post(new HotPlug {str, Action, &instanceData->hotplugThis});
+
+		int vid = 0;
+		int pid = 0;
+		extractVidPid(EventData->u.DeviceInterface.SymbolicLink, &vid, &pid);
+
+		//auto str = std::wstring(EventData->u.DeviceInterface.SymbolicLink);
+		instanceData->hotplugQueue.post(new HotPlug {vid, pid, Action, &instanceData->hotplugThis});
 		break;
 	}
 	default:
@@ -104,26 +146,28 @@ void handleHotplug(HotPlug* info) {
 	Napi::Env env = hotplugThis->Env();
 	Napi::HandleScope scope(env);
 
-	std::string path = std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(info->path);
-	auto v8Path = Napi::String::New(env, path);
+	int vid = info->vid;
+	int pid = info->pid;
+	auto v8Vid = Napi::Number::New(env, vid);
+	auto v8Pid = Napi::Number::New(env, pid);
 	CM_NOTIFY_ACTION event = info->event;
+	delete info;
 
-	DEBUG_LOG("HandleHotplug %s %i", info->path, event);
+	DEBUG_LOG("HandleHotplug %i %i %i", vid, pid, event);
 
 	Napi::String eventName;
 	if (CM_NOTIFY_ACTION_DEVICEINTERFACEARRIVAL == event) {
 		DEBUG_LOG("Device arrived");
-		eventName = Napi::String::New(env, "_attachPath");
+		eventName = Napi::String::New(env, "attachIds");
 
 	} else if (CM_NOTIFY_ACTION_DEVICEINTERFACEREMOVAL == event) {
 		DEBUG_LOG("Device left");
-		eventName = Napi::String::New(env, "_detachPath");
+		eventName = Napi::String::New(env, "detachIds");
 
 	} else {
 		DEBUG_LOG("Unhandled hotplug event %d\n", event);
 		return;
 	}
-
-	hotplugThis->Get("emit").As<Napi::Function>().MakeCallback(hotplugThis->Value(), { eventName, v8Path });
-	delete info;
+	
+	hotplugThis->Get("emit").As<Napi::Function>().MakeCallback(hotplugThis->Value(), { eventName, v8Vid, v8Pid });
 }
