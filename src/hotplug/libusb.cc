@@ -62,8 +62,13 @@ void handleHotplug(HotPlug* info) {
 	Napi::Object v8dev = Device::get(env, dev);
 	libusb_unref_device(dev);
 
-	Napi::Value v8Vid = v8dev.Get("idVendor");
-	Napi::Value v8Pid = v8dev.Get("idVendor");
+	Napi::Value v8Vid = env.Null();
+	Napi::Value v8Pid = env.Null();
+	auto deviceDescriptor = v8dev.Get("deviceDescriptor");
+	if (deviceDescriptor.IsObject()) {
+		v8Vid = deviceDescriptor.As<Napi::Object>().Get("idVendor");
+		v8Pid = deviceDescriptor.As<Napi::Object>().Get("idProduct");
+	}
 
 	Napi::String eventName;
 	Napi::String changeEventName;
@@ -83,5 +88,5 @@ void handleHotplug(HotPlug* info) {
 	}
 
 	hotplugThis->Get("emit").As<Napi::Function>().MakeCallback(hotplugThis->Value(), { eventName, v8dev });
-	hotplugThis->Get("emit").As<Napi::Function>().MakeCallback(hotplugThis->Value(), { changedEventName, v8Vid, v8Pid });
+	hotplugThis->Get("emit").As<Napi::Function>().MakeCallback(hotplugThis->Value(), { changeEventName, v8Vid, v8Pid });
 }
