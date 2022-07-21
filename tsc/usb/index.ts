@@ -14,8 +14,8 @@ Object.getOwnPropertyNames(ExtendedDevice.prototype).forEach(name => {
 });
 
 interface EventListeners<T> {
-    newListener: [event: keyof T];
-    removeListener: [event: keyof T];
+    newListener: keyof T;
+    removeListener: keyof T;
 }
 
 declare module './bindings' {
@@ -24,21 +24,21 @@ declare module './bindings' {
     interface Device extends ExtendedDevice { }
 
     interface DeviceEvents extends EventListeners<DeviceEvents> {
-        attach: [device: Device];
-        detach: [device: Device];
-        attachIds: [vendorId: number | null, productId: number | null]
-        detachIds: [vendorId: number | null, productId: number | null]
+        attach: Device;
+        detach: Device;
+        attachIds: undefined;
+        detachIds: undefined;
     }
 
-    function addListener<K extends keyof DeviceEvents>(event: K, listener: (...args: DeviceEvents[K]) => void): void;
-    function removeListener<K extends keyof DeviceEvents>(event: K, listener: (...args: DeviceEvents[K]) => void): void;
-    function on<K extends keyof DeviceEvents>(event: K, listener: (...args: DeviceEvents[K]) => void): void;
-    function off<K extends keyof DeviceEvents>(event: K, listener: (...args: DeviceEvents[K]) => void): void;
-    function once<K extends keyof DeviceEvents>(event: K, listener: (...args: DeviceEvents[K]) => void): void;
-    function listeners<K extends keyof DeviceEvents>(event: K): ((...args: DeviceEvents[K]) => void)[];
-    function rawListeners<K extends keyof DeviceEvents>(event: K): ((...args: DeviceEvents[K]) => void)[];
+    function addListener<K extends keyof DeviceEvents>(event: K, listener: (arg: DeviceEvents[K]) => void): void;
+    function removeListener<K extends keyof DeviceEvents>(event: K, listener: (arg: DeviceEvents[K]) => void): void;
+    function on<K extends keyof DeviceEvents>(event: K, listener: (arg: DeviceEvents[K]) => void): void;
+    function off<K extends keyof DeviceEvents>(event: K, listener: (arg: DeviceEvents[K]) => void): void;
+    function once<K extends keyof DeviceEvents>(event: K, listener: (arg: DeviceEvents[K]) => void): void;
+    function listeners<K extends keyof DeviceEvents>(event: K): ((arg: DeviceEvents[K]) => void)[];
+    function rawListeners<K extends keyof DeviceEvents>(event: K): ((arg: DeviceEvents[K]) => void)[];
     function removeAllListeners<K extends keyof DeviceEvents>(event?: K): void;
-    function emit<K extends keyof DeviceEvents>(event: K, ...args: DeviceEvents[K]): boolean;
+    function emit<K extends keyof DeviceEvents>(event: K, arg: DeviceEvents[K]): boolean;
     function listenerCount<K extends keyof DeviceEvents>(event: K): number;
 }
 
