@@ -83,68 +83,44 @@ const pollHotplugLoop = (start = false) => {
     }, pollTimeout);
 };
 
+const hotplugModeIsIdsOnly = hotplugSupported === 2;
+if (hotplugModeIsIdsOnly) {
+    // The hotplug backend doesnt emit 'attach' or 'detach', so we need to do some conversion
+    const hotplugEventConversion = () => {
+        // Future: This might want a debounce, to avoid doing multiple polls when attaching a usb hub or something
+        pollHotplugOnce(false);
+    };
 
-let hotplugEventConversionRunning = false;
-const hotplugEventConversion = () => {
-    // Future: This might want a debounce, to avoid doing multiple polls when attaching a usb hub or something
-    pollHotplugOnce(false);
-};
-
-function checkHotplugEventListeners(event: string, isAdding: boolean): void {
-    const isDeviceEvent = event === 'attach' || event === 'detach';
-    const isIdEvent = event === 'attachIds' || event === 'detachIds';
-
-    if (!isDeviceEvent && !isIdEvent) {
-        return;
-    }
-
-    const deviceListenerCount = usb.listenerCount('attach') + usb.listenerCount('detach');
-    const idsListenerCount = usb.listenerCount('attachIds') + usb.listenerCount('detachIds');
-
-    const hotplugModeIsIdsOnly = hotplugSupported === 2;
-    if (isDeviceEvent && deviceListenerCount === 0 && hotplugModeIsIdsOnly) {
-        // When the hotplug backend provides just the attachIds/detachIds events, we need to setup polling
-        // when the first listener to attach/detach is added. Or clean it up when the last listener is removed.
-        if (isAdding && !hotplugEventConversionRunning) {
-            hotplugEventConversionRunning = true;
-            pollHotplugOnce(true);
-
-            usb.on('attachIds', hotplugEventConversion);
-            usb.on('detachIds', hotplugEventConversion);
-        } else if (!isAdding && hotplugEventConversionRunning) {
-            hotplugEventConversionRunning = false;
-
-            usb.off('attachIds', hotplugEventConversion);
-            usb.off('detachIds', hotplugEventConversion);
-
-            pollDevices.clear();
-        }
-    } else if (deviceListenerCount === 0 && idsListenerCount === 0) {
-        // The first/last listener was added/removed, stop the hotplug backend or polling
-        if (isAdding) {
-            if (hotplugSupported > 0) {
-                usb._enableHotplugEvents();
-            } else {
-                pollHotplugLoop(true);
-            }
-        } else {
-            if (hotplugSupported > 0) {
-                usb._disableHotplugEvents();
-            } else {
-                pollingHotplug = false;
-            }
-
-            pollDevices.clear();
-        }
-    }
+    usb.on('attachIds', hotplugEventConversion);
+    usb.on('detachIds', hotplugEventConversion);
 }
 
 usb.on('newListener', event => {
-    checkHotplugEventListeners(event, true);
+    if (event !== 'attach' && event !== 'detach') {
+        return;
+    }
+    const listenerCount = usb.listenerCount('attach') + usb.listenerCount('detach');
+    if (listenerCount === 0) {
+        if (hotplugSupported) {
+            usb._enableHotplugEvents();
+        } else {
+            pollHotplugLoop(true);
+        }
+    }
 });
 
 usb.on('removeListener', event => {
-    checkHotplugEventListeners(event, false);
+    if (event !== 'attach' && event !== 'detach') {
+        return;
+    }
+    const listenerCount = usb.listenerCount('attach') + usb.listenerCount('detach');
+    if (listenerCount === 0) {
+        if (hotplugSupported) {
+            usb._disableHotplugEvents();
+        } else {
+            pollingHotplug = false;
+        }
+    }
 });
 
 export = usb;
