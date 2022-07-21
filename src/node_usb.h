@@ -10,9 +10,9 @@
 #endif
 
 #include <thread>
+#include <atomic>
 #include <libusb.h>
 #include <napi.h>
-#include <node_buffer.h>
 
 #include "helpers.h"
 #include "uv_async_queue.h"
