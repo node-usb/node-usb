@@ -9,12 +9,12 @@
 
 class HotPlugManager {
 public:
-	static std::unique_ptr<HotPlugManager> create();
+    static std::unique_ptr<HotPlugManager> create();
 
-	virtual int supportedHotplugEvents() = 0;
+    virtual int supportedHotplugEvents() = 0;
 
-	virtual void enableHotplug(const Napi::Env& env, ModuleData* instanceData) = 0;
-	virtual void disableHotplug(const Napi::Env& env, ModuleData* instanceData) = 0;
+    virtual void enableHotplug(const Napi::Env& env, ModuleData* instanceData) = 0;
+    virtual void disableHotplug(const Napi::Env& env, ModuleData* instanceData) = 0;
 };
 
 void handleHotplug(HotPlug* info);

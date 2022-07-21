@@ -221,9 +221,9 @@ struct Req: Napi::AsyncWorker {
 		device->ref();
 	}
 
-    void OnOK() override {
+	void OnOK() override {
 		auto env = Env();
-        Napi::HandleScope scope(env);
+		Napi::HandleScope scope(env);
 		device->unref();
 
 		Napi::Value error = env.Undefined();
@@ -236,7 +236,7 @@ struct Req: Napi::AsyncWorker {
 		catch (const Napi::Error& e) {
 			Napi::Error::Fatal("", e.what());
 		}
-    }
+	}
 };
 
 struct Device_Reset: Req {

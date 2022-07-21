@@ -79,7 +79,7 @@ struct ModuleData {
 	std::map<libusb_device*, Device*> byPtr;
 	Napi::FunctionReference deviceConstructor;
 
-    ModuleData(libusb_context* usb_context);
+	ModuleData(libusb_context* usb_context);
 	~ModuleData();
 };
 
