@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.5.0] - 2022-07-30
+
+### Fixed
+- Native USB device plug/unplug detection on Windows - [`524`](https://github.com/node-usb/node-usb/pull/524) ([Julian Waller](https://github.com/Julusian))
+
 ## [2.4.3] - 2022-06-21
 
 ### Fixed
