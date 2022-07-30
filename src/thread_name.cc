@@ -11,7 +11,7 @@
     #include <sys/prctl.h>
 
     // Define here to avoid relying on kernel headers being present
-    #define PR_SET_NAME    15		/* Set process name */
+    #define PR_SET_NAME    15 /* Set process name */
 
     bool SetThreadName(const char* name) {
         return prctl(PR_SET_NAME, name, 0, 0, 0) >= 0;
