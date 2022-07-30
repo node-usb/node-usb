@@ -41,7 +41,6 @@ void extractVidPid(wchar_t *buf, int *vid, int *pid)
     const wchar_t *vidStr = wcsstr(string.data(), VID_TAG);
     const wchar_t *pidStr = wcsstr(string.data(), PID_TAG);
 
-
     if (vidStr != nullptr)
     {
         memcpy(temp, vidStr + wcslen(VID_TAG), 4 * sizeof(wchar_t));
