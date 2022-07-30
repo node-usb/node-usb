@@ -612,6 +612,40 @@ is called once all transfers have completed or canceled.</p>
 </a>
 <p>Listening to events will prevent the process to exit. By calling this function, hotplug events will be unreferenced by the event loop, allowing the process to exit even when listening for the <code>attach</code> and <code>detach</code> events.</p>
 
+<a href="#migrating-from-node-usb-detection" id="migrating-from-node-usb-detection" style="color: inherit; text-decoration: none;">
+  <h1>Migrating from node-usb-detection</h1>
+</a>
+<p>If you have been referred here by <code>node-usb-detection</code>, the following may be helpful for you to update your existing code.</p>
+
+<a href="#usbdetectstartmonitoring-amp-usbdetectstopmonitoring" id="usbdetectstartmonitoring-amp-usbdetectstopmonitoring" style="color: inherit; text-decoration: none;">
+  <h2>usbDetect.startMonitoring() &amp; usbDetect.stopMonitoring()</h2>
+</a>
+<p>There is no direct equivalent to these methods. This is handled automatically for you when you add and remove event listeners.</p>
+<p>You may find <code>usb.unrefHotplugEvents()</code> useful as it is intended to help with exit conditions.</p>
+
+<a href="#usbdetectfind" id="usbdetectfind" style="color: inherit; text-decoration: none;">
+  <h2>usbDetect.find()</h2>
+</a>
+<p>You can instead use <code>usb.getDeviceList()</code>. Be aware that this will do an enumeration to find all of the devices, and not look at a cache of the known devices. If you call it too often it may have a performance impact.</p>
+<p>To find a specific device by vid and pid, call <code>usb.findByIds</code>. e.g. <code>usb.findByIds(0x12, 0x34)</code>.</p>
+
+<a href="#usbdetecton39add39-functiondevice---" id="usbdetecton39add39-functiondevice---" style="color: inherit; text-decoration: none;">
+  <h2>usbDetect.on(&#39;add&#39;, function(device) { ... })</h2>
+</a>
+<p>These should be changed to <code>usb.on(&#39;attach&#39;, function(device) { ... })</code>.</p>
+<p>There is no equivalent to filter based on the vid or pid, instead you should do a check inside the callback you provide.<br>The contents of the device object has also changed.</p>
+
+<a href="#usbdetecton39remove39-functiondevice---" id="usbdetecton39remove39-functiondevice---" style="color: inherit; text-decoration: none;">
+  <h2>usbDetect.on(&#39;remove&#39;, function(device) { ... })</h2>
+</a>
+<p>These should be changed to <code>usb.on(&#39;detach&#39;, function(device) { ... })</code>.</p>
+<p>There is no equivalent to filter based on the vid or pid, instead you should do a check inside the callback you provide.<br>The contents of the device object has also changed.</p>
+
+<a href="#usbdetecton39change39-functiondevice---" id="usbdetecton39change39-functiondevice---" style="color: inherit; text-decoration: none;">
+  <h2>usbDetect.on(&#39;change&#39;, function(device) { ... })</h2>
+</a>
+<p>There is no direct equivalent to this. Instead you can listen to both <code>attach</code> and <code>detach</code> to get the same behaviour.</p>
+
 <a href="#development" id="development" style="color: inherit; text-decoration: none;">
   <h1>Development</h1>
 </a>
