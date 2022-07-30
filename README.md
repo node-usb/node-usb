@@ -575,7 +575,7 @@ The contents of the device object has also changed.
 These should be changed to `usb.on('detach', function(device) { ... })`.
 
 There is no equivalent to filter based on the vid or pid, instead you should do a check inside the callback you provide.  
-The contents of the device object has also changed
+The contents of the device object has also changed.
 
 ## usbDetect.on('change', function(device) { ... })
 
