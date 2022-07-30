@@ -17,13 +17,10 @@
 #include "helpers.h"
 #include "uv_async_queue.h"
 
-struct HotPlug {
-	libusb_device* device;
-	libusb_hotplug_event event;
-	Napi::ObjectReference* hotplugThis;
-};
-
 struct Transfer;
+
+struct HotPlug;
+class HotPlugManager;
 
 Napi::Error libusbException(Napi::Env env, int errorno);
 void handleCompletion(Transfer* self);
@@ -76,13 +73,13 @@ struct ModuleData {
 	std::atomic<bool> handlingEvents;
 
 	bool hotplugEnabled = 0;
-	libusb_hotplug_callback_handle hotplugHandle;
+	std::unique_ptr<HotPlugManager> hotplugManager;
 	UVQueue<HotPlug*> hotplugQueue;
 	Napi::ObjectReference hotplugThis;
 	std::map<libusb_device*, Device*> byPtr;
 	Napi::FunctionReference deviceConstructor;
 
-    ModuleData(libusb_context* usb_context);
+	ModuleData(libusb_context* usb_context);
 	~ModuleData();
 };
 

@@ -26,6 +26,8 @@ declare module './bindings' {
     interface DeviceEvents extends EventListeners<DeviceEvents> {
         attach: Device;
         detach: Device;
+        attachIds: undefined;
+        detachIds: undefined;
     }
 
     function addListener<K extends keyof DeviceEvents>(event: K, listener: (arg: DeviceEvents[K]) => void): void;
@@ -40,20 +42,13 @@ declare module './bindings' {
     function listenerCount<K extends keyof DeviceEvents>(event: K): number;
 }
 
-// Polling mechanism for discovering device changes until this is fixed:
-// https://github.com/libusb/libusb/issues/86
+// Polling mechanism for discovering device changes where hotplug detection is not available
 const pollTimeout = 500;
-const hotplugSupported = usb._getLibusbCapability(usb.LIBUSB_CAP_HAS_HOTPLUG) > 0;
+const hotplugSupported = usb._supportedHotplugEvents();
 let pollingHotplug = false;
 let pollDevices = new Set<usb.Device>();
 
-const pollHotplug = (start = false) => {
-    if (start) {
-        pollingHotplug = true;
-    } else if (!pollingHotplug) {
-        return;
-    }
-
+const pollHotplugOnce = (start: boolean) => {
     // Collect current devices
     const devices = new Set(usb.getDeviceList());
 
@@ -72,10 +67,33 @@ const pollHotplug = (start = false) => {
     }
 
     pollDevices = devices;
+};
+
+const pollHotplugLoop = (start = false) => {
+    if (start) {
+        pollingHotplug = true;
+    } else if (!pollingHotplug) {
+        return;
+    }
+
+    pollHotplugOnce(start);
+
     setTimeout(() => {
-        pollHotplug();
+        pollHotplugLoop();
     }, pollTimeout);
 };
+
+const hotplugModeIsIdsOnly = hotplugSupported === 2;
+if (hotplugModeIsIdsOnly) {
+    // The hotplug backend doesnt emit 'attach' or 'detach', so we need to do some conversion
+    const hotplugEventConversion = () => {
+        // Future: This might want a debounce, to avoid doing multiple polls when attaching a usb hub or something
+        pollHotplugOnce(false);
+    };
+
+    usb.on('attachIds', hotplugEventConversion);
+    usb.on('detachIds', hotplugEventConversion);
+}
 
 usb.on('newListener', event => {
     if (event !== 'attach' && event !== 'detach') {
@@ -86,7 +104,7 @@ usb.on('newListener', event => {
         if (hotplugSupported) {
             usb._enableHotplugEvents();
         } else {
-            pollHotplug(true);
+            pollHotplugLoop(true);
         }
     }
 });

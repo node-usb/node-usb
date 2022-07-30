@@ -547,6 +547,40 @@ Restore (re-reference) the hotplug events unreferenced by `unrefHotplugEvents()`
 #### usb.unrefHotplugEvents();
 Listening to events will prevent the process to exit. By calling this function, hotplug events will be unreferenced by the event loop, allowing the process to exit even when listening for the `attach` and `detach` events.
 
+# Migrating from node-usb-detection
+
+If you have been referred here by `node-usb-detection`, the following may be helpful for you to update your existing code.
+
+## usbDetect.startMonitoring() & usbDetect.stopMonitoring()
+
+There is no direct equivalent to these methods. This is handled automatically for you when you add and remove event listeners.
+
+You may find `usb.unrefHotplugEvents()` useful as it is intended to help with exit conditions.
+
+## usbDetect.find()
+
+You can instead use `usb.getDeviceList()`. Be aware that this will do an enumeration to find all of the devices, and not look at a cache of the known devices. If you call it too often it may have a performance impact.
+
+To find a specific device by vid and pid, call `usb.findByIds`. e.g. `usb.findByIds(0x12, 0x34)`.
+
+## usbDetect.on('add', function(device) { ... })
+
+These should be changed to `usb.on('attach', function(device) { ... })`.
+
+There is no equivalent to filter based on the vid or pid, instead you should do a check inside the callback you provide.  
+The contents of the device object has also changed.
+
+## usbDetect.on('remove', function(device) { ... })
+
+These should be changed to `usb.on('detach', function(device) { ... })`.
+
+There is no equivalent to filter based on the vid or pid, instead you should do a check inside the callback you provide.  
+The contents of the device object has also changed.
+
+## usbDetect.on('change', function(device) { ... })
+
+There is no direct equivalent to this. Instead you can listen to both `attach` and `detach` to get the same behaviour.
+
 # Development
 The library is based on native bindings wrapping the [libusb](https://github.com/libusb/libusb) library.
 
