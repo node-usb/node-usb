@@ -561,7 +561,7 @@ You may find `usb.unrefHotplugEvents()` useful as it is intended to help with ex
 
 You can instead use `usb.getDeviceList()`. Be aware that this will do an enumeration to find all of the devices, and not look at a cache of the known devices. If you call it too often it may have a performance impact.
 
-The api does not allow for filtering by vid and pid, but you can do this yourself by doing a `usb.getDeviceList().filter((dev) => dev.deviceDescriptor.idVendor === 0x12 && dev.deviceDescriptor.idProduct === 0x34)`
+To find a specific device by vid and pid, call `usb.findByIds`. e.g. `usb.findByIds(0x12, 0x34)`.
 
 ## usbDetect.on('add', function(device) { ... })
 
