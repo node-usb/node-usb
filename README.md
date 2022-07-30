@@ -549,7 +549,7 @@ Listening to events will prevent the process to exit. By calling this function, 
 
 # Migrating from node-usb-detection
 
-If you have be referred here by node-usb-detection, the following may be helpful for you to update your existing code.
+If you have been referred here by `node-usb-detection`, the following may be helpful for you to update your existing code.
 
 ## usbDetect.startMonitoring() & usbDetect.stopMonitoring()
 
