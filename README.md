@@ -568,7 +568,7 @@ The api does not allow for filtering by vid and pid, but you can do this yoursel
 These should be changed to `usb.on('attach', function(device) { ... })`.
 
 There is no equivalent to filter based on the vid or pid, instead you should do a check inside the callback you provide.  
-The contents of the device object has also changed
+The contents of the device object has also changed.
 
 ## usbDetect.on('remove', function(device) { ... })
 
