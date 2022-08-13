@@ -594,11 +594,17 @@ git submodule update --init
 ```
 
 ## Building
-The package uses `yarn` for the typescript code and `prebuildify` to generate the native binaries. These can be executed as follows:
+The package uses `prebuildify` to generate the native binaries using an `install` script and `TypeScript` for the binding code using the `compile` script. The package can be built as follows:
 
 ```bash
 yarn
-yarn prebuild
+yarn compile
+```
+
+The native binaries can be rebuilt with:
+
+```bash
+yarn rebuild
 ```
 
 __Note:__ On Linux, you'll need libudev to build libusb. On Ubuntu/Debian:

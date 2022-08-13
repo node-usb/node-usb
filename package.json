@@ -36,12 +36,11 @@
     "hardware"
   ],
   "scripts": {
-    "prepare": "yarn compile",
     "install": "node-gyp-build",
     "rebuild": "node-gyp rebuild",
     "clean": "git clean -dfx",
-    "compile": "tsc && yarn lint && yarn docs",
-    "lint": "eslint . --ext .ts",
+    "compile": "tsc",
+    "postcompile": "eslint . --ext .ts",
     "watch": "tsc -w --preserveWatchOutput",
     "test": "mocha --require coffeescript/register --grep Module test/*",
     "full-test": "mocha --require coffeescript/register test/*.coffee",
