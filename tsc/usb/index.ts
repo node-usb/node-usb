@@ -93,6 +93,7 @@ if (hotplugModeIsIdsOnly) {
 
     usb.on('attachIds', hotplugEventConversion);
     usb.on('detachIds', hotplugEventConversion);
+    pollHotplugOnce(true);
 }
 
 usb.on('newListener', event => {
