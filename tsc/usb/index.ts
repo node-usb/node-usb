@@ -18,6 +18,11 @@ interface EventListeners<T> {
     removeListener: keyof T;
 }
 
+interface DeviceIds {
+    idVendor: number;
+    idProduct: number;
+}
+
 declare module './bindings' {
 
     /* eslint-disable @typescript-eslint/no-empty-interface */
@@ -26,8 +31,8 @@ declare module './bindings' {
     interface DeviceEvents extends EventListeners<DeviceEvents> {
         attach: Device;
         detach: Device;
-        attachIds: undefined;
-        detachIds: undefined;
+        attachIds: DeviceIds;
+        detachIds: DeviceIds;
     }
 
     function addListener<K extends keyof DeviceEvents>(event: K, listener: (arg: DeviceEvents[K]) => void): void;
@@ -46,6 +51,7 @@ declare module './bindings' {
 const hotplugSupportType = usb._supportedHotplugEvents();
 
 // Devices delta support for non-libusb hotplug events
+// This methd needs to be used for attach/detach IDs (hotplugSupportType === 2) rather than a lookup because vid/pid are not unique
 let hotPlugDevices = new Set<usb.Device>();
 const emitHotplugEvents = () => {
     // Collect current devices
@@ -106,15 +112,13 @@ const stopHotplug = () => {
     if (hotplugSupportType === 1) {
         // Disable libusb events
         usb._disableHotplugEvents();
+    } else if (hotplugSupportType === 2) {
+        // Remove hotplug ID event listeners
+        usb.off('attachIds', emitHotplugEvents);
+        usb.off('detachIds', emitHotplugEvents);
     } else {
-        if (hotplugSupportType === 2) {
-            // Remove hotplug ID event listeners
-            usb.off('attachIds', emitHotplugEvents);
-            usb.off('detachIds', emitHotplugEvents);
-        } else {
-            // Stop polling
-            pollingHotplug = false;
-        }
+        // Stop polling
+        pollingHotplug = false;
     }
 };
 
