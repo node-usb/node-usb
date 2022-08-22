@@ -135,7 +135,7 @@ void handleHotplug(HotPlug* info) {
 
     int vid = info->vid;
     int pid = info->pid;
-    Napi::Object v8VidPid = Object::New(env);
+    Napi::Object v8VidPid = Napi::Object::New(env);
     v8VidPid.Set("idVendor", Napi::Number::New(env, vid));
     v8VidPid.Set("idProduct", Napi::Number::New(env, pid));
     CM_NOTIFY_ACTION event = info->event;

@@ -61,7 +61,7 @@ void handleHotplug(HotPlug* info) {
     Napi::Object v8dev = Device::get(env, dev);
     libusb_unref_device(dev);
 
-    Napi::Object v8VidPid = Object::New(env);
+    Napi::Object v8VidPid = Napi::Object::New(env);
     auto deviceDescriptor = v8dev.Get("deviceDescriptor");
     if (deviceDescriptor.IsObject()) {
         v8VidPid.Set("idVendor", deviceDescriptor.As<Napi::Object>().Get("idVendor"));
