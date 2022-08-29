@@ -48,7 +48,7 @@ declare module './bindings' {
 }
 
 // Hotplug support
-const hotplugSupportType = usb._supportedHotplugEvents();
+const hotplugSupported = usb._supportedHotplugEvents();
 
 // Devices delta support for non-libusb hotplug events
 // This methd needs to be used for attach/detach IDs (hotplugSupportType === 2) rather than a lookup because vid/pid are not unique
@@ -90,32 +90,36 @@ const pollHotplug = (start = false) => {
 
 // Hotplug control
 const startHotplug = () => {
-    if (hotplugSupportType === 1) {
-        // Use libusb event emitters
-        usb._enableHotplugEvents();
-    } else {
-        // Collect initial devices
+    if (hotplugSupported !== 1) {
+        // Collect initial devices when not using libusb
         hotPlugDevices = new Set(usb.getDeviceList());
+    }
 
-        if (hotplugSupportType === 2) {
+    if (hotplugSupported) {
+        // Use hotplug event emitters
+        usb._enableHotplugEvents();
+
+        if (hotplugSupported === 2) {
             // Use hotplug ID events to trigger a change check
             usb.on('attachIds', emitHotplugEvents);
             usb.on('detachIds', emitHotplugEvents);
-        } else {
-            // Fallback to using polling to check for changes
-            pollHotplug(true);
         }
+    } else {
+        // Fallback to using polling to check for changes
+        pollHotplug(true);
     }
 };
 
 const stopHotplug = () => {
-    if (hotplugSupportType === 1) {
-        // Disable libusb events
+    if (hotplugSupported) {
+        // Disable hotplug events
         usb._disableHotplugEvents();
-    } else if (hotplugSupportType === 2) {
-        // Remove hotplug ID event listeners
-        usb.off('attachIds', emitHotplugEvents);
-        usb.off('detachIds', emitHotplugEvents);
+
+        if (hotplugSupported === 2) {
+            // Remove hotplug ID event listeners
+            usb.off('attachIds', emitHotplugEvents);
+            usb.off('detachIds', emitHotplugEvents);
+        }
     } else {
         // Stop polling
         pollingHotplug = false;
