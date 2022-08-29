@@ -661,8 +661,11 @@ is called once all transfers have completed or canceled.</p>
 <a href="#building" id="building" style="color: inherit; text-decoration: none;">
   <h2>Building</h2>
 </a>
-<p>The package uses <code>yarn</code> for the typescript code and <code>prebuildify</code> to generate the native binaries. These can be executed as follows:</p>
-<pre><code class="language-bash"><span class="hl-0">yarn</span><br/><span class="hl-0">yarn prebuild</span>
+<p>The package uses <code>prebuildify</code> to generate the native binaries using an <code>install</code> script and <code>TypeScript</code> for the binding code using the <code>compile</code> script. The package can be built as follows:</p>
+<pre><code class="language-bash"><span class="hl-0">yarn</span><br/><span class="hl-0">yarn compile</span>
+</code></pre>
+<p>The native binaries can be rebuilt with:</p>
+<pre><code class="language-bash"><span class="hl-0">yarn rebuild</span>
 </code></pre>
 <p><strong>Note:</strong> On Linux, you&#39;ll need libudev to build libusb. On Ubuntu/Debian:</p>
 <pre><code class="language-bash"><span class="hl-0">sudo apt-get install build-essential libudev-dev</span>
