@@ -6,3 +6,10 @@ build
 docs
 test/*.js
 .github
+.vscode
+.eslintignore
+.eslintrc.json
+.gitattributes
+.gitmodules
+tsconfig.json
+typedoc.json
