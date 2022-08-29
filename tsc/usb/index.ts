@@ -18,6 +18,11 @@ interface EventListeners<T> {
     removeListener: keyof T;
 }
 
+interface DeviceIds {
+    idVendor: number;
+    idProduct: number;
+}
+
 declare module './bindings' {
 
     /* eslint-disable @typescript-eslint/no-empty-interface */
@@ -26,8 +31,8 @@ declare module './bindings' {
     interface DeviceEvents extends EventListeners<DeviceEvents> {
         attach: Device;
         detach: Device;
-        attachIds: undefined;
-        detachIds: undefined;
+        attachIds: DeviceIds;
+        detachIds: DeviceIds;
     }
 
     function addListener<K extends keyof DeviceEvents>(event: K, listener: (arg: DeviceEvents[K]) => void): void;
@@ -42,58 +47,84 @@ declare module './bindings' {
     function listenerCount<K extends keyof DeviceEvents>(event: K): number;
 }
 
-// Polling mechanism for discovering device changes where hotplug detection is not available
-const pollTimeout = 500;
+// Hotplug support
 const hotplugSupported = usb._supportedHotplugEvents();
-let pollingHotplug = false;
-let pollDevices = new Set<usb.Device>();
 
-const pollHotplugOnce = (start: boolean) => {
+// Devices delta support for non-libusb hotplug events
+// This methd needs to be used for attach/detach IDs (hotplugSupportType === 2) rather than a lookup because vid/pid are not unique
+let hotPlugDevices = new Set<usb.Device>();
+const emitHotplugEvents = () => {
     // Collect current devices
     const devices = new Set(usb.getDeviceList());
 
-    if (!start) {
-        // Find attached devices
-        for (const device of devices) {
-            if (!pollDevices.has(device))
-                usb.emit('attach', device);
-        }
-
-        // Find detached devices
-        for (const device of pollDevices) {
-            if (!devices.has(device))
-                usb.emit('detach', device);
+    // Find attached devices
+    for (const device of devices) {
+        if (!hotPlugDevices.has(device)) {
+            usb.emit('attach', device);
         }
     }
 
-    pollDevices = devices;
+    // Find detached devices
+    for (const device of hotPlugDevices) {
+        if (!devices.has(device)) {
+            usb.emit('detach', device);
+        }
+    }
+
+    hotPlugDevices = devices;
 };
 
-const pollHotplugLoop = (start = false) => {
+// Polling mechanism for checking device changes where hotplug detection is not available
+let pollingHotplug = false;
+const pollHotplug = (start = false) => {
     if (start) {
         pollingHotplug = true;
     } else if (!pollingHotplug) {
         return;
+    } else {
+        emitHotplugEvents();
     }
 
-    pollHotplugOnce(start);
-
-    setTimeout(() => {
-        pollHotplugLoop();
-    }, pollTimeout);
+    setTimeout(() => pollHotplug(), 500);
 };
 
-const hotplugModeIsIdsOnly = hotplugSupported === 2;
-if (hotplugModeIsIdsOnly) {
-    // The hotplug backend doesnt emit 'attach' or 'detach', so we need to do some conversion
-    const hotplugEventConversion = () => {
-        // Future: This might want a debounce, to avoid doing multiple polls when attaching a usb hub or something
-        pollHotplugOnce(false);
-    };
+// Hotplug control
+const startHotplug = () => {
+    if (hotplugSupported !== 1) {
+        // Collect initial devices when not using libusb
+        hotPlugDevices = new Set(usb.getDeviceList());
+    }
 
-    usb.on('attachIds', hotplugEventConversion);
-    usb.on('detachIds', hotplugEventConversion);
-}
+    if (hotplugSupported) {
+        // Use hotplug event emitters
+        usb._enableHotplugEvents();
+
+        if (hotplugSupported === 2) {
+            // Use hotplug ID events to trigger a change check
+            usb.on('attachIds', emitHotplugEvents);
+            usb.on('detachIds', emitHotplugEvents);
+        }
+    } else {
+        // Fallback to using polling to check for changes
+        pollHotplug(true);
+    }
+};
+
+const stopHotplug = () => {
+    if (hotplugSupported) {
+        // Disable hotplug events
+        usb._disableHotplugEvents();
+
+        if (hotplugSupported === 2) {
+            // Remove hotplug ID event listeners
+            usb.off('attachIds', emitHotplugEvents);
+            usb.off('detachIds', emitHotplugEvents);
+        }
+    } else {
+        // Stop polling
+        pollingHotplug = false;
+    }
+};
 
 usb.on('newListener', event => {
     if (event !== 'attach' && event !== 'detach') {
@@ -101,11 +132,7 @@ usb.on('newListener', event => {
     }
     const listenerCount = usb.listenerCount('attach') + usb.listenerCount('detach');
     if (listenerCount === 0) {
-        if (hotplugSupported) {
-            usb._enableHotplugEvents();
-        } else {
-            pollHotplugLoop(true);
-        }
+        startHotplug();
     }
 });
 
@@ -115,11 +142,7 @@ usb.on('removeListener', event => {
     }
     const listenerCount = usb.listenerCount('attach') + usb.listenerCount('detach');
     if (listenerCount === 0) {
-        if (hotplugSupported) {
-            usb._disableHotplugEvents();
-        } else {
-            pollingHotplug = false;
-        }
+        stopHotplug();
     }
 });
 
