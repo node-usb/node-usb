@@ -38,7 +38,7 @@
   "scripts": {
     "install": "node-gyp-build",
     "rebuild": "node-gyp rebuild",
-    "clean": "git clean -dfx",
+    "clean": "git clean -fx ./build ./prebuilds ./dist ./docs ./node_modules",
     "compile": "tsc",
     "postcompile": "eslint . --ext .ts",
     "watch": "tsc -w --preserveWatchOutput",
