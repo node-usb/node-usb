@@ -78,6 +78,7 @@ DWORD MyCMInterfaceNotification(HCMNOTIFICATION hNotify, PVOID Context, CM_NOTIF
 
 class HotPlugManagerWindows : public HotPlugManager
 {
+public:
     HotPlugManagerWindows()
     {
         cmNotifyFilter = { 0 };
