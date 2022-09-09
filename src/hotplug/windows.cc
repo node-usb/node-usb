@@ -78,6 +78,16 @@ DWORD MyCMInterfaceNotification(HCMNOTIFICATION hNotify, PVOID Context, CM_NOTIF
 
 class HotPlugManagerWindows : public HotPlugManager
 {
+public:
+    HotPlugManagerWindows()
+    {
+        cmNotifyFilter = { 0 };
+        cmNotifyFilter.cbSize = sizeof(cmNotifyFilter);
+        cmNotifyFilter.Flags = 0;
+        cmNotifyFilter.FilterType = CM_NOTIFY_FILTER_TYPE_DEVICEINTERFACE;
+        cmNotifyFilter.u.DeviceInterface.ClassGuid = GUID_DEVINTERFACE_USB_DEVICE;
+    }
+    
     int supportedHotplugEvents()
     {
         return HOTPLUG_SUPPORTS_IDS;
@@ -91,12 +101,6 @@ class HotPlugManagerWindows : public HotPlugManager
         }
 
         isRunning = true;
-
-        CM_NOTIFY_FILTER cmNotifyFilter = { 0 };
-        cmNotifyFilter.cbSize = sizeof(cmNotifyFilter);
-        cmNotifyFilter.Flags = 0;
-        cmNotifyFilter.FilterType = CM_NOTIFY_FILTER_TYPE_DEVICEINTERFACE;
-        cmNotifyFilter.u.DeviceInterface.ClassGuid = GUID_DEVINTERFACE_USB_DEVICE;
     
         auto res = CM_Register_Notification(&cmNotifyFilter, (PVOID)instanceData, (PCM_NOTIFY_CALLBACK)&MyCMInterfaceNotification, &hcm);
         if (res != CR_SUCCESS)
@@ -121,6 +125,7 @@ class HotPlugManagerWindows : public HotPlugManager
 private:
     std::atomic<bool> isRunning = {false};
     HCMNOTIFICATION hcm;
+    CM_NOTIFY_FILTER cmNotifyFilter;
 };
 
 std::unique_ptr<HotPlugManager> HotPlugManager::create()
