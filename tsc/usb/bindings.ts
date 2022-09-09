@@ -3,7 +3,7 @@
 //  Rob Moran <https://github.com/thegecko>
 
 import { join } from 'path';
-import type { DeviceDescriptor, ConfigDescriptor, BosDescriptor } from './descriptors';
+import type { EndpointDescriptor, DeviceDescriptor, ConfigDescriptor, BosDescriptor } from './descriptors';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 const usb = require('node-gyp-build')(join(__dirname, '..', '..'));
@@ -102,6 +102,86 @@ export declare class Device {
     * @param callback
     */
     reset(callback: (error?: LibUSBException) => void): void;
+}
+
+/** Represents a USB device's Endpoint. */
+export declare class Endpoint {
+    address: number;
+
+    /** Endpoint direction: `"in"` or `"out"`. */
+    direction: 'in' | 'out';
+
+    /** Endpoint type: `usb.LIBUSB_TRANSFER_TYPE_BULK`, `usb.LIBUSB_TRANSFER_TYPE_INTERRUPT`, or `usb.LIBUSB_TRANSFER_TYPE_ISOCHRONOUS`. */
+    transferType: number;
+
+    /** Sets the timeout in milliseconds for transfers on this endpoint. The default, `0`, is infinite timeout. */
+    timeout: number;
+
+    /** Object with fields from the endpoint descriptor -- see libusb documentation or USB spec. */
+    descriptor: EndpointDescriptor;
+
+    constructor(device: Device, descriptor: EndpointDescriptor);
+    /** Clear the halt/stall condition for this endpoint. */
+    clearHalt(callback: (error: LibUSBException | undefined) => void): void;
+    /**
+     * Create a new `Transfer` object for this endpoint.
+     *
+     * The passed callback will be called when the transfer is submitted and finishes. Its arguments are the error (if any), the submitted buffer, and the amount of data actually written (for
+     * OUT transfers) or read (for IN transfers).
+     *
+     * @param timeout Timeout for the transfer (0 means unlimited).
+     * @param callback Transfer completion callback.
+     */
+    makeTransfer(timeout: number, callback: (error: LibUSBException | undefined, buffer: Buffer, actualLength: number) => void): Transfer;
+}
+
+/** Endpoints in the IN direction (device->PC) have this type. */
+export declare class InEndpoint extends Endpoint {
+
+    pollTransfers: Transfer[];
+    pollTransferSize: number;
+    pollPending: number;
+    pollActive: boolean;
+
+    constructor(device: Device, descriptor: EndpointDescriptor);
+    /**
+     * Start polling the endpoint.
+     *
+     * The library will keep `nTransfers` transfers of size `transferSize` pending in the kernel at all times to ensure continuous data flow.
+     * This is handled by the libusb event thread, so it continues even if the Node v8 thread is busy. The `data` and `error` events are emitted as transfers complete.
+     *
+     * The device must be open to use this method.
+     * @param nTransfers
+     * @param transferSize
+     */
+    public startPoll(nTransfers?: number, transferSize?: number, _callback?: (error: LibUSBException | undefined, buffer: Buffer, actualLength: number) => void): Transfer[];
+    protected startPollTransfers(nTransfers: number, transferSize: number, callback: (error: LibUSBException | undefined, buffer: Buffer, actualLength: number) => void): Transfer[];
+    /**
+     * Stop polling.
+     *
+     * Further data may still be received. The `end` event is emitted and the callback is called once all transfers have completed or canceled.
+     *
+     * The device must be open to use this method.
+     * @param callback
+     */
+    public stopPoll(callback?: () => void): void;
+}
+
+/** Endpoints in the OUT direction (PC->device) have this type. */
+export declare class OutEndpoint extends Endpoint {
+    /**
+     * Perform a transfer to write `data` to the endpoint.
+     *
+     * If length is greater than maxPacketSize, libusb will automatically split the transfer in multiple packets, and you will receive one callback once all packets are complete.
+     *
+     * `this` in the callback is the OutEndpoint object.
+     *
+     * The device must be open to use this method.
+     * @param buffer
+     * @param callback
+     */
+    public transfer(buffer: Buffer, callback?: (error: LibUSBException | undefined, actual: number) => void): OutEndpoint;
+    public transferWithZLP(buffer: Buffer, callback: (error: LibUSBException | undefined) => void): void;
 }
 
 /**
