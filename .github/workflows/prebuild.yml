@@ -69,8 +69,8 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           path: artifacts
-      - uses: docker://antonyurchenko/git-release:v4
+      - uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: artifacts/*/*.tar.gz
+          files: artifacts/*/*.tar.gz
