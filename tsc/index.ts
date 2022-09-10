@@ -1,11 +1,6 @@
 import { promisify } from 'util';
-import { WebUSB, getWebUsb } from './webusb';
-import { WebUSBDevice } from './webusb/webusb-device';
+import { WebUSB } from './webusb';
 import * as usb from './usb';
-
-const webusb = new WebUSB();
-const getDeviceList = usb.getDeviceList;
-const useUsbDkBackend = usb.useUsbDkBackend;
 
 /**
  * Convenience method to get the first device with the specified VID and PID, or `undefined` if no such device is present.
@@ -53,23 +48,27 @@ const findBySerialNumber = async (serialNumber: string): Promise<usb.Device | un
     return undefined;
 };
 
+const webusb = new WebUSB();
+
 export {
     // Core usb object for quick access
     usb,
 
     // Convenience methods
-    useUsbDkBackend,
-    getDeviceList,
     findByIds,
     findBySerialNumber,
-    getWebUsb,
 
     // Default WebUSB object (mimics navigator.usb)
-    webusb,
-
-    // WebUSB class for creating custom webusb instances
-    WebUSB,
-
-    // WebUSB Device class for turning a legacy usb.Device into a webusb device
-    WebUSBDevice
+    webusb
 };
+
+// Usb types
+export { Device, Transfer, DeviceEvents, getDeviceList, useUsbDkBackend, LibUSBException } from './usb';
+export * from './usb/capability';
+export * from './usb/descriptors';
+export * from './usb/endpoint';
+export * from './usb/interface';
+
+// WebUSB types
+export * from './webusb';
+export * from './webusb/webusb-device';
