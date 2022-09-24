@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.5.1] - 2022-08-29
+
+### Fixed
+- USB device plug/unplug detection on Windows when devce already attached - [`531`](https://github.com/node-usb/node-usb/pull/531) ([Rob Moran](https://github.com/thegecko))
+- Removed dependency on yarn in package.json scripts - [`535`](https://github.com/node-usb/node-usb/pull/535) ([Rob Moran](https://github.com/thegecko))
+
 ## [2.5.0] - 2022-07-30
 
 ### Fixed
