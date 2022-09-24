@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.5.2] - 2022-09-24
+
+### Fixed
+- Allow errors during WebUSBDevice creation to be thown - [`549`](https://github.com/node-usb/node-usb/pull/549) ([Rob Moran](https://github.com/thegecko))
+- Ensure cmNotifyFilter is kept alive for the duration of the hotplug detetion on Windows - [`541`](https://github.com/node-usb/node-usb/pull/541) ([Julian Waller](https://github.com/Julusian))
+
+### Changed
+- Export all types at the top level of the package - [`544`](https://github.com/node-usb/node-usb/pull/544) ([Rob Moran](https://github.com/thegecko))
+- Trimmed TypeScript source from release package - [`536`](https://github.com/node-usb/node-usb/pull/536) ([Rob Moran](https://github.com/thegecko))
+
 ## [2.5.1] - 2022-08-29
 
 ### Fixed
