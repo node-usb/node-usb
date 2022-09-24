@@ -13,7 +13,4 @@ test/*.js
 .gitmodules
 tsconfig.json
 typedoc.json
-libusb
-libusb_config
-src
 tsc
