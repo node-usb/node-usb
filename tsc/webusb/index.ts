@@ -48,7 +48,13 @@ export class WebUSB implements USB {
         this.allowedDevices = options.allowedDevices || [];
 
         const deviceConnectCallback = async (device: usb.Device) => {
-            const webDevice = await WebUSBDevice.createInstance(device);
+            let webDevice: WebUSBDevice | undefined;
+
+            try {
+                webDevice = await WebUSBDevice.createInstance(device);
+            } catch {
+                // Ignore creation issues as this may be a system device
+            }
 
             // When connected, emit an event if it is an allowed device
             if (webDevice && this.isAllowedDevice(webDevice)) {
@@ -258,7 +264,14 @@ export class WebUSB implements USB {
                 device.timeout = this.options.deviceTimeout;
             }
 
-            const webDevice = await WebUSBDevice.createInstance(device);
+            let webDevice: WebUSBDevice | undefined;
+
+            try {
+                webDevice = await WebUSBDevice.createInstance(device);
+            } catch {
+                // Ignore creation issues as this may be a system device
+            }
+
             if (webDevice) {
                 webDevices.push(webDevice);
 
