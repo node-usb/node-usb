@@ -103,7 +103,9 @@ export class InEndpoint extends Endpoint {
                 this.emit('data', buffer.slice(0, actualLength));
             } else if (error.errno != LIBUSB_TRANSFER_CANCELLED) {
                 this.emit('error', error);
-                this.stopPoll();
+                if (this.pollActive) {
+                    this.stopPoll();
+                }
             }
 
             if (this.pollActive) {
