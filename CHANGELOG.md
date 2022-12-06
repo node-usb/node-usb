@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.5.3] - 2022-12-06
+
+### Changed
+- Allow multiple polling to fail - [`556`](https://github.com/node-usb/node-usb/pull/556) ([Tim Strazzere](https://github.com/strazzere))
+- Ignore creation issues during attach and list - [`550`](https://github.com/node-usb/node-usb/pull/550) ([Rob Moran](https://github.com/thegecko))
+
 ## [2.5.2] - 2022-09-24
 
 ### Fixed
