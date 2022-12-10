@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.6.0] - 2022-12-10
+
+### Changed
+- Updated build dependencies and now using Python 3.x for builds (shouldn't affect package) - [`563`](https://github.com/node-usb/node-usb/pull/563) ([Rob Moran](https://github.com/thegecko))
+
 ## [2.5.3] - 2022-12-06
 
 ### Changed
