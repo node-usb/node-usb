@@ -84,7 +84,7 @@ export class WebUSBDevice implements USBDevice {
 
             try {
                 if (this.configuration) {
-                    for (const iface of this.configuration?.interfaces) {
+                    for (const iface of this.configuration.interfaces) {
                         await this._releaseInterface(iface.interfaceNumber);
                         // Re-create the USBInterface to set the claimed attribute
                         this.configuration.interfaces[this.configuration.interfaces.indexOf(iface)] = {
