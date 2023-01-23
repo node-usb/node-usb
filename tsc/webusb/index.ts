@@ -41,28 +41,17 @@ export const getWebUsb = (): USB => {
 export class WebUSB implements USB {
 
     protected emitter = new EventEmitter();
-    protected knownDevices: Map<string, USBDevice> = new Map();
+    protected knownDevices: Map<usb.Device, WebUSBDevice> = new Map();
     protected allowedDevices: USBDeviceFilter[];
 
     constructor(private options: USBOptions = {}) {
         this.allowedDevices = options.allowedDevices || [];
 
         const deviceConnectCallback = async (device: usb.Device) => {
-            let webDevice: WebUSBDevice | undefined;
-
-            try {
-                webDevice = await WebUSBDevice.createInstance(device);
-            } catch {
-                // Ignore creation issues as this may be a system device
-            }
+            const webDevice = await this.getWebDevice(device);
 
             // When connected, emit an event if it is an allowed device
             if (webDevice && this.isAllowedDevice(webDevice)) {
-                const deviceId = this.getDeviceId(device);
-                if (deviceId) {
-                    this.knownDevices.set(deviceId, webDevice);
-                }
-
                 const event = {
                     type: 'connect',
                     device: webDevice
@@ -73,11 +62,9 @@ export class WebUSB implements USB {
         };
 
         const deviceDisconnectCallback = async (device: usb.Device) => {
-            const deviceId = this.getDeviceId(device);
-
             // When disconnected, emit an event if the device was a known allowed device
-            if (deviceId !== undefined && this.knownDevices.has(deviceId)) {
-                const webDevice = this.knownDevices.get(deviceId);
+            if (this.knownDevices.has(device)) {
+                const webDevice = this.knownDevices.get(device);
 
                 if (webDevice && this.isAllowedDevice(webDevice)) {
                     const event = {
@@ -257,6 +244,7 @@ export class WebUSB implements USB {
         // Pre-filter devices
         devices = this.preFilterDevices(devices, preFilters);
 
+        const refreshedKnownDevices = new Map<usb.Device, WebUSBDevice>();
         const webDevices: USBDevice[] = [];
 
         for (const device of devices) {
@@ -264,25 +252,37 @@ export class WebUSB implements USB {
                 device.timeout = this.options.deviceTimeout;
             }
 
-            let webDevice: WebUSBDevice | undefined;
-
-            try {
-                webDevice = await WebUSBDevice.createInstance(device);
-            } catch {
-                // Ignore creation issues as this may be a system device
-            }
+            const webDevice = await this.getWebDevice(device);
 
             if (webDevice) {
                 webDevices.push(webDevice);
-
-                const deviceId = this.getDeviceId(device);
-                if (deviceId) {
-                    this.knownDevices.set(deviceId, webDevice);
-                }
+                refreshedKnownDevices.set(device, webDevice);
             }
         }
 
+        // Refresh knownDevices to remove old devices from the map
+        this.knownDevices = refreshedKnownDevices;
+
         return webDevices;
+    }
+
+    // Get a WebUSBDevice corresponding to underlying device.
+    // Returns undefined the device was not found and could not be created.
+    private async getWebDevice(device: usb.Device): Promise<WebUSBDevice|undefined> {
+        // See if we already have WebUSBDevice for this device
+        let webDevice = this.knownDevices.get(device);
+
+        // If not, create a new WebUSBDevice and add it to knownDevices
+        if (!webDevice) {
+            try {
+                webDevice = await WebUSBDevice.createInstance(device);
+                this.knownDevices.set(device, webDevice);
+            } catch {
+                // Ignore creation issues as this may be a system device
+            }
+        }
+
+        return webDevice;
     }
 
     private preFilterDevices(devices: usb.Device[], preFilters?: USBDeviceFilter[]): usb.Device[] {
@@ -355,14 +355,6 @@ export class WebUSB implements USB {
 
             return true;
         });
-    }
-
-    private getDeviceId(device: usb.Device): string | undefined {
-        if (device.busNumber === undefined || device.deviceAddress === undefined) {
-            return undefined;
-        }
-
-        return `${device.busNumber}.${device.deviceAddress}`;
     }
 
     private isAllowedDevice(device: USBDeviceFilter): boolean {
