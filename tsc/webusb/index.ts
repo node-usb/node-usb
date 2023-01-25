@@ -257,7 +257,7 @@ export class WebUSB implements USB {
         // Refresh knownDevices to remove old devices from the map
         this.knownDevices = refreshedKnownDevices;
 
-        return [...refreshedKnownDevices.values()];
+        return [...this.knownDevices.values()];
     }
 
     // Get a WebUSBDevice corresponding to underlying device.
