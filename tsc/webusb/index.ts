@@ -245,44 +245,38 @@ export class WebUSB implements USB {
         devices = this.preFilterDevices(devices, preFilters);
 
         const refreshedKnownDevices = new Map<usb.Device, WebUSBDevice>();
-        const webDevices: USBDevice[] = [];
 
-        for (const device of devices) {
-            if (this.options.deviceTimeout) {
-                device.timeout = this.options.deviceTimeout;
-            }
-
+        await Promise.all(devices.map(async (device) => {
             const webDevice = await this.getWebDevice(device);
 
             if (webDevice) {
-                webDevices.push(webDevice);
                 refreshedKnownDevices.set(device, webDevice);
             }
-        }
+        }));
 
         // Refresh knownDevices to remove old devices from the map
         this.knownDevices = refreshedKnownDevices;
 
-        return webDevices;
+        return [...refreshedKnownDevices.values()];
     }
 
     // Get a WebUSBDevice corresponding to underlying device.
     // Returns undefined the device was not found and could not be created.
-    private async getWebDevice(device: usb.Device): Promise<WebUSBDevice|undefined> {
-        // See if we already have WebUSBDevice for this device
-        let webDevice = this.knownDevices.get(device);
+    private async getWebDevice(device: usb.Device): Promise<WebUSBDevice | undefined> {
+        if (!this.knownDevices.has(device)) {
+            if (this.options.deviceTimeout) {
+                device.timeout = this.options.deviceTimeout;
+            }
 
-        // If not, create a new WebUSBDevice and add it to knownDevices
-        if (!webDevice) {
             try {
-                webDevice = await WebUSBDevice.createInstance(device);
+                const webDevice = await WebUSBDevice.createInstance(device);
                 this.knownDevices.set(device, webDevice);
             } catch {
                 // Ignore creation issues as this may be a system device
             }
         }
 
-        return webDevice;
+        return this.knownDevices.get(device);
     }
 
     private preFilterDevices(devices: usb.Device[], preFilters?: USBDeviceFilter[]): usb.Device[] {
