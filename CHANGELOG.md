@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.7.0] - 2023-01-25
+
+### Fixed
+- Return same WebUSB device on subsequent calls - [`567`](https://github.com/node-usb/node-usb/pull/567) ([Nisarg Jhaveri](https://github.com/nisargjhaveri))
+
 ## [2.6.0] - 2022-12-10
 
 ### Changed
