@@ -246,7 +246,7 @@ export class WebUSB implements USB {
 
         const refreshedKnownDevices = new Map<usb.Device, WebUSBDevice>();
 
-       for (const device of devices) {
+        for (const device of devices) {
             const webDevice = await this.getWebDevice(device);
 
             if (webDevice) {
