@@ -246,13 +246,13 @@ export class WebUSB implements USB {
 
         const refreshedKnownDevices = new Map<usb.Device, WebUSBDevice>();
 
-        await Promise.all(devices.map(async (device) => {
+       for (const device of devices) {
             const webDevice = await this.getWebDevice(device);
 
             if (webDevice) {
                 refreshedKnownDevices.set(device, webDevice);
             }
-        }));
+        }
 
         // Refresh knownDevices to remove old devices from the map
         this.knownDevices = refreshedKnownDevices;
