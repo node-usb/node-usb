@@ -80,6 +80,7 @@ class HotPlugManagerWindows : public HotPlugManager
 {
 public:
     HotPlugManagerWindows()
+    : hcm(nullptr)
     {
         cmNotifyFilter = { 0 };
         cmNotifyFilter.cbSize = sizeof(cmNotifyFilter);
@@ -105,6 +106,7 @@ public:
         auto res = CM_Register_Notification(&cmNotifyFilter, (PVOID)instanceData, (PCM_NOTIFY_CALLBACK)&MyCMInterfaceNotification, &hcm);
         if (res != CR_SUCCESS)
         {
+            isRunning = false;
             THROW_ERROR("RegisterNotification failed")
         }
     }
