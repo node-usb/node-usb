@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.8.0] - 2023-02-11
+
+### Changed
+- Minor tweaks to avoid some race conditions - [`569`](https://github.com/node-usb/node-usb/pull/569) ([Rob Moran](https://github.com/thegecko))
+
 ## [2.7.0] - 2023-01-25
 
 ### Fixed
