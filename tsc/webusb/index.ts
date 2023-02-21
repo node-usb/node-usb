@@ -192,7 +192,7 @@ export class WebUSB implements USB {
         devices = devices.filter(device => this.filterDevice(options, device));
 
         if (devices.length === 0) {
-            throw new Error('requestDevice error: no devices found');
+            throw new DOMException('Failed to execute \'requestDevice\' on \'USB\': No device selected.', 'NotFoundError');
         }
 
         try {
@@ -200,7 +200,7 @@ export class WebUSB implements USB {
             const device = this.options.devicesFound ? await this.options.devicesFound(devices) : devices[0];
 
             if (!device) {
-                throw new Error('selected device not found');
+                throw new DOMException('Failed to execute \'requestDevice\' on \'USB\': No device selected.', 'NotFoundError');
             }
 
             if (!this.isAllowedDevice(device)) {
@@ -213,7 +213,7 @@ export class WebUSB implements USB {
 
             return device;
         } catch (error) {
-            throw new Error(`requestDevice error: ${error}`);
+            throw new DOMException('Failed to execute \'requestDevice\' on \'USB\': No device selected.', 'NotFoundError');
         }
     }
 
