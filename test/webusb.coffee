@@ -1,6 +1,7 @@
 assert = require('assert')
 util = require('util')
 webusb = require('../').webusb
+WebUSB = require('../').WebUSB
 
 if typeof gc is 'function'
     # running with --expose-gc, do a sweep between tests so valgrind blames the right one
@@ -9,6 +10,17 @@ if typeof gc is 'function'
 describe 'WebUSB Module', ->
     it 'should describe basic constants', ->
         assert.notEqual(webusb, undefined, "webusb must be undefined")
+
+describe 'allowedDevices', ->
+    it 'should not list any devices by default', ->
+        l = await webusb.getDevices()
+        assert.equal(l.length, 0)
+
+    it 'should list allowed devices', ->
+        customWebusb = new WebUSB({ allowedDevices: [{ vendorId: 0x59e3 }] })
+        l = await customWebusb.getDevices()
+        assert.equal(l.length, 1)
+        assert.notEqual(l[0], undefined)
 
 describe 'requestDevice', ->
     it 'should return a device', ->
