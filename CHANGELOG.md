@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.8.1] - 2023-02-26
+
+### Changed
+- Reworked WebUSB options.allowedDevices to allow pre-authorisation using any filter - [`574`](https://github.com/node-usb/node-usb/pull/574) ([Rob Moran](https://github.com/thegecko))
+- Updated requestDevice errors to use correct names - [`575`](https://github.com/node-usb/node-usb/pull/575) ([Rob Moran](https://github.com/thegecko))
+
 ## [2.8.0] - 2023-02-11
 
 ### Changed
