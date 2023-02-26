@@ -49,16 +49,14 @@ export class WebUSB implements USB {
 
     protected emitter = new EventEmitter();
     protected knownDevices: Map<usb.Device, WebUSBDevice> = new Map();
-    protected allowedDevices: USBDeviceFilter[];
+    protected authorisedDevices = new Set<USBDevice>();
 
     constructor(private options: USBOptions = {}) {
-        this.allowedDevices = options.allowedDevices || [];
-
         const deviceConnectCallback = async (device: usb.Device) => {
             const webDevice = await this.getWebDevice(device);
 
             // When connected, emit an event if it is an allowed device
-            if (webDevice && this.isAllowedDevice(webDevice)) {
+            if (webDevice && this.isAuthorisedDevice(webDevice)) {
                 const event = {
                     type: 'connect',
                     device: webDevice
@@ -73,7 +71,7 @@ export class WebUSB implements USB {
             if (this.knownDevices.has(device)) {
                 const webDevice = this.knownDevices.get(device);
 
-                if (webDevice && this.isAllowedDevice(webDevice)) {
+                if (webDevice && this.isAuthorisedDevice(webDevice)) {
                     const event = {
                         type: 'disconnect',
                         device: webDevice
@@ -196,7 +194,7 @@ export class WebUSB implements USB {
         });
 
         let devices = await this.loadDevices(options.filters);
-        devices = devices.filter(device => this.filterDevice(options, device));
+        devices = devices.filter(device => this.filterDevice(device, options.filters));
 
         if (devices.length === 0) {
             throw new NamedError('Failed to execute \'requestDevice\' on \'USB\': No device selected.', 'NotFoundError');
@@ -210,14 +208,7 @@ export class WebUSB implements USB {
                 throw new NamedError('Failed to execute \'requestDevice\' on \'USB\': No device selected.', 'NotFoundError');
             }
 
-            if (!this.isAllowedDevice(device)) {
-                this.allowedDevices.push({
-                    vendorId: device.vendorId,
-                    productId: device.productId,
-                    serialNumber: device.serialNumber
-                });
-            }
-
+            this.authorisedDevices.add(device);
             return device;
         } catch (error) {
             throw new NamedError('Failed to execute \'requestDevice\' on \'USB\': No device selected.', 'NotFoundError');
@@ -229,27 +220,19 @@ export class WebUSB implements USB {
      * @returns Promise containing an array of devices
      */
     public async getDevices(): Promise<USBDevice[]> {
-        let preFilters: USBDeviceFilter[] | undefined;
-
-        if (!this.options.allowAllDevices) {
-            // Create pre-filters
-            preFilters = this.allowedDevices.map(device => ({
-                vendorId: device.vendorId || undefined,
-                productId: device.productId || undefined,
-                serialNumber: device.serialNumber || undefined
-            }));
-        }
+        const preFilters = this.options.allowAllDevices ? undefined : this.options.allowedDevices;
 
         // Refresh devices and filter for allowed ones
         const devices = await this.loadDevices(preFilters);
-        return devices.filter(device => this.isAllowedDevice(device));
+
+        return devices.filter(device => this.isAuthorisedDevice(device));
     }
 
     private async loadDevices(preFilters?: USBDeviceFilter[]): Promise<USBDevice[]> {
         let devices = usb.getDeviceList();
 
         // Pre-filter devices
-        devices = this.preFilterDevices(devices, preFilters);
+        devices = this.quickFilter(devices, preFilters);
 
         const refreshedKnownDevices = new Map<usb.Device, WebUSBDevice>();
 
@@ -286,7 +269,8 @@ export class WebUSB implements USB {
         return this.knownDevices.get(device);
     }
 
-    private preFilterDevices(devices: usb.Device[], preFilters?: USBDeviceFilter[]): usb.Device[] {
+    // Undertake quick filter on devices before creating WebUSB devices if possible
+    private quickFilter(devices: usb.Device[], preFilters?: USBDeviceFilter[]): usb.Device[] {
         if (!preFilters || !preFilters.length) {
             return devices;
         }
@@ -299,17 +283,19 @@ export class WebUSB implements USB {
             // Product
             if (filter.productId && filter.productId !== device.deviceDescriptor.idProduct) return false;
 
+            // Ignore Class, Subclass and Protocol as these need to check interfaces, too
             // Ignore serial number for node-usb as it requires device connection
             return true;
         }));
     }
 
-    private filterDevice(options: USBDeviceRequestOptions, device: USBDevice): boolean {
-        if (!options.filters || !options.filters.length) {
+    // Filter WebUSB devices
+    private filterDevice(device: USBDevice, filters?: USBDeviceFilter[]): boolean {
+        if (!filters || !filters.length) {
             return true;
         }
 
-        return options.filters.some(filter => {
+        return filters.some(filter => {
             // Vendor
             if (filter.vendorId && filter.vendorId !== device.vendorId) return false;
 
@@ -358,23 +344,18 @@ export class WebUSB implements USB {
         });
     }
 
-    private isAllowedDevice(device: USBDeviceFilter): boolean {
+    // Check whether a device is authorised
+    private isAuthorisedDevice(device: USBDevice): boolean {
+        // All devices are authorised
         if (this.options.allowAllDevices) {
             return true;
         }
 
-        const isSameDevice = (device1: USBDeviceFilter, device2: USBDeviceFilter): boolean => {
-            return (device1.productId === device2.productId
-                && device1.vendorId === device2.vendorId
-                && device1.serialNumber === device2.serialNumber);
-        };
-
-        for (const i in this.allowedDevices) {
-            if (isSameDevice(device, this.allowedDevices[i])) {
-                return true;
-            }
+        // Check any allowed device filters
+        if (this.options.allowedDevices && this.filterDevice(device, this.options.allowedDevices)) {
+            return true;
         }
 
-        return false;
+        return this.authorisedDevices.has(device);
     }
 }
