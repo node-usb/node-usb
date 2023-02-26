@@ -136,9 +136,7 @@ import { webusb } from 'usb';
         filters: [{}]
     })
 
-    if (device) {
-        console.log(device); // WebUSB device
-    }
+    console.log(device); // WebUSB device
 })();
 ```
 
@@ -157,9 +155,7 @@ import { WebUSB } from 'usb';
         filters: [{}]
     })
 
-    if (device) {
-        console.log(device); // WebUSB device
-    }
+    console.log(device); // WebUSB device
 })();
 ```
 
