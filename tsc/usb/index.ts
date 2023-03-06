@@ -8,6 +8,10 @@ if (usb.INIT_ERROR) {
 }
 
 Object.setPrototypeOf(usb, EventEmitter.prototype);
+Object.defineProperty(usb, 'pollHotplug', {
+    value: false,
+    writable: true
+});
 
 Object.getOwnPropertyNames(ExtendedDevice.prototype).forEach(name => {
     Object.defineProperty(usb.Device.prototype, name, Object.getOwnPropertyDescriptor(ExtendedDevice.prototype, name) || Object.create(null));
@@ -47,12 +51,10 @@ declare module './bindings' {
     function listenerCount<K extends keyof DeviceEvents>(event: K): number;
 }
 
-// Hotplug support
-const hotplugSupported = usb._supportedHotplugEvents();
-
 // Devices delta support for non-libusb hotplug events
-// This methd needs to be used for attach/detach IDs (hotplugSupportType === 2) rather than a lookup because vid/pid are not unique
 let hotPlugDevices = new Set<usb.Device>();
+
+// This method needs to be used for attach/detach IDs (hotplugSupportType === 2) rather than a lookup because vid/pid are not unique
 const emitHotplugEvents = () => {
     // Collect current devices
     const devices = new Set(usb.getDeviceList());
@@ -89,7 +91,10 @@ const pollHotplug = (start = false) => {
 };
 
 // Hotplug control
+let hotplugSupported = 0;
 const startHotplug = () => {
+    hotplugSupported = usb.pollHotplug ? 0 : usb._supportedHotplugEvents();
+
     if (hotplugSupported !== 1) {
         // Collect initial devices when not using libusb
         hotPlugDevices = new Set(usb.getDeviceList());
