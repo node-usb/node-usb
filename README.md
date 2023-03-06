@@ -290,6 +290,12 @@ Legacy usb object.
 #### usb.LIBUSB_*
 Constant properties from libusb
 
+#### usb.getDeviceList()
+Return a list of legacy `Device` objects for the USB devices attached to the system.
+
+#### usb.pollHotplug
+Force polling loop for hotplug events.
+
 #### usb.setDebugLevel(level : int)
 Set the libusb debug level (between 0 and 4)
 
