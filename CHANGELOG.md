@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.8.2] - 2023-03-06
+
+### Added
+- Added new `usb.pollHotplug` setting to allow users to force hotplug detection using polling - [`576`](https://github.com/node-usb/node-usb/pull/576) ([Rob Moran](https://github.com/thegecko))
+
 ## [2.8.1] - 2023-02-26
 
 ### Changed
