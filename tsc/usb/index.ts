@@ -13,6 +13,11 @@ Object.defineProperty(usb, 'pollHotplug', {
     writable: true
 });
 
+Object.defineProperty(usb, 'pollHotplugDelay', {
+    value: 500,
+    writable: true
+});
+
 Object.getOwnPropertyNames(ExtendedDevice.prototype).forEach(name => {
     Object.defineProperty(usb.Device.prototype, name, Object.getOwnPropertyDescriptor(ExtendedDevice.prototype, name) || Object.create(null));
 });
@@ -87,8 +92,11 @@ const pollHotplug = (start = false) => {
         emitHotplugEvents();
     }
 
-    setTimeout(() => pollHotplug(), 500);
+    setTimeout(() => pollHotplug(), usb.pollHotplugDelay);
 };
+
+// Devices changed event handler
+const devicesChanged = () => setTimeout(() => emitHotplugEvents(), usb.pollHotplugDelay);
 
 // Hotplug control
 let hotplugSupported = 0;
@@ -106,8 +114,8 @@ const startHotplug = () => {
 
         if (hotplugSupported === 2) {
             // Use hotplug ID events to trigger a change check
-            usb.on('attachIds', emitHotplugEvents);
-            usb.on('detachIds', emitHotplugEvents);
+            usb.on('attachIds', devicesChanged);
+            usb.on('detachIds', devicesChanged);
         }
     } else {
         // Fallback to using polling to check for changes
@@ -122,8 +130,8 @@ const stopHotplug = () => {
 
         if (hotplugSupported === 2) {
             // Remove hotplug ID event listeners
-            usb.off('attachIds', emitHotplugEvents);
-            usb.off('detachIds', emitHotplugEvents);
+            usb.off('attachIds', devicesChanged);
+            usb.off('detachIds', devicesChanged);
         }
     } else {
         // Stop polling
