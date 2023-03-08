@@ -365,7 +365,7 @@ export class WebUSB implements USB {
         }
 
         // Check authorised devices
-        return [...this.authorisedDevices.values()].some(authorised => 
+        return [...this.authorisedDevices.values()].some(authorised =>
             authorised.vendorId === device.vendorId
             && authorised.productId === device.productId
             && authorised.classCode === device.deviceClass
