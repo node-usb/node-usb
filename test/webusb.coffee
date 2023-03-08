@@ -35,6 +35,19 @@ describe 'getDevices', ->
         assert.notEqual(l[0], undefined)
         assert.deepEqual(l[0], device)
 
+describe 'WebUSB Hotplug', ->
+    it 'should detect connect', (done) ->
+        webusb.addEventListener 'disconnect', (e) ->
+            assert.equal(e.device.serialNumber, "TEST_DEVICE")
+            done()
+        console.log('Disconnect device now...')
+
+    it 'should detect disconnect', (done) ->
+        webusb.addEventListener 'connect', (e) ->
+            assert.equal(e.device.serialNumber, "TEST_DEVICE")
+            done()
+        console.log('Connect device now...')
+
 describe 'Device properties', ->
     device = null
     before ->
