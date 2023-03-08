@@ -42,7 +42,7 @@ describe 'WebUSB Hotplug', ->
             webusb.removeEventListener 'disconnect', fn
             done()
         webusb.addEventListener 'disconnect', fn
-        console.log('Disconnect device now...')
+        console.log('\n--- DISCONNECT DEVICE ---\n')
 
     it 'should detect connect', (done) ->
         fn = (e) ->
@@ -50,7 +50,7 @@ describe 'WebUSB Hotplug', ->
             webusb.removeEventListener 'connect', fn
             done()
         webusb.addEventListener 'connect', fn
-        console.log('Connect device now...')
+        console.log('\n--- CONNECT DEVICE ---\n')
 
 describe 'Device properties', ->
     device = null

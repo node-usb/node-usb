@@ -51,14 +51,14 @@ describe 'Hotplug', ->
             assert.equal(d.deviceDescriptor.idVendor, 0x59e3)
             assert.equal(d.deviceDescriptor.idProduct, 0x0a23)
             done()
-        console.log('Disconnect device now...')
+        console.log('\n--- DISCONNECT DEVICE ---\n')
 
     it 'should detect attach', (done) ->
         usb.once 'attach', (d) ->
             assert.equal(d.deviceDescriptor.idVendor, 0x59e3)
             assert.equal(d.deviceDescriptor.idProduct, 0x0a23)
             done()
-        console.log('Connect device now...')
+        console.log('\n--- CONNECT DEVICE ---\n')
 
 describe 'Device', ->
     device = null

@@ -49,7 +49,7 @@ export class WebUSB implements USB {
 
     protected emitter = new EventEmitter();
     protected knownDevices: Map<usb.Device, WebUSBDevice> = new Map();
-    protected authorisedDevices = new Set<USBDevice>();
+    protected authorisedDevices = new Set<USBDeviceFilter>();
 
     constructor(private options: USBOptions = {}) {
         const deviceConnectCallback = async (device: usb.Device) => {
@@ -208,7 +208,15 @@ export class WebUSB implements USB {
                 throw new NamedError('Failed to execute \'requestDevice\' on \'USB\': No device selected.', 'NotFoundError');
             }
 
-            this.authorisedDevices.add(device);
+            this.authorisedDevices.add({
+                vendorId: device.vendorId,
+                productId: device.productId,
+                classCode: device.deviceClass,
+                subclassCode: device.deviceSubclass,
+                protocolCode: device.deviceProtocol,
+                serialNumber: device.serialNumber
+            });
+
             return device;
         } catch (error) {
             throw new NamedError('Failed to execute \'requestDevice\' on \'USB\': No device selected.', 'NotFoundError');
@@ -356,6 +364,14 @@ export class WebUSB implements USB {
             return true;
         }
 
-        return this.authorisedDevices.has(device);
+        // Check authorised devices
+        return [...this.authorisedDevices.values()].some(authorised => 
+            authorised.vendorId === device.vendorId
+            && authorised.productId === device.productId
+            && authorised.classCode === device.deviceClass
+            && authorised.subclassCode === device.deviceSubclass
+            && authorised.protocolCode === device.deviceProtocol
+            && authorised.serialNumber === device.serialNumber
+        );
     }
 }
