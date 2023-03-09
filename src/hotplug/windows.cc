@@ -54,7 +54,7 @@ void extractVidPid(wchar_t *buf, int *vid, int *pid)
     }
 }
 
-DWORD MyCMInterfaceNotification(HCMNOTIFICATION hNotify, PVOID Context, CM_NOTIFY_ACTION Action, PCM_NOTIFY_EVENT_DATA EventData, DWORD EventDataSize)
+DWORD WINAPI MyCMInterfaceNotification(HCMNOTIFICATION hNotify, PVOID Context, CM_NOTIFY_ACTION Action, PCM_NOTIFY_EVENT_DATA EventData, DWORD EventDataSize)
 {
     switch (Action)
     {
@@ -73,7 +73,7 @@ DWORD MyCMInterfaceNotification(HCMNOTIFICATION hNotify, PVOID Context, CM_NOTIF
     default:
         break;
     }
-    return 0;
+    return ERROR_SUCCESS;
 }
 
 class HotPlugManagerWindows : public HotPlugManager
