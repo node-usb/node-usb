@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.8.3] - 2023-03-09
+
+### Fixed
+- Fixed Windows X86 crash with USB detection - [`578`](https://github.com/node-usb/node-usb/pull/578) ([Julian Waller](https://github.com/Julusian))
+- Fixed Windows USB detection race condition with delay - [`577`](https://github.com/node-usb/node-usb/pull/577) ([Rob Moran](https://github.com/thegecko))
+
 ## [2.8.2] - 2023-03-06
 
 ### Added
