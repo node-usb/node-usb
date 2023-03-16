@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.9.0] - 2023-03-16
+
+### Changed
+- Updated node-addon-api to v6.0 - [`581`](https://github.com/node-usb/node-usb/pull/581) ([Maarten Bent](https://github.com/MaartenBent))
+
 ## [2.8.3] - 2023-03-09
 
 ### Fixed
