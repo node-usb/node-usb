@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
         "target": "ES2019",
+        "module": "CommonJS",
         "strict": true,
         "downlevelIteration": true,
         "noImplicitReturns": true,
