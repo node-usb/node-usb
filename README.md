@@ -197,6 +197,10 @@ Please refer to the maintained example for using `node-usb` in electron:
 
 https://github.com/node-usb/node-usb-example-electron
 
+# Troubleshooting
+
+For libusb issues, please refer to the FAQ at https://github.com/libusb/libusb/wiki/FAQ
+
 # APIs
 Since `v2.0.0`, the `node-usb` library supports two APIs:
 
