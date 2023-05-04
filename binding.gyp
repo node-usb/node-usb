@@ -34,7 +34,7 @@
       'defines': [
         '_FILE_OFFSET_BITS=64',
         '_LARGEFILE_SOURCE',
-        'NAPI_VERSION=6'
+        'NAPI_VERSION=8'
       ],
       'include_dirs+': [
         'src/',
