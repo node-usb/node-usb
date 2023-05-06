@@ -20,6 +20,8 @@ You can install one using [Zadig](http://zadig.akeo.ie/) or another approach is 
 
 Note that you cannot use multiple drivers on Windows as they get exclusive access to the device. So if you want to switch between drivers (e.g. using a printer with this software or the system), you will need to uninstall/install drivers as required.
 
+For further info, check [How to use libusb on Windows](https://github.com/libusb/libusb/wiki/Windows#user-content-How_to_use_libusb_on_Windows) in the libusb's wiki.
+
 ## Linux
 
 On Linux, you'll need libudev to build libusb if a prebuild is not available. On Ubuntu/Debian:
@@ -27,6 +29,10 @@ On Linux, you'll need libudev to build libusb if a prebuild is not available. On
 ```bash
 sudo apt-get install build-essential libudev-dev
 ```
+
+# Troubleshooting
+
+For libusb issues, please refer to the FAQ at https://github.com/libusb/libusb/wiki/FAQ
 
 # Installation
 
@@ -196,10 +202,6 @@ import { WebUSB } from 'usb';
 Please refer to the maintained example for using `node-usb` in electron:
 
 https://github.com/node-usb/node-usb-example-electron
-
-# Troubleshooting
-
-For libusb issues, please refer to the FAQ at https://github.com/libusb/libusb/wiki/FAQ
 
 # APIs
 Since `v2.0.0`, the `node-usb` library supports two APIs:
