@@ -107,7 +107,7 @@ export class InEndpoint extends Endpoint {
                     this.stopPoll();
                 }
                 if (callback) {
-                    callback(error, buffer, actualLength)
+                    callback(error, buffer, actualLength);
                 }
             }
 
