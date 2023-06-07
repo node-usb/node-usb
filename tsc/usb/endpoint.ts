@@ -96,15 +96,18 @@ export class InEndpoint extends Endpoint {
      * The device must be open to use this method.
      * @param nTransfers
      * @param transferSize
+     * @param callback
      */
-    public startPoll(nTransfers?: number, transferSize?: number, _callback?: (error: LibUSBException | undefined, buffer: Buffer, actualLength: number) => void): Transfer[] {
+    public startPoll(nTransfers?: number, transferSize?: number, callback?: (error: LibUSBException | undefined, buffer: Buffer, actualLength: number) => void): Transfer[] {
         const transferDone = (error: LibUSBException | undefined, transfer: Transfer, buffer: Buffer, actualLength: number) => {
             if (!error) {
                 this.emit('data', buffer.slice(0, actualLength));
             } else if (error.errno != LIBUSB_TRANSFER_CANCELLED) {
-                this.emit('error', error);
                 if (this.pollActive) {
                     this.stopPoll();
+                }
+                if (callback) {
+                    callback(error, buffer, actualLength)
                 }
             }
 
