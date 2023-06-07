@@ -141,9 +141,10 @@ Napi::Value EnableHotplugEvents(const Napi::CallbackInfo& info) {
     if (!instanceData->hotplugEnabled) {
         instanceData->hotplugThis.Reset(info.This().As<Napi::Object>(), 1);
 
+        // Start queue, then enable hotplug events
+        instanceData->hotplugQueue.start(env);
         instanceData->hotplugManager->enableHotplug(env, instanceData);
         
-        instanceData->hotplugQueue.start(env);
         instanceData->hotplugEnabled = true;
     }
     return env.Undefined();
@@ -155,9 +156,11 @@ Napi::Value DisableHotplugEvents(const Napi::CallbackInfo& info) {
     ModuleData* instanceData = env.GetInstanceData<ModuleData>();
 
     if (instanceData->hotplugEnabled) {
-        instanceData->hotplugManager->disableHotplug(env, instanceData);
 
+        // Disable events, then stop queue
+        instanceData->hotplugManager->disableHotplug(env, instanceData);
         instanceData->hotplugQueue.stop();
+
         instanceData->hotplugEnabled = false;
     }
     return env.Undefined();

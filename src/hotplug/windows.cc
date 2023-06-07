@@ -54,7 +54,7 @@ void extractVidPid(wchar_t *buf, int *vid, int *pid)
     }
 }
 
-DWORD MyCMInterfaceNotification(HCMNOTIFICATION hNotify, PVOID Context, CM_NOTIFY_ACTION Action, PCM_NOTIFY_EVENT_DATA EventData, DWORD EventDataSize)
+DWORD WINAPI MyCMInterfaceNotification(HCMNOTIFICATION hNotify, PVOID Context, CM_NOTIFY_ACTION Action, PCM_NOTIFY_EVENT_DATA EventData, DWORD EventDataSize)
 {
     switch (Action)
     {
@@ -73,13 +73,14 @@ DWORD MyCMInterfaceNotification(HCMNOTIFICATION hNotify, PVOID Context, CM_NOTIF
     default:
         break;
     }
-    return 0;
+    return ERROR_SUCCESS;
 }
 
 class HotPlugManagerWindows : public HotPlugManager
 {
 public:
     HotPlugManagerWindows()
+    : hcm(nullptr)
     {
         cmNotifyFilter = { 0 };
         cmNotifyFilter.cbSize = sizeof(cmNotifyFilter);
@@ -105,6 +106,7 @@ public:
         auto res = CM_Register_Notification(&cmNotifyFilter, (PVOID)instanceData, (PCM_NOTIFY_CALLBACK)&MyCMInterfaceNotification, &hcm);
         if (res != CR_SUCCESS)
         {
+            isRunning = false;
             THROW_ERROR("RegisterNotification failed")
         }
     }

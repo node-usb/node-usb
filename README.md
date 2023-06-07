@@ -20,6 +20,8 @@ You can install one using [Zadig](http://zadig.akeo.ie/) or another approach is 
 
 Note that you cannot use multiple drivers on Windows as they get exclusive access to the device. So if you want to switch between drivers (e.g. using a printer with this software or the system), you will need to uninstall/install drivers as required.
 
+For further info, check [How to use libusb on Windows](https://github.com/libusb/libusb/wiki/Windows#user-content-How_to_use_libusb_on_Windows) in the libusb's wiki.
+
 ## Linux
 
 On Linux, you'll need libudev to build libusb if a prebuild is not available. On Ubuntu/Debian:
@@ -27,6 +29,10 @@ On Linux, you'll need libudev to build libusb if a prebuild is not available. On
 ```bash
 sudo apt-get install build-essential libudev-dev
 ```
+
+# Troubleshooting
+
+For libusb issues, please refer to the FAQ at https://github.com/libusb/libusb/wiki/FAQ
 
 # Installation
 
@@ -136,9 +142,7 @@ import { webusb } from 'usb';
         filters: [{}]
     })
 
-    if (device) {
-        console.log(device); // WebUSB device
-    }
+    console.log(device); // WebUSB device
 })();
 ```
 
@@ -157,9 +161,7 @@ import { WebUSB } from 'usb';
         filters: [{}]
     })
 
-    if (device) {
-        console.log(device); // WebUSB device
-    }
+    console.log(device); // WebUSB device
 })();
 ```
 
@@ -293,6 +295,12 @@ Legacy usb object.
 
 #### usb.LIBUSB_*
 Constant properties from libusb
+
+#### usb.getDeviceList()
+Return a list of legacy `Device` objects for the USB devices attached to the system.
+
+#### usb.pollHotplug
+Force polling loop for hotplug events.
 
 #### usb.setDebugLevel(level : int)
 Set the libusb debug level (between 0 and 4)

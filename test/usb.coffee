@@ -41,9 +41,24 @@ describe 'findByIds', ->
         assert.ok(dev, "Demo device is not attached")
 
 describe 'findBySerialNumber', ->
-    it 'should return a single device ', ->
+    it 'should return a single device', ->
         dev = findBySerialNumber('TEST_DEVICE')
         assert.ok(dev, "Demo device is not attached")
+
+describe 'Hotplug', ->
+    it 'should detect detach', (done) ->
+        usb.once 'detach', (d) ->
+            assert.equal(d.deviceDescriptor.idVendor, 0x59e3)
+            assert.equal(d.deviceDescriptor.idProduct, 0x0a23)
+            done()
+        console.log('\n--- DISCONNECT DEVICE ---\n')
+
+    it 'should detect attach', (done) ->
+        usb.once 'attach', (d) ->
+            assert.equal(d.deviceDescriptor.idVendor, 0x59e3)
+            assert.equal(d.deviceDescriptor.idProduct, 0x0a23)
+            done()
+        console.log('\n--- CONNECT DEVICE ---\n')
 
 describe 'Device', ->
     device = null

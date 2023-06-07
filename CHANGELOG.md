@@ -1,5 +1,48 @@
 # Changelog
 
+## [2.9.0] - 2023-03-16
+
+### Changed
+- Updated node-addon-api to v6.0 - [`581`](https://github.com/node-usb/node-usb/pull/581) ([Maarten Bent](https://github.com/MaartenBent))
+
+## [2.8.3] - 2023-03-09
+
+### Fixed
+- Fixed Windows X86 crash with USB detection - [`578`](https://github.com/node-usb/node-usb/pull/578) ([Julian Waller](https://github.com/Julusian))
+- Fixed Windows USB detection race condition with delay - [`577`](https://github.com/node-usb/node-usb/pull/577) ([Rob Moran](https://github.com/thegecko))
+
+## [2.8.2] - 2023-03-06
+
+### Added
+- Added new `usb.pollHotplug` setting to allow users to force hotplug detection using polling - [`576`](https://github.com/node-usb/node-usb/pull/576) ([Rob Moran](https://github.com/thegecko))
+
+## [2.8.1] - 2023-02-26
+
+### Changed
+- Reworked WebUSB options.allowedDevices to allow pre-authorisation using any filter - [`574`](https://github.com/node-usb/node-usb/pull/574) ([Rob Moran](https://github.com/thegecko))
+- Updated requestDevice errors to use correct names - [`575`](https://github.com/node-usb/node-usb/pull/575) ([Rob Moran](https://github.com/thegecko))
+
+## [2.8.0] - 2023-02-11
+
+### Changed
+- Minor tweaks to avoid some race conditions - [`569`](https://github.com/node-usb/node-usb/pull/569) ([Rob Moran](https://github.com/thegecko))
+
+## [2.7.0] - 2023-01-25
+
+### Fixed
+- Return same WebUSB device on subsequent calls - [`567`](https://github.com/node-usb/node-usb/pull/567) ([Nisarg Jhaveri](https://github.com/nisargjhaveri))
+
+## [2.6.0] - 2022-12-10
+
+### Changed
+- Updated build dependencies and now using Python 3.x for builds (shouldn't affect package) - [`563`](https://github.com/node-usb/node-usb/pull/563) ([Rob Moran](https://github.com/thegecko))
+
+## [2.5.3] - 2022-12-06
+
+### Changed
+- Allow multiple polling to fail - [`556`](https://github.com/node-usb/node-usb/pull/556) ([Tim Strazzere](https://github.com/strazzere))
+- Ignore creation issues during attach and list - [`550`](https://github.com/node-usb/node-usb/pull/550) ([Rob Moran](https://github.com/thegecko))
+
 ## [2.5.2] - 2022-09-24
 
 ### Fixed

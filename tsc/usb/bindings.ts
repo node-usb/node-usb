@@ -14,6 +14,16 @@ module.exports = usb;
  */
 export declare function getDeviceList(): Device[];
 
+/**
+ * Force polling loop for hotplug events
+ */
+export declare let pollHotplug: boolean;
+
+/**
+ * Hotplug polling loop delay (ms)
+ */
+export declare let pollHotplugDelay: number;
+
 export declare const INIT_ERROR: number;
 
 export declare class LibUSBException extends Error {

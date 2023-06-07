@@ -8,6 +8,15 @@ if (usb.INIT_ERROR) {
 }
 
 Object.setPrototypeOf(usb, EventEmitter.prototype);
+Object.defineProperty(usb, 'pollHotplug', {
+    value: false,
+    writable: true
+});
+
+Object.defineProperty(usb, 'pollHotplugDelay', {
+    value: 500,
+    writable: true
+});
 
 Object.getOwnPropertyNames(ExtendedDevice.prototype).forEach(name => {
     Object.defineProperty(usb.Device.prototype, name, Object.getOwnPropertyDescriptor(ExtendedDevice.prototype, name) || Object.create(null));
@@ -47,12 +56,10 @@ declare module './bindings' {
     function listenerCount<K extends keyof DeviceEvents>(event: K): number;
 }
 
-// Hotplug support
-const hotplugSupported = usb._supportedHotplugEvents();
-
 // Devices delta support for non-libusb hotplug events
-// This methd needs to be used for attach/detach IDs (hotplugSupportType === 2) rather than a lookup because vid/pid are not unique
 let hotPlugDevices = new Set<usb.Device>();
+
+// This method needs to be used for attach/detach IDs (hotplugSupportType === 2) rather than a lookup because vid/pid are not unique
 const emitHotplugEvents = () => {
     // Collect current devices
     const devices = new Set(usb.getDeviceList());
@@ -85,11 +92,17 @@ const pollHotplug = (start = false) => {
         emitHotplugEvents();
     }
 
-    setTimeout(() => pollHotplug(), 500);
+    setTimeout(() => pollHotplug(), usb.pollHotplugDelay);
 };
 
+// Devices changed event handler
+const devicesChanged = () => setTimeout(() => emitHotplugEvents(), usb.pollHotplugDelay);
+
 // Hotplug control
+let hotplugSupported = 0;
 const startHotplug = () => {
+    hotplugSupported = usb.pollHotplug ? 0 : usb._supportedHotplugEvents();
+
     if (hotplugSupported !== 1) {
         // Collect initial devices when not using libusb
         hotPlugDevices = new Set(usb.getDeviceList());
@@ -101,8 +114,8 @@ const startHotplug = () => {
 
         if (hotplugSupported === 2) {
             // Use hotplug ID events to trigger a change check
-            usb.on('attachIds', emitHotplugEvents);
-            usb.on('detachIds', emitHotplugEvents);
+            usb.on('attachIds', devicesChanged);
+            usb.on('detachIds', devicesChanged);
         }
     } else {
         // Fallback to using polling to check for changes
@@ -117,8 +130,8 @@ const stopHotplug = () => {
 
         if (hotplugSupported === 2) {
             // Remove hotplug ID event listeners
-            usb.off('attachIds', emitHotplugEvents);
-            usb.off('detachIds', emitHotplugEvents);
+            usb.off('attachIds', devicesChanged);
+            usb.off('detachIds', devicesChanged);
         }
     } else {
         // Stop polling
