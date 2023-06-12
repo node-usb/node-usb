@@ -106,9 +106,6 @@ export class InEndpoint extends Endpoint {
                 if (this.pollActive) {
                     this.stopPoll();
                 }
-                if (callback) {
-                    callback(error, buffer, actualLength);
-                }
             }
 
             if (this.pollActive) {
@@ -121,6 +118,10 @@ export class InEndpoint extends Endpoint {
                     this.pollActive = false;
                     this.emit('end');
                 }
+            }
+
+            if (callback) {
+                callback(error, buffer, actualLength);
             }
         };
 
