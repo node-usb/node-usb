@@ -172,7 +172,10 @@ describe 'Device', ->
             it 'polls the device', (done) ->
                 pkts = 0
 
-                inEndpoint.startPoll 8, 64
+                inEndpoint.startPoll 8, 64, (e, b, n) ->
+                    assert.ok(e == undefined, e)
+                    assert.equal(n, 100)
+                    done()
                 inEndpoint.on 'data', (d) ->
                     assert.equal d.length, 64
                     pkts++
