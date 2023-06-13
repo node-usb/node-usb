@@ -117,11 +117,10 @@ export class InEndpoint extends Endpoint {
                     this.pollTransfers = [];
                     this.pollActive = false;
                     this.emit('end');
+                    if (callback) {
+                        callback(error, buffer, actualLength);
+                    }
                 }
-            }
-
-            if (callback) {
-                callback(error, buffer, actualLength);
             }
         };
 
