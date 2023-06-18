@@ -258,7 +258,7 @@ export class WebUSBDevice implements USBDevice {
         try {
             const wIndex = endpointNumber | (direction === 'in' ? usb.LIBUSB_ENDPOINT_IN : usb.LIBUSB_ENDPOINT_OUT);
             const controlTransfer = promisify(this.device.controlTransfer).bind(this.device);
-            await controlTransfer(usb.LIBUSB_RECIPIENT_ENDPOINT, CLEAR_FEATURE, ENDPOINT_HALT, wIndex, 0);
+            await controlTransfer(usb.LIBUSB_RECIPIENT_ENDPOINT, CLEAR_FEATURE, ENDPOINT_HALT, wIndex, Buffer.from(new Uint8Array()));
         } catch (error) {
             throw new Error(`clearHalt error: ${error}`);
         }
