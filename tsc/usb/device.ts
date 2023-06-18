@@ -130,7 +130,7 @@ export class ExtendedDevice {
         const wLength = isIn ? data_or_length as number : (data_or_length as Buffer).length;
 
         if (isIn) {
-            if (!(data_or_length >= 0)) {
+            if (wLength < 0) {
                 throw new TypeError('Expected size number for IN transfer (based on bmRequestType)');
             }
         } else {
