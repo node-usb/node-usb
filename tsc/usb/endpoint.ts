@@ -98,11 +98,11 @@ export class InEndpoint extends Endpoint {
      * @param transferSize
      * @param callback
      */
-    public startPoll(nTransfers?: number, transferSize?: number, callback?: (error: LibUSBException | undefined, buffer: Buffer, actualLength: number) => void): Transfer[] {
+    public startPoll(nTransfers?: number, transferSize?: number, callback?: (error: LibUSBException | undefined, buffer: Buffer, actualLength: number, cancelled: boolean) => void): Transfer[] {
         const transferDone = (error: LibUSBException | undefined, transfer: Transfer, buffer: Buffer, actualLength: number) => {
             if (!error) {
                 this.emit('data', buffer.slice(0, actualLength));
-            } else if (error.errno != LIBUSB_TRANSFER_CANCELLED) {
+            } else if (error.errno !== LIBUSB_TRANSFER_CANCELLED) {
                 if (this.pollActive) {
                     this.emit('error', error);
                     this.stopPoll();
@@ -119,7 +119,8 @@ export class InEndpoint extends Endpoint {
                     this.pollActive = false;
                     this.emit('end');
                     if (callback) {
-                        callback(error, buffer, actualLength);
+                        const cancelled = error?.errno !== LIBUSB_TRANSFER_CANCELLED
+                        callback(cancelled ? undefined : error, buffer, actualLength, cancelled);
                     }
                 }
             }
