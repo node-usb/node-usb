@@ -187,7 +187,7 @@ describe 'Device', ->
                     throw e
 
                 inEndpoint.on 'end', ->
-                    assert.equal(n, 100)
+                    assert.equal(pkts, 100)
 
         describe 'OUT endpoint', ->
             outEndpoint = null
