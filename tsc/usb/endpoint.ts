@@ -119,7 +119,7 @@ export class InEndpoint extends Endpoint {
                     this.pollActive = false;
                     this.emit('end');
                     if (callback) {
-                        const cancelled = error?.errno !== LIBUSB_TRANSFER_CANCELLED;
+                        const cancelled = error?.errno === LIBUSB_TRANSFER_CANCELLED;
                         callback(cancelled ? undefined : error, buffer, actualLength, cancelled);
                     }
                 }

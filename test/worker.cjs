@@ -8,6 +8,6 @@ if (!device) {
 }
 device.open();
 device.getStringDescriptor(device.deviceDescriptor.iSerialNumber, (_, serial) => {
-    parentPort.postMessage(serial);
+    parentPort?.postMessage(serial);
     device.close();
 });
