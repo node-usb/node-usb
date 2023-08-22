@@ -172,7 +172,12 @@ describe 'Device', ->
             it 'polls the device', (done) ->
                 pkts = 0
 
-                inEndpoint.startPoll 8, 64
+                inEndpoint.startPoll 8, 64, (e, b, a, c) ->
+                    assert.equal(c, true)
+                    assert.ok(e == undefined, e)
+                    assert.equal(pkts, 100)
+                    done()
+
                 inEndpoint.on 'data', (d) ->
                     assert.equal d.length, 64
                     pkts++
@@ -184,8 +189,7 @@ describe 'Device', ->
                     throw e
 
                 inEndpoint.on 'end', ->
-                    #console.log("Stream stopped")
-                    done()
+                    assert.equal(pkts, 100)
 
         describe 'OUT endpoint', ->
             outEndpoint = null
