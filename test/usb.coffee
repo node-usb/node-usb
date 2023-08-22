@@ -169,7 +169,24 @@ describe 'Device', ->
                     assert.equal e.errno, usb.LIBUSB_TRANSFER_TIMED_OUT
                     done()
 
-            it 'polls the device', (done) ->
+            it 'polls the device using events', (done) ->
+                pkts = 0
+
+                inEndpoint.startPoll 8, 64
+                inEndpoint.on 'data', (d) ->
+                    assert.equal d.length, 64
+                    pkts++
+
+                    if pkts == 100
+                        inEndpoint.stopPoll()
+
+                inEndpoint.once 'error', (e) ->
+                    throw e
+
+                inEndpoint.once 'end', ->
+                    done()
+
+            it 'polls the device using a callback', (done) ->
                 pkts = 0
 
                 inEndpoint.startPoll 8, 64, (e, b, a, c) ->
@@ -185,10 +202,10 @@ describe 'Device', ->
                     if pkts == 100
                         inEndpoint.stopPoll()
 
-                inEndpoint.on 'error', (e) ->
+                inEndpoint.once 'error', (e) ->
                     throw e
 
-                inEndpoint.on 'end', ->
+                inEndpoint.once 'end', ->
                     assert.equal(pkts, 100)
 
         describe 'OUT endpoint', ->
