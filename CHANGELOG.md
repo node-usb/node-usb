@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.10.0] - 2023-08-22
+
+### Fixed
+- Fixed using callbacks in startPolling - [`631`](https://github.com/node-usb/node-usb/pull/631) ([Tim Strazzere](https://github.com/strazzere))
+
 ## [2.9.0] - 2023-03-16
 
 ### Changed
