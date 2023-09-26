@@ -203,9 +203,11 @@ Napi::Value Device::Open(const Napi::CallbackInfo& info) {
 Napi::Value Device::Close(const Napi::CallbackInfo& info) {
     ENTER_METHOD(Device, 0);
     if (self->canClose()){
-        libusb_close(self->device_handle);
-        self->device_handle = NULL;
-        completionQueue.stop();
+        if (self->device_handle){
+            libusb_close(self->device_handle);
+            self->device_handle = NULL;
+            completionQueue.stop();
+        }
     }else{
         THROW_ERROR("Can't close device with a pending request");
     }
