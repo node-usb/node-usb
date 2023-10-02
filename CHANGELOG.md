@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.11.0] - 2023-10-02
+
+### Fixed
+- Allow use of close on a closed device - [`676`](https://github.com/node-usb/node-usb/pull/676) ([Julien Vanier](https://github.com/monkbroc))
+
 ## [2.10.0] - 2023-08-22
 
 ### Fixed
