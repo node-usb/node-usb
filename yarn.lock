@@ -2653,9 +2653,9 @@ node-addon-api@^7.0.0:
   integrity sha512-vgbBJTS4m5/KkE16t5Ly0WW9hz46swAstv0hYYwMtbG7AznRhNyfLRe8HZAiWIpcHzoO7HxhLuBQj9rJ/Ho0ZA==
 
 node-gyp-build@^4.5.0:
-  version "4.7.0"
-  resolved "https://registry.yarnpkg.com/node-gyp-build/-/node-gyp-build-4.7.0.tgz#749f0033590b2a89ac8edb5e0775f95f5ae86d15"
-  integrity sha512-PbZERfeFdrHQOOXiAKOY0VPbykZy90ndPKk0d+CFDegTKmWp1VgOTz2xACVbr1BjCWxrQp68CXtvNsveFhqDJg==
+  version "4.7.1"
+  resolved "https://registry.yarnpkg.com/node-gyp-build/-/node-gyp-build-4.7.1.tgz#cd7d2eb48e594874053150a9418ac85af83ca8f7"
+  integrity sha512-wTSrZ+8lsRRa3I3H8Xr65dLWSgCvY2l4AOnaeKdPA9TB/WYMPaTcrzf3rXvFoVvjKNVnu0CcWSx54qq9GKRUYg==
 
 node-gyp@^9.3.0:
   version "9.4.0"
