@@ -56,7 +56,7 @@ jobs:
       - run: yarn install --ignore-scripts
       - run: yarn ${{ matrix.command }}
       - run: tar -zcvf ${{ matrix.name }}.tar.gz -C prebuilds .
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.name }}
           path: ${{ matrix.name }}.tar.gz
