@@ -171,6 +171,15 @@ describe 'Alternates', ->
     after ->
         device.close()
 
+describe 'Throwing Transfers', ->
+    device = null
+
+    before ->
+        device = await webusb.requestDevice({ filters: [{ vendorId: 0x59e3 }] });
+
+    it 'should fail transfer unless opened', ->
+        assert.rejects(device.transferIn(1, 64), 'The device must be opened first')
+
 describe 'Transfers', ->
     device = null
     b = Uint8Array.from([0x30...0x40]).buffer

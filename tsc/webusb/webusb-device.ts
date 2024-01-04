@@ -206,6 +206,7 @@ export class WebUSBDevice implements USBDevice {
 
     public async controlTransferIn(setup: USBControlTransferParameters, length: number): Promise<USBInTransferResult> {
         try {
+            this.checkDeviceOpen();
             const type = this.controlTransferParamsToType(setup, usb.LIBUSB_ENDPOINT_IN);
             const controlTransfer = promisify(this.device.controlTransfer).bind(this.device);
             const result = await controlTransfer(type, setup.request, setup.value, setup.index, length);
@@ -233,6 +234,7 @@ export class WebUSBDevice implements USBDevice {
 
     public async controlTransferOut(setup: USBControlTransferParameters, data?: ArrayBuffer): Promise<USBOutTransferResult> {
         try {
+            this.checkDeviceOpen();
             const type = this.controlTransferParamsToType(setup, usb.LIBUSB_ENDPOINT_OUT);
             const controlTransfer = promisify(this.device.controlTransfer).bind(this.device);
             const buffer = data ? Buffer.from(data) : Buffer.alloc(0);
@@ -266,6 +268,7 @@ export class WebUSBDevice implements USBDevice {
 
     public async transferIn(endpointNumber: number, length: number): Promise<USBInTransferResult> {
         try {
+            this.checkDeviceOpen();
             const endpoint = this.getEndpoint(endpointNumber | usb.LIBUSB_ENDPOINT_IN) as InEndpoint;
             const transfer = promisify(endpoint.transfer).bind(endpoint);
             const result = await transfer(length);
@@ -293,6 +296,7 @@ export class WebUSBDevice implements USBDevice {
 
     public async transferOut(endpointNumber: number, data: ArrayBuffer): Promise<USBOutTransferResult> {
         try {
+            this.checkDeviceOpen();
             const endpoint = this.getEndpoint(endpointNumber | usb.LIBUSB_ENDPOINT_OUT) as OutEndpoint;
             const transfer = promisify(endpoint.transfer).bind(endpoint);
             const buffer = Buffer.from(data);
@@ -481,6 +485,12 @@ export class WebUSBDevice implements USBDevice {
             await release();
         } catch (error) {
             throw new Error(`releaseInterface error: ${error}`);
+        }
+    }
+
+    private checkDeviceOpen(): void {
+        if (!this.opened) {
+            throw new Error('The device must be opened first');
         }
     }
 }
