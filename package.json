@@ -64,7 +64,7 @@
     "eslint": "^8.29.0",
     "mocha": "^10.1.0",
     "node-gyp": "^9.3.0",
-    "prebuildify": "^5.0.1",
+    "prebuildify": "^6.0.0",
     "prebuildify-ci": "^1.0.5",
     "prebuildify-cross": "^5.0.0",
     "typedoc": "^0.22.10",
