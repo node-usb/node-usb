@@ -2989,10 +2989,10 @@ prebuildify-cross@^5.0.0:
     tar-fs "^2.0.0"
     unixify "^1.0.0"
 
-prebuildify@^5.0.1:
-  version "5.0.1"
-  resolved "https://registry.yarnpkg.com/prebuildify/-/prebuildify-5.0.1.tgz#e10bb6e4986c18909185704c806cc06976c30478"
-  integrity sha512-vXpKLfIEsDCqMJWVIoSrUUBJQIuAk9uHAkLiGJuTdXdqKSJ10sHmWeuNCDkIoRFTV1BDGYMghHVmDFP8NfkA2Q==
+prebuildify@^6.0.0:
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/prebuildify/-/prebuildify-6.0.0.tgz#da3dba61e0e9fad7e63beaf7332b286ae6d8a562"
+  integrity sha512-DEvK4C3tcimIp7Pzqbs036n9i6CTKGp1XVEpMnr4wV3enKU5sBogPP+lP3KZw7993i42bXnsd5eIxAXQ566Cqw==
   dependencies:
     execspawn "^1.0.1"
     minimist "^1.2.5"
