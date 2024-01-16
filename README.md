@@ -185,7 +185,7 @@ import { WebUSB } from 'usb';
 
 (async () => {
     const customWebUSB = new WebUSB({
-        // Bypass cheking for authorised devices
+        // Bypass checking for authorised devices
         allowAllDevices: true
     });
 
