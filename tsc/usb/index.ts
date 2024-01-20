@@ -18,9 +18,12 @@ Object.defineProperty(usb, 'pollHotplugDelay', {
     writable: true
 });
 
-Object.getOwnPropertyNames(ExtendedDevice.prototype).forEach(name => {
-    Object.defineProperty(usb.Device.prototype, name, Object.getOwnPropertyDescriptor(ExtendedDevice.prototype, name) || Object.create(null));
-});
+// `usb.Device` is not defined when `usb.INIT_ERROR` is true
+if (usb.Device) {
+    Object.getOwnPropertyNames(ExtendedDevice.prototype).forEach(name => {
+        Object.defineProperty(usb.Device.prototype, name, Object.getOwnPropertyDescriptor(ExtendedDevice.prototype, name) || Object.create(null));
+    });
+}
 
 interface EventListeners<T> {
     newListener: keyof T;
