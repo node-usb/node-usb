@@ -1,6 +1,7 @@
 import { EventEmitter } from 'events';
 import { LibUSBException, LIBUSB_TRANSFER_CANCELLED, Transfer, Device } from './bindings';
 import { EndpointDescriptor } from './descriptors';
+import { promisify } from 'util';
 
 const isBuffer = (obj: ArrayBuffer | Buffer): obj is Uint8Array => obj && obj instanceof Uint8Array;
 
@@ -57,8 +58,12 @@ export class InEndpoint extends Endpoint {
     protected pollPending = 0;
     public pollActive = false;
 
+    public transferAsync: (length: number) => Promise<Buffer | undefined>;
+
     constructor(device: Device, descriptor: EndpointDescriptor) {
         super(device, descriptor);
+
+        this.transferAsync = promisify(this.transfer).bind(this);
     }
 
     /**
@@ -191,6 +196,14 @@ export class OutEndpoint extends Endpoint {
 
     /** Endpoint direction. */
     public direction: 'in' | 'out' = 'out';
+
+    public transferAsync: (buffer: Buffer) => Promise<number>;
+
+    public constructor(device: Device, descriptor: EndpointDescriptor) {
+        super(device, descriptor);
+
+        this.transferAsync = promisify(this.transfer).bind(this);
+    }
 
     /**
      * Perform a transfer to write `data` to the endpoint.
