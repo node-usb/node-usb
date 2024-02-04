@@ -62,7 +62,6 @@ export class InEndpoint extends Endpoint {
 
     constructor(device: Device, descriptor: EndpointDescriptor) {
         super(device, descriptor);
-
         this.transferAsync = promisify(this.transfer).bind(this);
     }
 
@@ -201,7 +200,6 @@ export class OutEndpoint extends Endpoint {
 
     public constructor(device: Device, descriptor: EndpointDescriptor) {
         super(device, descriptor);
-
         this.transferAsync = promisify(this.transfer).bind(this);
     }
 
