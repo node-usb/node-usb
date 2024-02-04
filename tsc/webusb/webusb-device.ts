@@ -34,6 +34,14 @@ export class WebUSBDevice implements USBDevice {
     public serialNumber?: string | undefined;
     public configurations: USBConfiguration[] = [];
 
+    private controlTransfer: (
+        bmRequestType: number,
+        bRequest: number,
+        wValue: number,
+        wIndex: number,
+        data_or_length: number | Buffer,
+    ) => Promise<number | Buffer | undefined>;
+
     private constructor(private device: usb.Device) {
         const usbVersion = this.decodeVersion(device.deviceDescriptor.bcdUSB);
         this.usbVersionMajor = usbVersion.major;
@@ -50,6 +58,8 @@ export class WebUSBDevice implements USBDevice {
         this.deviceVersionMajor = deviceVersion.major;
         this.deviceVersionMinor = deviceVersion.minor;
         this.deviceVersionSubminor = deviceVersion.sub;
+
+        this.controlTransfer = promisify(this.device.controlTransfer).bind(this.device);
     }
 
     public get configuration(): USBConfiguration | undefined {
@@ -208,8 +218,7 @@ export class WebUSBDevice implements USBDevice {
         try {
             this.checkDeviceOpen();
             const type = this.controlTransferParamsToType(setup, usb.LIBUSB_ENDPOINT_IN);
-            const controlTransfer = promisify(this.device.controlTransfer).bind(this.device);
-            const result = await controlTransfer(type, setup.request, setup.value, setup.index, length);
+            const result = await this.controlTransfer(type, setup.request, setup.value, setup.index, length);
 
             return {
                 data: result ? new DataView(new Uint8Array(result as Buffer).buffer) : undefined,
@@ -236,9 +245,8 @@ export class WebUSBDevice implements USBDevice {
         try {
             this.checkDeviceOpen();
             const type = this.controlTransferParamsToType(setup, usb.LIBUSB_ENDPOINT_OUT);
-            const controlTransfer = promisify(this.device.controlTransfer).bind(this.device);
             const buffer = data ? Buffer.from(data) : Buffer.alloc(0);
-            const bytesWritten = <number>await controlTransfer(type, setup.request, setup.value, setup.index, buffer);
+            const bytesWritten = <number>await this.controlTransfer(type, setup.request, setup.value, setup.index, buffer);
 
             return {
                 bytesWritten,
@@ -259,8 +267,7 @@ export class WebUSBDevice implements USBDevice {
     public async clearHalt(direction: USBDirection, endpointNumber: number): Promise<void> {
         try {
             const wIndex = endpointNumber | (direction === 'in' ? usb.LIBUSB_ENDPOINT_IN : usb.LIBUSB_ENDPOINT_OUT);
-            const controlTransfer = promisify(this.device.controlTransfer).bind(this.device);
-            await controlTransfer(usb.LIBUSB_RECIPIENT_ENDPOINT, CLEAR_FEATURE, ENDPOINT_HALT, wIndex, Buffer.from(new Uint8Array()));
+            await this.controlTransfer(usb.LIBUSB_RECIPIENT_ENDPOINT, CLEAR_FEATURE, ENDPOINT_HALT, wIndex, Buffer.from(new Uint8Array()));
         } catch (error) {
             throw new Error(`clearHalt error: ${error}`);
         }
@@ -270,8 +277,7 @@ export class WebUSBDevice implements USBDevice {
         try {
             this.checkDeviceOpen();
             const endpoint = this.getEndpoint(endpointNumber | usb.LIBUSB_ENDPOINT_IN) as InEndpoint;
-            const transfer = promisify(endpoint.transfer).bind(endpoint);
-            const result = await transfer(length);
+            const result = await endpoint.transferAsync(length);
 
             return {
                 data: result ? new DataView(new Uint8Array(result).buffer) : undefined,
@@ -298,9 +304,8 @@ export class WebUSBDevice implements USBDevice {
         try {
             this.checkDeviceOpen();
             const endpoint = this.getEndpoint(endpointNumber | usb.LIBUSB_ENDPOINT_OUT) as OutEndpoint;
-            const transfer = promisify(endpoint.transfer).bind(endpoint);
             const buffer = Buffer.from(data);
-            const bytesWritten = await transfer(buffer);
+            const bytesWritten = await endpoint.transferAsync(buffer);
 
             return {
                 bytesWritten,
