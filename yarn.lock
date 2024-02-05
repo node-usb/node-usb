@@ -2974,9 +2974,9 @@ prebuildify-ci@^1.0.5:
     unzipper "^0.9.11"
 
 prebuildify-cross@^5.0.0:
-  version "5.0.0"
-  resolved "https://registry.yarnpkg.com/prebuildify-cross/-/prebuildify-cross-5.0.0.tgz#65b306c369597948fee104a5a4960e6b2ad4e73c"
-  integrity sha512-IiHekM5GWmJdWqFuj0qFDkx3Zj2Ujgp8L37hmaulIuTZ+AC5RNKbaGLZPR3bpB0woYV+gJX+58Idrr+IE46WzA==
+  version "5.1.0"
+  resolved "https://registry.yarnpkg.com/prebuildify-cross/-/prebuildify-cross-5.1.0.tgz#0b03017d4357ba5f1578e1c5a6d7c19dfddcd946"
+  integrity sha512-OthEdNpp6irC18hzVUJ6t/b1xrgcY9lUw/kGG7xRmkuA4g9cH0HgaL6BWQuzjmAnafZ6b8rO9As+KqbUK37WHg==
   dependencies:
     "@vweevers/docker-pull" "^1.1.1"
     browserify "^17.0.0"
