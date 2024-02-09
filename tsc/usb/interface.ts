@@ -1,6 +1,7 @@
 import { LibUSBException, LIBUSB_ENDPOINT_IN, Device } from './bindings';
 import { InterfaceDescriptor } from './descriptors';
 import { Endpoint, InEndpoint, OutEndpoint } from './endpoint';
+import { promisify } from 'util';
 
 export class Interface {
     /** Integer interface number. */
@@ -15,8 +16,13 @@ export class Interface {
     /** List of endpoints on this interface: InEndpoint and OutEndpoint objects. */
     public endpoints!: Endpoint[];
 
+    public releaseAsync: () => Promise<void>;
+    public setAltSettingAsync: (alternateSetting: number) => Promise<void>;
+
     constructor(protected device: Device, protected id: number) {
         this.refresh();
+        this.releaseAsync = promisify(this.release).bind(this);
+        this.setAltSettingAsync = promisify(this.setAltSetting).bind(this);
     }
 
     protected refresh(): void {

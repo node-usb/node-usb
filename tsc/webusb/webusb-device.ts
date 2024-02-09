@@ -34,13 +34,17 @@ export class WebUSBDevice implements USBDevice {
     public serialNumber?: string | undefined;
     public configurations: USBConfiguration[] = [];
 
-    private controlTransfer: (
+    private controlTransferAsync: (
         bmRequestType: number,
         bRequest: number,
         wValue: number,
         wIndex: number,
         data_or_length: number | Buffer,
     ) => Promise<number | Buffer | undefined>;
+
+    private setConfigurationAsync: (desired: number) => Promise<void>;
+    private resetAsync: () => Promise<void>;
+    private getStringDescriptorAsync: (desc_index: number) => Promise<string | undefined>;
 
     private constructor(private device: usb.Device) {
         const usbVersion = this.decodeVersion(device.deviceDescriptor.bcdUSB);
@@ -59,7 +63,10 @@ export class WebUSBDevice implements USBDevice {
         this.deviceVersionMinor = deviceVersion.minor;
         this.deviceVersionSubminor = deviceVersion.sub;
 
-        this.controlTransfer = promisify(this.device.controlTransfer).bind(this.device);
+        this.controlTransferAsync = promisify(this.device.controlTransfer).bind(this.device);
+        this.setConfigurationAsync = promisify(this.device.setConfiguration).bind(this.device);
+        this.resetAsync = promisify(this.device.reset).bind(this.device);
+        this.getStringDescriptorAsync = promisify(this.device.getStringDescriptor).bind(this.device);
     }
 
     public get configuration(): USBConfiguration | undefined {
@@ -130,8 +137,7 @@ export class WebUSBDevice implements USBDevice {
         }
 
         try {
-            const setConfiguration = promisify(this.device.setConfiguration).bind(this.device);
-            await setConfiguration(configurationValue);
+            await this.setConfigurationAsync(configurationValue);
         } catch (error) {
             throw new Error(`selectConfiguration error: ${error}`);
         }
@@ -207,8 +213,7 @@ export class WebUSBDevice implements USBDevice {
 
         try {
             const iface = this.device.interface(interfaceNumber);
-            const setAltSetting = promisify(iface.setAltSetting).bind(iface);
-            await setAltSetting(alternateSetting);
+            await iface.setAltSettingAsync(alternateSetting);
         } catch (error) {
             throw new Error(`selectAlternateInterface error: ${error}`);
         }
@@ -218,7 +223,7 @@ export class WebUSBDevice implements USBDevice {
         try {
             this.checkDeviceOpen();
             const type = this.controlTransferParamsToType(setup, usb.LIBUSB_ENDPOINT_IN);
-            const result = await this.controlTransfer(type, setup.request, setup.value, setup.index, length);
+            const result = await this.controlTransferAsync(type, setup.request, setup.value, setup.index, length);
 
             return {
                 data: result ? new DataView(new Uint8Array(result as Buffer).buffer) : undefined,
@@ -246,7 +251,7 @@ export class WebUSBDevice implements USBDevice {
             this.checkDeviceOpen();
             const type = this.controlTransferParamsToType(setup, usb.LIBUSB_ENDPOINT_OUT);
             const buffer = data ? Buffer.from(data) : Buffer.alloc(0);
-            const bytesWritten = <number>await this.controlTransfer(type, setup.request, setup.value, setup.index, buffer);
+            const bytesWritten = <number>await this.controlTransferAsync(type, setup.request, setup.value, setup.index, buffer);
 
             return {
                 bytesWritten,
@@ -267,7 +272,7 @@ export class WebUSBDevice implements USBDevice {
     public async clearHalt(direction: USBDirection, endpointNumber: number): Promise<void> {
         try {
             const wIndex = endpointNumber | (direction === 'in' ? usb.LIBUSB_ENDPOINT_IN : usb.LIBUSB_ENDPOINT_OUT);
-            await this.controlTransfer(usb.LIBUSB_RECIPIENT_ENDPOINT, CLEAR_FEATURE, ENDPOINT_HALT, wIndex, Buffer.from(new Uint8Array()));
+            await this.controlTransferAsync(usb.LIBUSB_RECIPIENT_ENDPOINT, CLEAR_FEATURE, ENDPOINT_HALT, wIndex, Buffer.from(new Uint8Array()));
         } catch (error) {
             throw new Error(`clearHalt error: ${error}`);
         }
@@ -325,8 +330,7 @@ export class WebUSBDevice implements USBDevice {
 
     public async reset(): Promise<void> {
         try {
-            const reset = promisify(this.device.reset).bind(this.device);
-            await reset();
+            await this.resetAsync();
         } catch (error) {
             throw new Error(`reset error: ${error}`);
         }
@@ -374,8 +378,7 @@ export class WebUSBDevice implements USBDevice {
 
     private async getStringDescriptor(index: number): Promise<string> {
         try {
-            const getStringDescriptor = promisify(this.device.getStringDescriptor).bind(this.device);
-            const buffer = await getStringDescriptor(index);
+            const buffer = await this.getStringDescriptorAsync(index);
             return buffer ? buffer.toString() : '';
         } catch (error) {
             return '';
@@ -486,8 +489,7 @@ export class WebUSBDevice implements USBDevice {
 
         try {
             const iface = this.device.interface(interfaceNumber);
-            const release = promisify(iface.release).bind(iface);
-            await release();
+            await iface.releaseAsync();
         } catch (error) {
             throw new Error(`releaseInterface error: ${error}`);
         }
