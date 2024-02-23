@@ -30,6 +30,7 @@ jobs:
             command: prebuild
           - name: win-arm
             os: windows-2022
+            node: arm64
             command: prebuild --arch arm64
           - name: linux-x64
             os: ubuntu-20.04
@@ -51,7 +52,7 @@ jobs:
       - if: matrix.node
         uses: actions/setup-node@v4
         with:
-          node-version: 16.x
+          node-version: 20.x
           architecture: ${{ matrix.node }}
       - uses: actions/checkout@v4
         with:
