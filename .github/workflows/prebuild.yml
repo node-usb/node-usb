@@ -31,7 +31,7 @@ jobs:
           - name: win-arm
             os: windows-2022
             node: x64
-            command: prebuild --arch arm64
+            command: prebuild --arch arm64 --target 20.11.1
           - name: linux-x64
             os: ubuntu-20.04
             command: prebuild-cross --tag-libc -i ghcr.io/node-usb/centos7-devtoolset7 -i ghcr.io/node-usb/alpine
