@@ -30,7 +30,6 @@ jobs:
             command: prebuild
           - name: win-arm
             os: windows-2022
-            node: arm64
             command: prebuild --arch arm64
           - name: linux-x64
             os: ubuntu-20.04
