@@ -3,6 +3,9 @@
     'use_udev%': 1,
     'use_system_libusb%': 'false'
   },
+  'dependencies': [
+    "<!(node -p \"require('node-addon-api').targets\"):node_addon_api_except"
+  ],
   'targets': [
     {
       'target_name': 'usb_bindings',
