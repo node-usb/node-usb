@@ -51,7 +51,7 @@ jobs:
       - if: matrix.node
         uses: actions/setup-node@v4
         with:
-          node-version: 16.x
+          node-version: 20.x
           architecture: ${{ matrix.node }}
       - uses: actions/checkout@v4
         with:
@@ -74,7 +74,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
-      - uses: softprops/action-gh-release@v1
+      - uses: softprops/action-gh-release@4634c16e79c963813287e889244c50009e7f0981
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
