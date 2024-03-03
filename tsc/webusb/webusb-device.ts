@@ -1,6 +1,7 @@
 import * as usb from '../usb';
 import { promisify } from 'util';
 import { Endpoint, InEndpoint, OutEndpoint } from '../usb/endpoint';
+import { platform } from 'os';
 
 const LIBUSB_TRANSFER_TYPE_MASK = 0x03;
 const ENDPOINT_NUMBER_MASK = 0x7f;
@@ -352,6 +353,12 @@ export class WebUSBDevice implements USBDevice {
         try {
             if (!this.opened) {
                 this.device.open();
+
+                // Explicitly set configuration for vendor-specific devices on macos
+                // https://github.com/node-usb/node-usb/issues/61
+                if (this.deviceClass === 0xff && platform() === 'darwin') {
+                    await this.setConfigurationAsync(1);
+                }
             }
 
             this.manufacturerName = await this.getStringDescriptor(this.device.deviceDescriptor.iManufacturer);
