@@ -6,6 +6,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "prebuildify"
 
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
