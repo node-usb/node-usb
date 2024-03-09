@@ -1,8 +1,13 @@
 # Changelog
 
+## [2.12.1] - 2024-03-09
+
+### Changed
+- Rolled back prebuildify to 5.0.1 to avoid naming issue - [`744`](https://github.com/node-usb/node-usb/pull/744) ([Rob Moran](https://github.com/thegecko))
+
 ## [2.12.0] - 2024-03-02
 
-#### Added
+### Added
 - Added prebuilt binary for Windows Arm64 - [`735`](https://github.com/node-usb/node-usb/pull/735) ([Rob Moran](https://github.com/thegecko))
 - Added exception handling - [`738`](https://github.com/node-usb/node-usb/pull/738) ([Rob Moran](https://github.com/thegecko))
 - Added exception when trying to transfer and device is closed - [`715`](https://github.com/node-usb/node-usb/pull/715) ([Rob Moran](https://github.com/thegecko))
