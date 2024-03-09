@@ -53,7 +53,7 @@
   },
   "dependencies": {
     "@types/w3c-web-usb": "^1.0.6",
-    "node-addon-api": "^7.0.0",
+    "node-addon-api": "^8.0.0",
     "node-gyp-build": "^4.5.0"
   },
   "devDependencies": {
