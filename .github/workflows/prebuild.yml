@@ -74,7 +74,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
-      - uses: softprops/action-gh-release@20e085ccc73308c2c8e43ab8da4f8d7ecbb94d4e
+      - uses: softprops/action-gh-release@d99959edae48b5ffffd7b00da66dcdb0a33a52ee
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
