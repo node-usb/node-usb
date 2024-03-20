@@ -360,6 +360,11 @@ export class WebUSBDevice implements USBDevice {
                     await this.setConfigurationAsync(1);
                 }
             }
+            if (this.opened && this.deviceClass === 0xff && this.device.interfaces && !this.device.interfaces.length) {
+                this.device.close();
+                this.device.open(false);
+                this.device.setConfiguration(1);
+            }
 
             this.manufacturerName = await this.getStringDescriptor(this.device.deviceDescriptor.iManufacturer);
             this.productName = await this.getStringDescriptor(this.device.deviceDescriptor.iProduct);
