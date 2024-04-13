@@ -1,5 +1,26 @@
 # Changelog
 
+## [2.12.1] - 2024-03-09
+
+### Changed
+- Rolled back prebuildify to 5.0.1 to avoid naming issue - [`744`](https://github.com/node-usb/node-usb/pull/744) ([Rob Moran](https://github.com/thegecko))
+
+## [2.12.0] - 2024-03-02
+
+### Added
+- Added prebuilt binary for Windows Arm64 - [`735`](https://github.com/node-usb/node-usb/pull/735) ([Rob Moran](https://github.com/thegecko))
+- Added exception handling - [`738`](https://github.com/node-usb/node-usb/pull/738) ([Rob Moran](https://github.com/thegecko))
+- Added exception when trying to transfer and device is closed - [`715`](https://github.com/node-usb/node-usb/pull/715) ([Rob Moran](https://github.com/thegecko))
+
+### Changed
+- Precreate async transfer functions to increase speed - [`725`](https://github.com/node-usb/node-usb/pull/725) ([Cosmin Tanislav](https://github.com/Demon000))
+- Precreate all other async functions to increase speed - [`730`](https://github.com/node-usb/node-usb/pull/730) ([Rob Moran](https://github.com/thegecko))
+
+### Fixed
+- Explicitly set configuration in WebUSB for vendor-specific devices on macos - [`739`](https://github.com/node-usb/node-usb/pull/739) ([Jouni Airaksinen](https://github.com/jounii))
+- Handle exception when loading library on WSL - [`726`](https://github.com/node-usb/node-usb/pull/726) ([Julian Waller](https://github.com/Julusian))
+- Comment typo fix - [`723`](https://github.com/node-usb/node-usb/pull/723) ([koji](https://github.com/koji))
+
 ## [2.11.0] - 2023-10-02
 
 ### Fixed

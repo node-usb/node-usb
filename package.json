@@ -2,7 +2,7 @@
   "name": "usb",
   "description": "Library to access USB devices",
   "license": "MIT",
-  "version": "2.11.0",
+  "version": "2.12.1",
   "main": "dist/index.js",
   "engines": {
     "node": ">=12.22.0 <13.0 || >=14.17.0"
@@ -53,7 +53,7 @@
   },
   "dependencies": {
     "@types/w3c-web-usb": "^1.0.6",
-    "node-addon-api": "^7.0.0",
+    "node-addon-api": "^8.0.0",
     "node-gyp-build": "^4.5.0"
   },
   "devDependencies": {
@@ -64,7 +64,7 @@
     "eslint": "^8.29.0",
     "mocha": "^10.1.0",
     "node-gyp": "^10.0.1",
-    "prebuildify": "^6.0.0",
+    "prebuildify": "^5.0.1",
     "prebuildify-ci": "^1.0.5",
     "prebuildify-cross": "^5.0.0",
     "typedoc": "^0.22.10",

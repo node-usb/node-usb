@@ -66,10 +66,11 @@ export class ExtendedDevice {
      */
     public open(this: usb.Device, defaultConfig = true): void {
         this.__open();
+        // The presence of interfaces is used to determine if the device is open
+        this.interfaces = [];
         if (defaultConfig === false) {
             return;
         }
-        this.interfaces = [];
         const len = this.configDescriptor ? this.configDescriptor.interfaces.length : 0;
         for (let i = 0; i < len; i++) {
             this.interfaces[i] = new Interface(this, i);
