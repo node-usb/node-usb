@@ -104,8 +104,11 @@ Napi::Object Device::cdesc2V8(Napi::Env env, libusb_config_descriptor * cdesc) {
     STRUCT_TO_V8(v8cdesc, *cdesc, bmAttributes)
     // Libusb 1.0 typo'd bMaxPower as MaxPower
     v8cdesc.DefineProperty(Napi::PropertyDescriptor::Value("bMaxPower", Napi::Number::New(env, (uint32_t)cdesc->MaxPower), CONST_PROP));
+    const auto config_extras = (cdesc->extra && cdesc->extra_length)
+        ? Napi::Buffer<const char>::Copy(env, (const char*)cdesc->extra, cdesc->extra_length)
+        : Napi::Buffer<const char>::New(env, 0);
 
-    v8cdesc.DefineProperty(Napi::PropertyDescriptor::Value("extra", Napi::Buffer<const char>::Copy(env, (const char*)cdesc->extra, cdesc->extra_length), CONST_PROP));
+    v8cdesc.DefineProperty(Napi::PropertyDescriptor::Value("extra", config_extras, CONST_PROP));
 
     Napi::Array v8interfaces = Napi::Array::New(env, cdesc->bNumInterfaces);
     v8cdesc.DefineProperty(Napi::PropertyDescriptor::Value("interfaces", v8interfaces, CONST_PROP));
@@ -133,7 +136,10 @@ Napi::Object Device::cdesc2V8(Napi::Env env, libusb_config_descriptor * cdesc) {
             STRUCT_TO_V8(v8idesc, idesc, bInterfaceProtocol)
             STRUCT_TO_V8(v8idesc, idesc, iInterface)
 
-            v8idesc.DefineProperty(Napi::PropertyDescriptor::Value("extra", Napi::Buffer<const char>::Copy(env, (const char*)idesc.extra, idesc.extra_length), CONST_PROP));
+            auto interface_extras = (idesc.extra && idesc.extra_length)
+                ? Napi::Buffer<const char>::Copy(env, (const char*)idesc.extra, idesc.extra_length)
+                : Napi::Buffer<const char>::New(env, 0);
+            v8idesc.DefineProperty(Napi::PropertyDescriptor::Value("extra", interface_extras, CONST_PROP));
 
             Napi::Array v8endpoints = Napi::Array::New(env, idesc.bNumEndpoints);
             v8idesc.DefineProperty(Napi::PropertyDescriptor::Value("endpoints", v8endpoints, CONST_PROP));
@@ -151,8 +157,10 @@ Napi::Object Device::cdesc2V8(Napi::Env env, libusb_config_descriptor * cdesc) {
                 STRUCT_TO_V8(v8edesc, edesc, bInterval)
                 STRUCT_TO_V8(v8edesc, edesc, bRefresh)
                 STRUCT_TO_V8(v8edesc, edesc, bSynchAddress)
-
-                v8edesc.DefineProperty(Napi::PropertyDescriptor::Value("extra", Napi::Buffer<const char>::Copy(env, (const char*)edesc.extra, edesc.extra_length), CONST_PROP));
+                auto endpoint_extras = (edesc.extra && edesc.extra_length)
+                    ? Napi::Buffer<const char>::Copy(env, (const char*)edesc.extra, edesc.extra_length)
+                    : Napi::Buffer<const char>::New(env, 0);
+                v8edesc.DefineProperty(Napi::PropertyDescriptor::Value("extra", endpoint_extras, CONST_PROP));
             }
         }
     }
@@ -175,7 +183,9 @@ Napi::Value Device::GetAllConfigDescriptors(const Napi::CallbackInfo& info) {
     libusb_get_device_descriptor(self->device, &dd);
     Napi::Array v8cdescriptors = Napi::Array::New(env, dd.bNumConfigurations);
     for(uint8_t i = 0; i < dd.bNumConfigurations; i++){
-        libusb_get_config_descriptor(device, i, &cdesc);
+        // libusb_get_config_descriptor is nonblocking but allocates and those allocates
+        // may fail
+        CHECK_USB(libusb_get_config_descriptor(device, i, &cdesc));
         v8cdescriptors.Set(i, Device::cdesc2V8(env, cdesc));
         libusb_free_config_descriptor(cdesc);
     }
