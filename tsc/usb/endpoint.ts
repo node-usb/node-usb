@@ -86,7 +86,7 @@ export class InEndpoint extends Endpoint {
         try {
             this.makeTransfer(this.timeout, cb).submit(buffer);
         } catch (e) {
-            process.nextTick(() => callback.call(this, e));
+            process.nextTick(() => callback.call(this, e as LibUSBException));
         }
         return this;
     }
@@ -230,7 +230,7 @@ export class OutEndpoint extends Endpoint {
         try {
             this.makeTransfer(this.timeout, cb).submit(buffer);
         } catch (e) {
-            process.nextTick(() => cb(e));
+            process.nextTick(() => cb(e as LibUSBException));
         }
 
         return this;
