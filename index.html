@@ -1,136 +1,56 @@
-<!DOCTYPE html><html class="default"><head><meta charSet="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>Node USB</title><meta name="description" content="Documentation for Node USB"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="assets/style.css"/><link rel="stylesheet" href="assets/highlight.css"/><script async src="assets/search.js" id="search-script"></script></head><body><script>document.body.classList.add(localStorage.getItem("tsd-theme") || "os")</script><header><div class="tsd-page-toolbar"><div class="container"><div class="table-wrap"><div class="table-cell" id="tsd-search" data-base="."><div class="field"><label for="tsd-search-field" class="tsd-widget search no-caption">Search</label><input type="text" id="tsd-search-field"/></div><ul class="results"><li class="state loading">Preparing search index...</li><li class="state failure">The search index is not available</li></ul><a href="index.html" class="title">Node USB</a></div><div class="table-cell" id="tsd-widgets"><div id="tsd-filter"><a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a><div class="tsd-filter-group"><div class="tsd-select" id="tsd-filter-visibility"><span class="tsd-select-label">All</span><ul class="tsd-select-list"><li data-value="public">Public</li><li data-value="protected">Public/Protected</li><li data-value="private" class="selected">All</li></ul></div> <input type="checkbox" id="tsd-filter-inherited" checked/><label class="tsd-widget" for="tsd-filter-inherited">Inherited</label></div></div><a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a></div></div></div></div><div class="tsd-page-title"><div class="container"><h1>Node USB </h1></div></div></header><div class="container container-main"><div class="row"><div class="col-8 col-content"><div class="tsd-panel tsd-typography">
-<a href="#usb-library-for-nodejs" id="usb-library-for-nodejs" style="color: inherit; text-decoration: none;">
-  <h1>USB Library for Node.JS</h1>
-</a>
-<p><a href="https://github.com/node-usb/node-usb/actions"><img src="https://github.com/node-usb/node-usb/workflows/prebuild/badge.svg" alt="Build Status"></a>
+<!DOCTYPE html><html class="default" lang="en"><head><meta charSet="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>Node USB</title><meta name="description" content="Documentation for Node USB"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="assets/style.css"/><link rel="stylesheet" href="assets/highlight.css"/><script defer src="assets/main.js"></script><script async src="assets/icons.js" id="tsd-icons-script"></script><script async src="assets/search.js" id="tsd-search-script"></script><script async src="assets/navigation.js" id="tsd-nav-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar"><div class="tsd-toolbar-contents container"><div class="table-cell" id="tsd-search" data-base="."><div class="field"><label for="tsd-search-field" class="tsd-widget tsd-toolbar-icon search no-caption"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><use href="assets/icons.svg#icon-search"></use></svg></label><input type="text" id="tsd-search-field" aria-label="Search"/></div><div class="field"><div id="tsd-toolbar-links"></div></div><ul class="results"><li class="state loading">Preparing search index...</li><li class="state failure">The search index is not available</li></ul><a href="index.html" class="title">Node USB</a></div><div class="table-cell" id="tsd-widgets"><a href="#" class="tsd-widget tsd-toolbar-icon menu no-caption" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><use href="assets/icons.svg#icon-menu"></use></svg></a></div></div></header><div class="container container-main"><div class="col-content"><div class="tsd-page-title"><h2>Node USB</h2></div><div class="tsd-panel tsd-typography"><a id="md:usb-library-for-nodejs" class="tsd-anchor"></a><h1><a href="#md:usb-library-for-nodejs">USB Library for Node.JS</a></h1><p><a href="https://github.com/node-usb/node-usb/actions"><img src="https://github.com/node-usb/node-usb/workflows/prebuild/badge.svg" alt="Build Status"></a>
 <a href="https://www.npmjs.com/package/usb"><img src="https://img.shields.io/npm/dm/usb.svg" alt="npm"></a>
 <a href="http://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/licence-MIT-blue.svg" alt="Licence MIT"></a></p>
 <p>Node.JS library for communicating with USB devices.</p>
 <p>This is a refactoring / rewrite of Christopher Klein&#39;s <a href="https://github.com/schakko/node-usb">node-usb</a>.</p>
-
-<a href="#prerequisites" id="prerequisites" style="color: inherit; text-decoration: none;">
-  <h1>Prerequisites</h1>
-</a>
-<p><a href="https://nodejs.org">Node.js &gt;= v10.20.0</a>, which includes <code>npm</code>.</p>
-
-<a href="#windows" id="windows" style="color: inherit; text-decoration: none;">
-  <h2>Windows</h2>
-</a>
-<p>On Windows, if you get <code>LIBUSB_ERROR_NOT_SUPPORTED</code> when attempting to open your device, it&#39;s possible your device doesn&#39;t have a WinUSB driver for libusb to use.</p>
+<a id="md:prerequisites" class="tsd-anchor"></a><h1><a href="#md:prerequisites">Prerequisites</a></h1><p><a href="https://nodejs.org">Node.js &gt;= v10.20.0</a>, which includes <code>npm</code>.</p>
+<a id="md:windows" class="tsd-anchor"></a><h2><a href="#md:windows">Windows</a></h2><p>On Windows, if you get <code>LIBUSB_ERROR_NOT_SUPPORTED</code> when attempting to open your device, it&#39;s possible your device doesn&#39;t have a WinUSB driver for libusb to use.</p>
 <p>You can install one using <a href="http://zadig.akeo.ie/">Zadig</a> or another approach is to use the <a href="https://github.com/daynix/UsbDk">UsbDK Backend</a> of libusb by immediately calling <code>usb.useUsbDkBackend()</code>.</p>
 <p>Note that you cannot use multiple drivers on Windows as they get exclusive access to the device. So if you want to switch between drivers (e.g. using a printer with this software or the system), you will need to uninstall/install drivers as required.</p>
 <p>For further info, check <a href="https://github.com/libusb/libusb/wiki/Windows#user-content-How_to_use_libusb_on_Windows">How to use libusb on Windows</a> in the libusb&#39;s wiki.</p>
-
-<a href="#linux" id="linux" style="color: inherit; text-decoration: none;">
-  <h2>Linux</h2>
-</a>
-<p>On Linux, you&#39;ll need libudev to build libusb if a prebuild is not available. On Ubuntu/Debian:</p>
-<pre><code class="language-bash"><span class="hl-0">sudo apt-get install build-essential libudev-dev</span>
-</code></pre>
-
-<a href="#troubleshooting" id="troubleshooting" style="color: inherit; text-decoration: none;">
-  <h1>Troubleshooting</h1>
-</a>
-<p>For libusb issues, please refer to the FAQ at <a href="https://github.com/libusb/libusb/wiki/FAQ">https://github.com/libusb/libusb/wiki/FAQ</a></p>
-
-<a href="#installation" id="installation" style="color: inherit; text-decoration: none;">
-  <h1>Installation</h1>
-</a>
-<p>Native modules are bundled using <code>prebuildify</code>, so installation should be as simple as installing the package.</p>
+<a id="md:linux" class="tsd-anchor"></a><h2><a href="#md:linux">Linux</a></h2><p>On Linux, you&#39;ll need libudev to build libusb if a prebuild is not available. On Ubuntu/Debian:</p>
+<pre><code class="language-bash"><span class="hl-0">sudo</span><span class="hl-1"> </span><span class="hl-2">apt-get</span><span class="hl-1"> </span><span class="hl-2">install</span><span class="hl-1"> </span><span class="hl-2">build-essential</span><span class="hl-1"> </span><span class="hl-2">libudev-dev</span>
+</code><button>Copy</button></pre>
+<a id="md:troubleshooting" class="tsd-anchor"></a><h1><a href="#md:troubleshooting">Troubleshooting</a></h1><p>For libusb issues, please refer to the FAQ at <a href="https://github.com/libusb/libusb/wiki/FAQ">https://github.com/libusb/libusb/wiki/FAQ</a></p>
+<a id="md:installation" class="tsd-anchor"></a><h1><a href="#md:installation">Installation</a></h1><p>Native modules are bundled using <code>prebuildify</code>, so installation should be as simple as installing the package.</p>
 <p>With <code>npm</code>:</p>
-<pre><code class="language-bash"><span class="hl-0">npm install usb</span>
-</code></pre>
+<pre><code class="language-bash"><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">install</span><span class="hl-1"> </span><span class="hl-2">usb</span>
+</code><button>Copy</button></pre>
 <p>With <code>yarn</code>:</p>
-<pre><code class="language-bash"><span class="hl-0">yarn add usb</span>
-</code></pre>
+<pre><code class="language-bash"><span class="hl-0">yarn</span><span class="hl-1"> </span><span class="hl-2">add</span><span class="hl-1"> </span><span class="hl-2">usb</span>
+</code><button>Copy</button></pre>
 <p><strong>Note:</strong> the library is now written in <code>TypeScript</code>, so a separate types file is not longer required to be installed (e.g. don&#39;t install <code>@types/usb</code>).</p>
-
-<a href="#license" id="license" style="color: inherit; text-decoration: none;">
-  <h1>License</h1>
-</a>
-<p><a href="LICENSE.md">MIT</a></p>
+<a id="md:license" class="tsd-anchor"></a><h1><a href="#md:license">License</a></h1><p><a href="LICENSE.md">MIT</a></p>
 <p>Note that the compiled Node extension includes <a href="https://github.com/libusb/libusb">libusb</a>, and is thus subject to the <a href="https://github.com/libusb/libusb/blob/master/COPYING">LGPL</a>.</p>
-
-<a href="#limitations" id="limitations" style="color: inherit; text-decoration: none;">
-  <h1>Limitations</h1>
-</a>
-<p>Does not support:</p>
+<a id="md:limitations" class="tsd-anchor"></a><h1><a href="#md:limitations">Limitations</a></h1><p>Does not support:</p>
 <ul>
 <li>Configurations other than the default one</li>
 <li>Isochronous transfers</li>
 </ul>
-
-<a href="#getting-started" id="getting-started" style="color: inherit; text-decoration: none;">
-  <h1>Getting Started</h1>
-</a>
-<p>Use the following examples to kickstart your development. Once you have a desired device, use the APIs below to interact with it.</p>
-
-<a href="#migrating-to-v200" id="migrating-to-v200" style="color: inherit; text-decoration: none;">
-  <h2>Migrating to <code>v2.0.0</code></h2>
-</a>
-<p>The legacy API exists on an object called <code>usb</code> on the main import and the convenience functions exist as top level objects.</p>
+<a id="md:getting-started" class="tsd-anchor"></a><h1><a href="#md:getting-started">Getting Started</a></h1><p>Use the following examples to kickstart your development. Once you have a desired device, use the APIs below to interact with it.</p>
+<a id="md:migrating-to-v200" class="tsd-anchor"></a><h2><a href="#md:migrating-to-v200">Migrating to <code>v2.0.0</code></a></h2><p>The legacy API exists on an object called <code>usb</code> on the main import and the convenience functions exist as top level objects.</p>
 <p>To use <code>v2.0.0</code> simply update your import statements and the function calls;</p>
-<pre><code class="language-typescript"><span class="hl-1">// import * as usb from &#39;usb&#39;;</span><br/><span class="hl-1">// const devices: usb.Device[] = usb.getDeviceList();</span><br/><br/><span class="hl-2">import</span><span class="hl-0"> { </span><span class="hl-3">usb</span><span class="hl-0">, </span><span class="hl-3">getDeviceList</span><span class="hl-0"> } </span><span class="hl-2">from</span><span class="hl-0"> </span><span class="hl-4">&#39;usb&#39;</span><span class="hl-0">;</span><br/><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">devices</span><span class="hl-0">: </span><span class="hl-7">usb</span><span class="hl-0">.</span><span class="hl-7">Device</span><span class="hl-0">[] = </span><span class="hl-8">getDeviceList</span><span class="hl-0">();</span>
-</code></pre>
-
-<a href="#list-all-legacy-devices" id="list-all-legacy-devices" style="color: inherit; text-decoration: none;">
-  <h2>List all legacy devices</h2>
-</a>
-<pre><code class="language-typescript"><span class="hl-2">import</span><span class="hl-0"> { </span><span class="hl-3">getDeviceList</span><span class="hl-0"> } </span><span class="hl-2">from</span><span class="hl-0"> </span><span class="hl-4">&#39;usb&#39;</span><span class="hl-0">;</span><br/><br/><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">devices</span><span class="hl-0"> = </span><span class="hl-8">getDeviceList</span><span class="hl-0">();</span><br/><br/><span class="hl-2">for</span><span class="hl-0"> (</span><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">device</span><span class="hl-0"> </span><span class="hl-5">of</span><span class="hl-0"> </span><span class="hl-3">devices</span><span class="hl-0">) {</span><br/><span class="hl-0">    </span><span class="hl-3">console</span><span class="hl-0">.</span><span class="hl-8">log</span><span class="hl-0">(</span><span class="hl-3">device</span><span class="hl-0">); </span><span class="hl-1">// Legacy device</span><br/><span class="hl-0">}</span>
-</code></pre>
-
-<a href="#find-legacy-device-by-vidpid" id="find-legacy-device-by-vidpid" style="color: inherit; text-decoration: none;">
-  <h2>Find legacy device by vid/pid</h2>
-</a>
-<pre><code class="language-typescript"><span class="hl-2">import</span><span class="hl-0"> { </span><span class="hl-3">findByIds</span><span class="hl-0"> } </span><span class="hl-2">from</span><span class="hl-0"> </span><span class="hl-4">&#39;usb&#39;</span><span class="hl-0">;</span><br/><br/><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">device</span><span class="hl-0"> = </span><span class="hl-8">findByIds</span><span class="hl-0">(</span><span class="hl-9">0x59e3</span><span class="hl-0">, </span><span class="hl-9">0x0a23</span><span class="hl-0">);</span><br/><br/><span class="hl-2">if</span><span class="hl-0"> (</span><span class="hl-3">device</span><span class="hl-0">) {</span><br/><span class="hl-0">    </span><span class="hl-3">console</span><span class="hl-0">.</span><span class="hl-8">log</span><span class="hl-0">(</span><span class="hl-3">device</span><span class="hl-0">); </span><span class="hl-1">// Legacy device</span><br/><span class="hl-0">}</span>
-</code></pre>
-
-<a href="#find-legacy-device-by-serialnumber" id="find-legacy-device-by-serialnumber" style="color: inherit; text-decoration: none;">
-  <h2>Find legacy device by SerialNumber</h2>
-</a>
-<pre><code class="language-typescript"><span class="hl-2">import</span><span class="hl-0"> { </span><span class="hl-3">findBySerialNumber</span><span class="hl-0"> } </span><span class="hl-2">from</span><span class="hl-0"> </span><span class="hl-4">&#39;usb&#39;</span><span class="hl-0">;</span><br/><br/><span class="hl-0">(</span><span class="hl-5">async</span><span class="hl-0"> () </span><span class="hl-5">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">    </span><span class="hl-1">// Uses a blocking call, so is async</span><br/><span class="hl-0">    </span><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">device</span><span class="hl-0"> = </span><span class="hl-2">await</span><span class="hl-0"> </span><span class="hl-8">findBySerialNumber</span><span class="hl-0">(</span><span class="hl-4">&#39;TEST_DEVICE&#39;</span><span class="hl-0">);</span><br/><br/><span class="hl-0">    </span><span class="hl-2">if</span><span class="hl-0"> (</span><span class="hl-3">device</span><span class="hl-0">) {</span><br/><span class="hl-0">        </span><span class="hl-3">console</span><span class="hl-0">.</span><span class="hl-8">log</span><span class="hl-0">(</span><span class="hl-3">device</span><span class="hl-0">); </span><span class="hl-1">// Legacy device</span><br/><span class="hl-0">    }</span><br/><span class="hl-0">})();</span>
-</code></pre>
-
-<a href="#turn-legacy-device-into-webusb-compatible-device" id="turn-legacy-device-into-webusb-compatible-device" style="color: inherit; text-decoration: none;">
-  <h2>Turn legacy Device into WebUSB compatible device</h2>
-</a>
-<pre><code class="language-typescript"><span class="hl-2">import</span><span class="hl-0"> { </span><span class="hl-3">findBySerialNumber</span><span class="hl-0">, </span><span class="hl-3">WebUSBDevice</span><span class="hl-0"> } </span><span class="hl-2">from</span><span class="hl-0"> </span><span class="hl-4">&#39;usb&#39;</span><span class="hl-0">;</span><br/><br/><span class="hl-0">(</span><span class="hl-5">async</span><span class="hl-0"> () </span><span class="hl-5">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">    </span><span class="hl-1">// Uses a blocking call, so is async</span><br/><span class="hl-0">    </span><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">device</span><span class="hl-0"> = </span><span class="hl-2">await</span><span class="hl-0"> </span><span class="hl-8">findBySerialNumber</span><span class="hl-0">(</span><span class="hl-4">&#39;TEST_DEVICE&#39;</span><span class="hl-0">);</span><br/><br/><span class="hl-0">    </span><span class="hl-1">// Uses blocking calls, so is async</span><br/><span class="hl-0">    </span><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">webDevice</span><span class="hl-0"> = </span><span class="hl-2">await</span><span class="hl-0"> </span><span class="hl-3">WebUSBDevice</span><span class="hl-0">.</span><span class="hl-8">createInstance</span><span class="hl-0">(</span><span class="hl-3">device</span><span class="hl-0">);</span><br/><br/><span class="hl-0">    </span><span class="hl-2">if</span><span class="hl-0"> (</span><span class="hl-3">webDevice</span><span class="hl-0">) {</span><br/><span class="hl-0">        </span><span class="hl-3">console</span><span class="hl-0">.</span><span class="hl-8">log</span><span class="hl-0">(</span><span class="hl-3">webDevice</span><span class="hl-0">); </span><span class="hl-1">// WebUSB device</span><br/><span class="hl-0">    }</span><br/><span class="hl-0">})();</span>
-</code></pre>
-
-<a href="#use-webusb-approach-to-find-a-device" id="use-webusb-approach-to-find-a-device" style="color: inherit; text-decoration: none;">
-  <h2>Use WebUSB approach to find a device</h2>
-</a>
-<pre><code class="language-typescript"><span class="hl-2">import</span><span class="hl-0"> { </span><span class="hl-3">webusb</span><span class="hl-0"> } </span><span class="hl-2">from</span><span class="hl-0"> </span><span class="hl-4">&#39;usb&#39;</span><span class="hl-0">;</span><br/><br/><span class="hl-0">(</span><span class="hl-5">async</span><span class="hl-0"> () </span><span class="hl-5">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">    </span><span class="hl-1">// Returns first matching device</span><br/><span class="hl-0">    </span><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">device</span><span class="hl-0"> = </span><span class="hl-2">await</span><span class="hl-0"> </span><span class="hl-3">webusb</span><span class="hl-0">.</span><span class="hl-8">requestDevice</span><span class="hl-0">({</span><br/><span class="hl-0">        </span><span class="hl-3">filters:</span><span class="hl-0"> [{}]</span><br/><span class="hl-0">    })</span><br/><br/><span class="hl-0">    </span><span class="hl-3">console</span><span class="hl-0">.</span><span class="hl-8">log</span><span class="hl-0">(</span><span class="hl-3">device</span><span class="hl-0">); </span><span class="hl-1">// WebUSB device</span><br/><span class="hl-0">})();</span>
-</code></pre>
-
-<a href="#use-webusb-approach-to-find-a-device-with-custom-selection-method" id="use-webusb-approach-to-find-a-device-with-custom-selection-method" style="color: inherit; text-decoration: none;">
-  <h2>Use WebUSB approach to find a device with custom selection method</h2>
-</a>
-<pre><code class="language-typescript"><span class="hl-2">import</span><span class="hl-0"> { </span><span class="hl-3">WebUSB</span><span class="hl-0"> } </span><span class="hl-2">from</span><span class="hl-0"> </span><span class="hl-4">&#39;usb&#39;</span><span class="hl-0">;</span><br/><br/><span class="hl-0">(</span><span class="hl-5">async</span><span class="hl-0"> () </span><span class="hl-5">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">    </span><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">customWebUSB</span><span class="hl-0"> = </span><span class="hl-5">new</span><span class="hl-0"> </span><span class="hl-8">WebUSB</span><span class="hl-0">({</span><br/><span class="hl-0">        </span><span class="hl-1">// This function can return a promise which allows a UI to be displayed if required</span><br/><span class="hl-0">        </span><span class="hl-8">devicesFound</span><span class="hl-3">:</span><span class="hl-0"> </span><span class="hl-3">devices</span><span class="hl-0"> </span><span class="hl-5">=&gt;</span><span class="hl-0"> </span><span class="hl-3">devices</span><span class="hl-0">.</span><span class="hl-8">find</span><span class="hl-0">(</span><span class="hl-3">device</span><span class="hl-0"> </span><span class="hl-5">=&gt;</span><span class="hl-0"> </span><span class="hl-3">device</span><span class="hl-0">.</span><span class="hl-3">serialNumber</span><span class="hl-0"> === </span><span class="hl-4">&#39;TEST_DEVICE&#39;</span><span class="hl-0">)</span><br/><span class="hl-0">    });</span><br/><br/><span class="hl-0">    </span><span class="hl-1">// Returns device based on injected &#39;devicesFound&#39; function</span><br/><span class="hl-0">    </span><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">device</span><span class="hl-0"> = </span><span class="hl-2">await</span><span class="hl-0"> </span><span class="hl-3">customWebUSB</span><span class="hl-0">.</span><span class="hl-8">requestDevice</span><span class="hl-0">({</span><br/><span class="hl-0">        </span><span class="hl-3">filters:</span><span class="hl-0"> [{}]</span><br/><span class="hl-0">    })</span><br/><br/><span class="hl-0">    </span><span class="hl-3">console</span><span class="hl-0">.</span><span class="hl-8">log</span><span class="hl-0">(</span><span class="hl-3">device</span><span class="hl-0">); </span><span class="hl-1">// WebUSB device</span><br/><span class="hl-0">})();</span>
-</code></pre>
-
-<a href="#use-webusb-approach-to-list-authorised-devices" id="use-webusb-approach-to-list-authorised-devices" style="color: inherit; text-decoration: none;">
-  <h2>Use WebUSB approach to list authorised devices</h2>
-</a>
-<pre><code class="language-typescript"><span class="hl-2">import</span><span class="hl-0"> { </span><span class="hl-3">webusb</span><span class="hl-0"> } </span><span class="hl-2">from</span><span class="hl-0"> </span><span class="hl-4">&#39;usb&#39;</span><span class="hl-0">;</span><br/><br/><span class="hl-0">(</span><span class="hl-5">async</span><span class="hl-0"> () </span><span class="hl-5">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">    </span><span class="hl-1">// The default webusb instance follows the WebUSB spec and only returns authorised devices</span><br/><span class="hl-0">    </span><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">devices</span><span class="hl-0"> = </span><span class="hl-2">await</span><span class="hl-0"> </span><span class="hl-3">webusb</span><span class="hl-0">.</span><span class="hl-8">getDevices</span><span class="hl-0">();</span><br/><br/><span class="hl-0">    </span><span class="hl-2">for</span><span class="hl-0"> (</span><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">device</span><span class="hl-0"> </span><span class="hl-5">of</span><span class="hl-0"> </span><span class="hl-3">devices</span><span class="hl-0">) {</span><br/><span class="hl-0">        </span><span class="hl-3">console</span><span class="hl-0">.</span><span class="hl-8">log</span><span class="hl-0">(</span><span class="hl-3">device</span><span class="hl-0">); </span><span class="hl-1">// WebUSB device</span><br/><span class="hl-0">    }</span><br/><span class="hl-0">})();</span>
-</code></pre>
-
-<a href="#use-webusb-approach-to-list-all-devices" id="use-webusb-approach-to-list-all-devices" style="color: inherit; text-decoration: none;">
-  <h2>Use WebUSB approach to list all devices</h2>
-</a>
-<pre><code class="language-typescript"><span class="hl-2">import</span><span class="hl-0"> { </span><span class="hl-3">WebUSB</span><span class="hl-0"> } </span><span class="hl-2">from</span><span class="hl-0"> </span><span class="hl-4">&#39;usb&#39;</span><span class="hl-0">;</span><br/><br/><span class="hl-0">(</span><span class="hl-5">async</span><span class="hl-0"> () </span><span class="hl-5">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">    </span><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">customWebUSB</span><span class="hl-0"> = </span><span class="hl-5">new</span><span class="hl-0"> </span><span class="hl-8">WebUSB</span><span class="hl-0">({</span><br/><span class="hl-0">        </span><span class="hl-1">// Bypass checking for authorised devices</span><br/><span class="hl-0">        </span><span class="hl-3">allowAllDevices:</span><span class="hl-0"> </span><span class="hl-5">true</span><br/><span class="hl-0">    });</span><br/><br/><span class="hl-0">    </span><span class="hl-1">// Uses blocking calls, so is async</span><br/><span class="hl-0">    </span><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">devices</span><span class="hl-0"> = </span><span class="hl-2">await</span><span class="hl-0"> </span><span class="hl-3">customWebUSB</span><span class="hl-0">.</span><span class="hl-8">getDevices</span><span class="hl-0">();</span><br/><br/><span class="hl-0">    </span><span class="hl-2">for</span><span class="hl-0"> (</span><span class="hl-5">const</span><span class="hl-0"> </span><span class="hl-6">device</span><span class="hl-0"> </span><span class="hl-5">of</span><span class="hl-0"> </span><span class="hl-3">devices</span><span class="hl-0">) {</span><br/><span class="hl-0">        </span><span class="hl-3">console</span><span class="hl-0">.</span><span class="hl-8">log</span><span class="hl-0">(</span><span class="hl-3">device</span><span class="hl-0">); </span><span class="hl-1">// WebUSB device</span><br/><span class="hl-0">    }</span><br/><span class="hl-0">})();</span>
-</code></pre>
-
-<a href="#electron" id="electron" style="color: inherit; text-decoration: none;">
-  <h2>Electron</h2>
-</a>
-<p>Please refer to the maintained example for using <code>node-usb</code> in electron:</p>
+<pre><code class="language-typescript"><span class="hl-3">// import * as usb from &#39;usb&#39;;</span><br/><span class="hl-3">// const devices: usb.Device[] = usb.getDeviceList();</span><br/><br/><span class="hl-4">import</span><span class="hl-1"> { </span><span class="hl-5">usb</span><span class="hl-1">, </span><span class="hl-5">getDeviceList</span><span class="hl-1"> } </span><span class="hl-4">from</span><span class="hl-1"> </span><span class="hl-2">&#39;usb&#39;</span><span class="hl-1">;</span><br/><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-7">devices</span><span class="hl-1">: </span><span class="hl-8">usb</span><span class="hl-1">.</span><span class="hl-8">Device</span><span class="hl-1">[] = </span><span class="hl-0">getDeviceList</span><span class="hl-1">();</span>
+</code><button>Copy</button></pre>
+<a id="md:list-all-legacy-devices" class="tsd-anchor"></a><h2><a href="#md:list-all-legacy-devices">List all legacy devices</a></h2><pre><code class="language-typescript"><span class="hl-4">import</span><span class="hl-1"> { </span><span class="hl-5">getDeviceList</span><span class="hl-1"> } </span><span class="hl-4">from</span><span class="hl-1"> </span><span class="hl-2">&#39;usb&#39;</span><span class="hl-1">;</span><br/><br/><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-7">devices</span><span class="hl-1"> = </span><span class="hl-0">getDeviceList</span><span class="hl-1">();</span><br/><br/><span class="hl-4">for</span><span class="hl-1"> (</span><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-7">device</span><span class="hl-1"> </span><span class="hl-6">of</span><span class="hl-1"> </span><span class="hl-5">devices</span><span class="hl-1">) {</span><br/><span class="hl-1">    </span><span class="hl-5">console</span><span class="hl-1">.</span><span class="hl-0">log</span><span class="hl-1">(</span><span class="hl-5">device</span><span class="hl-1">); </span><span class="hl-3">// Legacy device</span><br/><span class="hl-1">}</span>
+</code><button>Copy</button></pre>
+<a id="md:find-legacy-device-by-vidpid" class="tsd-anchor"></a><h2><a href="#md:find-legacy-device-by-vidpid">Find legacy device by vid/pid</a></h2><pre><code class="language-typescript"><span class="hl-4">import</span><span class="hl-1"> { </span><span class="hl-5">findByIds</span><span class="hl-1"> } </span><span class="hl-4">from</span><span class="hl-1"> </span><span class="hl-2">&#39;usb&#39;</span><span class="hl-1">;</span><br/><br/><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-7">device</span><span class="hl-1"> = </span><span class="hl-0">findByIds</span><span class="hl-1">(</span><span class="hl-9">0x59e3</span><span class="hl-1">, </span><span class="hl-9">0x0a23</span><span class="hl-1">);</span><br/><br/><span class="hl-4">if</span><span class="hl-1"> (</span><span class="hl-5">device</span><span class="hl-1">) {</span><br/><span class="hl-1">    </span><span class="hl-5">console</span><span class="hl-1">.</span><span class="hl-0">log</span><span class="hl-1">(</span><span class="hl-5">device</span><span class="hl-1">); </span><span class="hl-3">// Legacy device</span><br/><span class="hl-1">}</span>
+</code><button>Copy</button></pre>
+<a id="md:find-legacy-device-by-serialnumber" class="tsd-anchor"></a><h2><a href="#md:find-legacy-device-by-serialnumber">Find legacy device by SerialNumber</a></h2><pre><code class="language-typescript"><span class="hl-4">import</span><span class="hl-1"> { </span><span class="hl-5">findBySerialNumber</span><span class="hl-1"> } </span><span class="hl-4">from</span><span class="hl-1"> </span><span class="hl-2">&#39;usb&#39;</span><span class="hl-1">;</span><br/><br/><span class="hl-1">(</span><span class="hl-6">async</span><span class="hl-1"> () </span><span class="hl-6">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-3">// Uses a blocking call, so is async</span><br/><span class="hl-1">    </span><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-7">device</span><span class="hl-1"> = </span><span class="hl-4">await</span><span class="hl-1"> </span><span class="hl-0">findBySerialNumber</span><span class="hl-1">(</span><span class="hl-2">&#39;TEST_DEVICE&#39;</span><span class="hl-1">);</span><br/><br/><span class="hl-1">    </span><span class="hl-4">if</span><span class="hl-1"> (</span><span class="hl-5">device</span><span class="hl-1">) {</span><br/><span class="hl-1">        </span><span class="hl-5">console</span><span class="hl-1">.</span><span class="hl-0">log</span><span class="hl-1">(</span><span class="hl-5">device</span><span class="hl-1">); </span><span class="hl-3">// Legacy device</span><br/><span class="hl-1">    }</span><br/><span class="hl-1">})();</span>
+</code><button>Copy</button></pre>
+<a id="md:turn-legacy-device-into-webusb-compatible-device" class="tsd-anchor"></a><h2><a href="#md:turn-legacy-device-into-webusb-compatible-device">Turn legacy Device into WebUSB compatible device</a></h2><pre><code class="language-typescript"><span class="hl-4">import</span><span class="hl-1"> { </span><span class="hl-5">findBySerialNumber</span><span class="hl-1">, </span><span class="hl-5">WebUSBDevice</span><span class="hl-1"> } </span><span class="hl-4">from</span><span class="hl-1"> </span><span class="hl-2">&#39;usb&#39;</span><span class="hl-1">;</span><br/><br/><span class="hl-1">(</span><span class="hl-6">async</span><span class="hl-1"> () </span><span class="hl-6">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-3">// Uses a blocking call, so is async</span><br/><span class="hl-1">    </span><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-7">device</span><span class="hl-1"> = </span><span class="hl-4">await</span><span class="hl-1"> </span><span class="hl-0">findBySerialNumber</span><span class="hl-1">(</span><span class="hl-2">&#39;TEST_DEVICE&#39;</span><span class="hl-1">);</span><br/><br/><span class="hl-1">    </span><span class="hl-3">// Uses blocking calls, so is async</span><br/><span class="hl-1">    </span><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-7">webDevice</span><span class="hl-1"> = </span><span class="hl-4">await</span><span class="hl-1"> </span><span class="hl-5">WebUSBDevice</span><span class="hl-1">.</span><span class="hl-0">createInstance</span><span class="hl-1">(</span><span class="hl-5">device</span><span class="hl-1">);</span><br/><br/><span class="hl-1">    </span><span class="hl-4">if</span><span class="hl-1"> (</span><span class="hl-5">webDevice</span><span class="hl-1">) {</span><br/><span class="hl-1">        </span><span class="hl-5">console</span><span class="hl-1">.</span><span class="hl-0">log</span><span class="hl-1">(</span><span class="hl-5">webDevice</span><span class="hl-1">); </span><span class="hl-3">// WebUSB device</span><br/><span class="hl-1">    }</span><br/><span class="hl-1">})();</span>
+</code><button>Copy</button></pre>
+<a id="md:use-webusb-approach-to-find-a-device" class="tsd-anchor"></a><h2><a href="#md:use-webusb-approach-to-find-a-device">Use WebUSB approach to find a device</a></h2><pre><code class="language-typescript"><span class="hl-4">import</span><span class="hl-1"> { </span><span class="hl-5">webusb</span><span class="hl-1"> } </span><span class="hl-4">from</span><span class="hl-1"> </span><span class="hl-2">&#39;usb&#39;</span><span class="hl-1">;</span><br/><br/><span class="hl-1">(</span><span class="hl-6">async</span><span class="hl-1"> () </span><span class="hl-6">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-3">// Returns first matching device</span><br/><span class="hl-1">    </span><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-7">device</span><span class="hl-1"> = </span><span class="hl-4">await</span><span class="hl-1"> </span><span class="hl-5">webusb</span><span class="hl-1">.</span><span class="hl-0">requestDevice</span><span class="hl-1">({</span><br/><span class="hl-1">        </span><span class="hl-5">filters:</span><span class="hl-1"> [{}]</span><br/><span class="hl-1">    })</span><br/><br/><span class="hl-1">    </span><span class="hl-5">console</span><span class="hl-1">.</span><span class="hl-0">log</span><span class="hl-1">(</span><span class="hl-5">device</span><span class="hl-1">); </span><span class="hl-3">// WebUSB device</span><br/><span class="hl-1">})();</span>
+</code><button>Copy</button></pre>
+<a id="md:use-webusb-approach-to-find-a-device-with-custom-selection-method" class="tsd-anchor"></a><h2><a href="#md:use-webusb-approach-to-find-a-device-with-custom-selection-method">Use WebUSB approach to find a device with custom selection method</a></h2><pre><code class="language-typescript"><span class="hl-4">import</span><span class="hl-1"> { </span><span class="hl-5">WebUSB</span><span class="hl-1"> } </span><span class="hl-4">from</span><span class="hl-1"> </span><span class="hl-2">&#39;usb&#39;</span><span class="hl-1">;</span><br/><br/><span class="hl-1">(</span><span class="hl-6">async</span><span class="hl-1"> () </span><span class="hl-6">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-7">customWebUSB</span><span class="hl-1"> = </span><span class="hl-6">new</span><span class="hl-1"> </span><span class="hl-0">WebUSB</span><span class="hl-1">({</span><br/><span class="hl-1">        </span><span class="hl-3">// This function can return a promise which allows a UI to be displayed if required</span><br/><span class="hl-1">        </span><span class="hl-0">devicesFound</span><span class="hl-5">:</span><span class="hl-1"> </span><span class="hl-5">devices</span><span class="hl-1"> </span><span class="hl-6">=&gt;</span><span class="hl-1"> </span><span class="hl-5">devices</span><span class="hl-1">.</span><span class="hl-0">find</span><span class="hl-1">(</span><span class="hl-5">device</span><span class="hl-1"> </span><span class="hl-6">=&gt;</span><span class="hl-1"> </span><span class="hl-5">device</span><span class="hl-1">.</span><span class="hl-5">serialNumber</span><span class="hl-1"> === </span><span class="hl-2">&#39;TEST_DEVICE&#39;</span><span class="hl-1">)</span><br/><span class="hl-1">    });</span><br/><br/><span class="hl-1">    </span><span class="hl-3">// Returns device based on injected &#39;devicesFound&#39; function</span><br/><span class="hl-1">    </span><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-7">device</span><span class="hl-1"> = </span><span class="hl-4">await</span><span class="hl-1"> </span><span class="hl-5">customWebUSB</span><span class="hl-1">.</span><span class="hl-0">requestDevice</span><span class="hl-1">({</span><br/><span class="hl-1">        </span><span class="hl-5">filters:</span><span class="hl-1"> [{}]</span><br/><span class="hl-1">    })</span><br/><br/><span class="hl-1">    </span><span class="hl-5">console</span><span class="hl-1">.</span><span class="hl-0">log</span><span class="hl-1">(</span><span class="hl-5">device</span><span class="hl-1">); </span><span class="hl-3">// WebUSB device</span><br/><span class="hl-1">})();</span>
+</code><button>Copy</button></pre>
+<a id="md:use-webusb-approach-to-list-authorised-devices" class="tsd-anchor"></a><h2><a href="#md:use-webusb-approach-to-list-authorised-devices">Use WebUSB approach to list authorised devices</a></h2><pre><code class="language-typescript"><span class="hl-4">import</span><span class="hl-1"> { </span><span class="hl-5">webusb</span><span class="hl-1"> } </span><span class="hl-4">from</span><span class="hl-1"> </span><span class="hl-2">&#39;usb&#39;</span><span class="hl-1">;</span><br/><br/><span class="hl-1">(</span><span class="hl-6">async</span><span class="hl-1"> () </span><span class="hl-6">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-3">// The default webusb instance follows the WebUSB spec and only returns authorised devices</span><br/><span class="hl-1">    </span><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-7">devices</span><span class="hl-1"> = </span><span class="hl-4">await</span><span class="hl-1"> </span><span class="hl-5">webusb</span><span class="hl-1">.</span><span class="hl-0">getDevices</span><span class="hl-1">();</span><br/><br/><span class="hl-1">    </span><span class="hl-4">for</span><span class="hl-1"> (</span><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-7">device</span><span class="hl-1"> </span><span class="hl-6">of</span><span class="hl-1"> </span><span class="hl-5">devices</span><span class="hl-1">) {</span><br/><span class="hl-1">        </span><span class="hl-5">console</span><span class="hl-1">.</span><span class="hl-0">log</span><span class="hl-1">(</span><span class="hl-5">device</span><span class="hl-1">); </span><span class="hl-3">// WebUSB device</span><br/><span class="hl-1">    }</span><br/><span class="hl-1">})();</span>
+</code><button>Copy</button></pre>
+<a id="md:use-webusb-approach-to-list-all-devices" class="tsd-anchor"></a><h2><a href="#md:use-webusb-approach-to-list-all-devices">Use WebUSB approach to list all devices</a></h2><pre><code class="language-typescript"><span class="hl-4">import</span><span class="hl-1"> { </span><span class="hl-5">WebUSB</span><span class="hl-1"> } </span><span class="hl-4">from</span><span class="hl-1"> </span><span class="hl-2">&#39;usb&#39;</span><span class="hl-1">;</span><br/><br/><span class="hl-1">(</span><span class="hl-6">async</span><span class="hl-1"> () </span><span class="hl-6">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-7">customWebUSB</span><span class="hl-1"> = </span><span class="hl-6">new</span><span class="hl-1"> </span><span class="hl-0">WebUSB</span><span class="hl-1">({</span><br/><span class="hl-1">        </span><span class="hl-3">// Bypass checking for authorised devices</span><br/><span class="hl-1">        </span><span class="hl-5">allowAllDevices:</span><span class="hl-1"> </span><span class="hl-6">true</span><br/><span class="hl-1">    });</span><br/><br/><span class="hl-1">    </span><span class="hl-3">// Uses blocking calls, so is async</span><br/><span class="hl-1">    </span><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-7">devices</span><span class="hl-1"> = </span><span class="hl-4">await</span><span class="hl-1"> </span><span class="hl-5">customWebUSB</span><span class="hl-1">.</span><span class="hl-0">getDevices</span><span class="hl-1">();</span><br/><br/><span class="hl-1">    </span><span class="hl-4">for</span><span class="hl-1"> (</span><span class="hl-6">const</span><span class="hl-1"> </span><span class="hl-7">device</span><span class="hl-1"> </span><span class="hl-6">of</span><span class="hl-1"> </span><span class="hl-5">devices</span><span class="hl-1">) {</span><br/><span class="hl-1">        </span><span class="hl-5">console</span><span class="hl-1">.</span><span class="hl-0">log</span><span class="hl-1">(</span><span class="hl-5">device</span><span class="hl-1">); </span><span class="hl-3">// WebUSB device</span><br/><span class="hl-1">    }</span><br/><span class="hl-1">})();</span>
+</code><button>Copy</button></pre>
+<a id="md:electron" class="tsd-anchor"></a><h2><a href="#md:electron">Electron</a></h2><p>Please refer to the maintained example for using <code>node-usb</code> in electron:</p>
 <p><a href="https://github.com/node-usb/node-usb-example-electron">https://github.com/node-usb/node-usb-example-electron</a></p>
-
-<a href="#apis" id="apis" style="color: inherit; text-decoration: none;">
-  <h1>APIs</h1>
-</a>
-<p>Since <code>v2.0.0</code>, the <code>node-usb</code> library supports two APIs:</p>
+<a id="md:apis" class="tsd-anchor"></a><h1><a href="#md:apis">APIs</a></h1><p>Since <code>v2.0.0</code>, the <code>node-usb</code> library supports two APIs:</p>
 <ul>
 <li><code>WebUSB</code> which follows the <a href="https://wicg.github.io/webusb/">WebUSB Specification</a> (recommended)</li>
 <li><code>Legacy API</code> which retains the previous &#39;non-blocking&#39; API</li>
@@ -138,63 +58,19 @@
 <p>Convenience methods also exist to easily list or find devices as well as convert between a legacy usb.Device device and WebUSB device.</p>
 <p>Full auto-generated API documentation can be seen here:</p>
 <p><a href="https://node-usb.github.io/node-usb/">https://node-usb.github.io/node-usb/</a></p>
-
-<a href="#convenience-functions" id="convenience-functions" style="color: inherit; text-decoration: none;">
-  <h2>Convenience Functions</h2>
-</a>
-
-<a href="#getdevicelist" id="getdevicelist" style="color: inherit; text-decoration: none;">
-  <h3>getDeviceList()</h3>
-</a>
-<p>Return a list of legacy <code>Device</code> objects for the USB devices attached to the system.</p>
-
-<a href="#findbyidsvid-pid" id="findbyidsvid-pid" style="color: inherit; text-decoration: none;">
-  <h3>findByIds(vid, pid)</h3>
-</a>
-<p>Convenience method to get the first legacy device with the specified VID and PID, or <code>undefined</code> if no such device is present.</p>
-
-<a href="#findbyserialnumberserialnumber" id="findbyserialnumberserialnumber" style="color: inherit; text-decoration: none;">
-  <h3>findBySerialNumber(serialNumber)</h3>
-</a>
-<p>Convenience method to get a promise of the legacy device with the specified serial number, or <code>undefined</code> if no such device is present.</p>
-
-<a href="#getwebusb" id="getwebusb" style="color: inherit; text-decoration: none;">
-  <h3>getWebUsb()</h3>
-</a>
-<p>Return the <code>navigator.usb</code> instance if it exists, otherwise a <code>webusb</code> instance.</p>
-
-<a href="#webusbdevice" id="webusbdevice" style="color: inherit; text-decoration: none;">
-  <h3>WebUSBDevice</h3>
-</a>
-<p>WebUSB Device class for wrapping a legacy Device into a WebUSB device</p>
-
-<a href="#webusbdevicecreateinstancedevice" id="webusbdevicecreateinstancedevice" style="color: inherit; text-decoration: none;">
-  <h4>WebUSBDevice.createInstance(device)</h4>
-</a>
-<p>Convenience method to return a promise of a WebUSB device based on a legacy device</p>
-
-<a href="#webusb" id="webusb" style="color: inherit; text-decoration: none;">
-  <h2>WebUSB</h2>
-</a>
-<p>Please refer to the WebUSB specification which be found here:</p>
+<a id="md:convenience-functions" class="tsd-anchor"></a><h2><a href="#md:convenience-functions">Convenience Functions</a></h2><a id="md:getdevicelist" class="tsd-anchor"></a><h3><a href="#md:getdevicelist">getDeviceList()</a></h3><p>Return a list of legacy <code>Device</code> objects for the USB devices attached to the system.</p>
+<a id="md:findbyidsvid-pid" class="tsd-anchor"></a><h3><a href="#md:findbyidsvid-pid">findByIds(vid, pid)</a></h3><p>Convenience method to get the first legacy device with the specified VID and PID, or <code>undefined</code> if no such device is present.</p>
+<a id="md:findbyserialnumberserialnumber" class="tsd-anchor"></a><h3><a href="#md:findbyserialnumberserialnumber">findBySerialNumber(serialNumber)</a></h3><p>Convenience method to get a promise of the legacy device with the specified serial number, or <code>undefined</code> if no such device is present.</p>
+<a id="md:getwebusb" class="tsd-anchor"></a><h3><a href="#md:getwebusb">getWebUsb()</a></h3><p>Return the <code>navigator.usb</code> instance if it exists, otherwise a <code>webusb</code> instance.</p>
+<a id="md:webusbdevice" class="tsd-anchor"></a><h3><a href="#md:webusbdevice">WebUSBDevice</a></h3><p>WebUSB Device class for wrapping a legacy Device into a WebUSB device</p>
+<a id="md:webusbdevicecreateinstancedevice" class="tsd-anchor"></a><h4><a href="#md:webusbdevicecreateinstancedevice">WebUSBDevice.createInstance(device)</a></h4><p>Convenience method to return a promise of a WebUSB device based on a legacy device</p>
+<a id="md:webusb" class="tsd-anchor"></a><h2><a href="#md:webusb">WebUSB</a></h2><p>Please refer to the WebUSB specification which be found here:</p>
 <p><a href="https://wicg.github.io/webusb/">https://wicg.github.io/webusb/</a></p>
-
-<a href="#implementation-status" id="implementation-status" style="color: inherit; text-decoration: none;">
-  <h3>Implementation Status</h3>
-</a>
-
-<a href="#usb" id="usb" style="color: inherit; text-decoration: none;">
-  <h4>USB</h4>
-</a>
-<ul>
+<a id="md:implementation-status" class="tsd-anchor"></a><h3><a href="#md:implementation-status">Implementation Status</a></h3><a id="md:usb" class="tsd-anchor"></a><h4><a href="#md:usb">USB</a></h4><ul>
 <li><input checked="" disabled="" type="checkbox"> getDevices()</li>
 <li><input checked="" disabled="" type="checkbox"> requestDevice()</li>
 </ul>
-
-<a href="#usbdevice" id="usbdevice" style="color: inherit; text-decoration: none;">
-  <h4>USBDevice</h4>
-</a>
-<ul>
+<a id="md:usbdevice" class="tsd-anchor"></a><h4><a href="#md:usbdevice">USBDevice</a></h4><ul>
 <li><input checked="" disabled="" type="checkbox"> usbVersionMajor</li>
 <li><input checked="" disabled="" type="checkbox"> usbVersionMinor</li>
 <li><input checked="" disabled="" type="checkbox"> usbVersionSubminor</li>
@@ -228,73 +104,21 @@
 <li><input disabled="" type="checkbox"> isochronousTransferOut()</li>
 <li><input disabled="" type="checkbox"> forget()</li>
 </ul>
-
-<a href="#events" id="events" style="color: inherit; text-decoration: none;">
-  <h4>Events</h4>
-</a>
-<ul>
+<a id="md:events" class="tsd-anchor"></a><h4><a href="#md:events">Events</a></h4><ul>
 <li><input checked="" disabled="" type="checkbox"> connect</li>
 <li><input checked="" disabled="" type="checkbox"> disconnect</li>
 </ul>
-
-<a href="#legacy-api" id="legacy-api" style="color: inherit; text-decoration: none;">
-  <h2>Legacy API</h2>
-</a>
-
-<a href="#usb-1" id="usb-1" style="color: inherit; text-decoration: none;">
-  <h3>usb</h3>
-</a>
-<p>Legacy usb object.</p>
-
-<a href="#usblibusb_" id="usblibusb_" style="color: inherit; text-decoration: none;">
-  <h4>usb.LIBUSB_*</h4>
-</a>
-<p>Constant properties from libusb</p>
-
-<a href="#usbgetdevicelist" id="usbgetdevicelist" style="color: inherit; text-decoration: none;">
-  <h4>usb.getDeviceList()</h4>
-</a>
-<p>Return a list of legacy <code>Device</code> objects for the USB devices attached to the system.</p>
-
-<a href="#usbpollhotplug" id="usbpollhotplug" style="color: inherit; text-decoration: none;">
-  <h4>usb.pollHotplug</h4>
-</a>
-<p>Force polling loop for hotplug events.</p>
-
-<a href="#usbsetdebuglevellevel--int" id="usbsetdebuglevellevel--int" style="color: inherit; text-decoration: none;">
-  <h4>usb.setDebugLevel(level : int)</h4>
-</a>
-<p>Set the libusb debug level (between 0 and 4)</p>
-
-<a href="#usbuseusbdkbackend" id="usbuseusbdkbackend" style="color: inherit; text-decoration: none;">
-  <h4>usb.useUsbDkBackend()</h4>
-</a>
-<p>On Windows, use the USBDK backend of libusb instead of WinUSB</p>
-
-<a href="#device" id="device" style="color: inherit; text-decoration: none;">
-  <h3>Device</h3>
-</a>
-<p>Represents a USB device.</p>
-
-<a href="#busnumber" id="busnumber" style="color: inherit; text-decoration: none;">
-  <h4>.busNumber</h4>
-</a>
-<p>Integer USB device number</p>
-
-<a href="#deviceaddress" id="deviceaddress" style="color: inherit; text-decoration: none;">
-  <h4>.deviceAddress</h4>
-</a>
-<p>Integer USB device address</p>
-
-<a href="#portnumbers" id="portnumbers" style="color: inherit; text-decoration: none;">
-  <h4>.portNumbers</h4>
-</a>
-<p>Array containing the USB device port numbers, or <code>undefined</code> if not supported on this platform.</p>
-
-<a href="#devicedescriptor" id="devicedescriptor" style="color: inherit; text-decoration: none;">
-  <h4>.deviceDescriptor</h4>
-</a>
-<p>Object with properties for the fields of the device descriptor:</p>
+<a id="md:legacy-api" class="tsd-anchor"></a><h2><a href="#md:legacy-api">Legacy API</a></h2><a id="md:usb-1" class="tsd-anchor"></a><h3><a href="#md:usb-1">usb</a></h3><p>Legacy usb object.</p>
+<a id="md:usblibusb_" class="tsd-anchor"></a><h4><a href="#md:usblibusb_">usb.LIBUSB_*</a></h4><p>Constant properties from libusb</p>
+<a id="md:usbgetdevicelist" class="tsd-anchor"></a><h4><a href="#md:usbgetdevicelist">usb.getDeviceList()</a></h4><p>Return a list of legacy <code>Device</code> objects for the USB devices attached to the system.</p>
+<a id="md:usbpollhotplug" class="tsd-anchor"></a><h4><a href="#md:usbpollhotplug">usb.pollHotplug</a></h4><p>Force polling loop for hotplug events.</p>
+<a id="md:usbsetdebuglevellevel--int" class="tsd-anchor"></a><h4><a href="#md:usbsetdebuglevellevel--int">usb.setDebugLevel(level : int)</a></h4><p>Set the libusb debug level (between 0 and 4)</p>
+<a id="md:usbuseusbdkbackend" class="tsd-anchor"></a><h4><a href="#md:usbuseusbdkbackend">usb.useUsbDkBackend()</a></h4><p>On Windows, use the USBDK backend of libusb instead of WinUSB</p>
+<a id="md:device" class="tsd-anchor"></a><h3><a href="#md:device">Device</a></h3><p>Represents a USB device.</p>
+<a id="md:busnumber" class="tsd-anchor"></a><h4><a href="#md:busnumber">.busNumber</a></h4><p>Integer USB device number</p>
+<a id="md:deviceaddress" class="tsd-anchor"></a><h4><a href="#md:deviceaddress">.deviceAddress</a></h4><p>Integer USB device address</p>
+<a id="md:portnumbers" class="tsd-anchor"></a><h4><a href="#md:portnumbers">.portNumbers</a></h4><p>Array containing the USB device port numbers, or <code>undefined</code> if not supported on this platform.</p>
+<a id="md:devicedescriptor" class="tsd-anchor"></a><h4><a href="#md:devicedescriptor">.deviceDescriptor</a></h4><p>Object with properties for the fields of the device descriptor:</p>
 <ul>
 <li>bLength</li>
 <li>bDescriptorType</li>
@@ -311,11 +135,7 @@
 <li>iSerialNumber</li>
 <li>bNumConfigurations</li>
 </ul>
-
-<a href="#configdescriptor" id="configdescriptor" style="color: inherit; text-decoration: none;">
-  <h4>.configDescriptor</h4>
-</a>
-<p>Object with properties for the fields of the configuration descriptor:</p>
+<a id="md:configdescriptor" class="tsd-anchor"></a><h4><a href="#md:configdescriptor">.configDescriptor</a></h4><p>Object with properties for the fields of the configuration descriptor:</p>
 <ul>
 <li>bLength</li>
 <li>bDescriptorType</li>
@@ -327,140 +147,40 @@
 <li>bMaxPower</li>
 <li>extra (Buffer containing any extra data or additional descriptors)</li>
 </ul>
-
-<a href="#allconfigdescriptors" id="allconfigdescriptors" style="color: inherit; text-decoration: none;">
-  <h4>.allConfigDescriptors</h4>
-</a>
-<p>Contains all config descriptors of the device (same structure as .configDescriptor above)</p>
-
-<a href="#parent" id="parent" style="color: inherit; text-decoration: none;">
-  <h4>.parent</h4>
-</a>
-<p>Contains the parent of the device, such as a hub. If there is no parent this property is set to <code>null</code>.</p>
-
-<a href="#open" id="open" style="color: inherit; text-decoration: none;">
-  <h4>.open()</h4>
-</a>
-<p>Open the device. All methods below require the device to be open before use.</p>
-
-<a href="#close" id="close" style="color: inherit; text-decoration: none;">
-  <h4>.close()</h4>
-</a>
-<p>Close the device.</p>
-
-<a href="#controltransferbmrequesttype-brequest-wvalue-windex-data_or_length-callbackerror-data" id="controltransferbmrequesttype-brequest-wvalue-windex-data_or_length-callbackerror-data" style="color: inherit; text-decoration: none;">
-  <h4>.controlTransfer(bmRequestType, bRequest, wValue, wIndex, data_or_length, callback(error, data))</h4>
-</a>
-<p>Perform a control transfer with <code>libusb_control_transfer</code>.</p>
+<a id="md:allconfigdescriptors" class="tsd-anchor"></a><h4><a href="#md:allconfigdescriptors">.allConfigDescriptors</a></h4><p>Contains all config descriptors of the device (same structure as .configDescriptor above)</p>
+<a id="md:parent" class="tsd-anchor"></a><h4><a href="#md:parent">.parent</a></h4><p>Contains the parent of the device, such as a hub. If there is no parent this property is set to <code>null</code>.</p>
+<a id="md:open" class="tsd-anchor"></a><h4><a href="#md:open">.open()</a></h4><p>Open the device. All methods below require the device to be open before use.</p>
+<a id="md:close" class="tsd-anchor"></a><h4><a href="#md:close">.close()</a></h4><p>Close the device.</p>
+<a id="md:controltransferbmrequesttype-brequest-wvalue-windex-data_or_length-callbackerror-data" class="tsd-anchor"></a><h4><a href="#md:controltransferbmrequesttype-brequest-wvalue-windex-data_or_length-callbackerror-data">.controlTransfer(bmRequestType, bRequest, wValue, wIndex, data_or_length, callback(error, data))</a></h4><p>Perform a control transfer with <code>libusb_control_transfer</code>.</p>
 <p>Parameter <code>data_or_length</code> can be a integer length for an IN transfer, or a Buffer for an out transfer. The type must match the direction specified in the MSB of bmRequestType.</p>
 <p>The <code>data</code> parameter of the callback is always undefined for OUT transfers, or will be passed a Buffer for IN transfers.</p>
 <p>A <a href="https://www.npmjs.com/package/bmrequesttype">package is available to calculate bmRequestType</a> if needed.</p>
-
-<a href="#setconfigurationid-callbackerror" id="setconfigurationid-callbackerror" style="color: inherit; text-decoration: none;">
-  <h4>.setConfiguration(id, callback(error))</h4>
-</a>
-<p>Set the device configuration to something other than the default (0). To use this, first call <code>.open(false)</code> (which tells it not to auto configure), then before claiming an interface, call this method.</p>
-
-<a href="#getstringdescriptorindex-callbackerror-data" id="getstringdescriptorindex-callbackerror-data" style="color: inherit; text-decoration: none;">
-  <h4>.getStringDescriptor(index, callback(error, data))</h4>
-</a>
-<p>Perform a control transfer to retrieve a string descriptor</p>
-
-<a href="#getbosdescriptorcallbackerror-bosdescriptor" id="getbosdescriptorcallbackerror-bosdescriptor" style="color: inherit; text-decoration: none;">
-  <h4>.getBosDescriptor(callback(error, bosDescriptor))</h4>
-</a>
-<p>Perform a control transfer to retrieve an object with properties for the fields of the Binary Object Store descriptor:</p>
+<a id="md:setconfigurationid-callbackerror" class="tsd-anchor"></a><h4><a href="#md:setconfigurationid-callbackerror">.setConfiguration(id, callback(error))</a></h4><p>Set the device configuration to something other than the default (0). To use this, first call <code>.open(false)</code> (which tells it not to auto configure), then before claiming an interface, call this method.</p>
+<a id="md:getstringdescriptorindex-callbackerror-data" class="tsd-anchor"></a><h4><a href="#md:getstringdescriptorindex-callbackerror-data">.getStringDescriptor(index, callback(error, data))</a></h4><p>Perform a control transfer to retrieve a string descriptor</p>
+<a id="md:getbosdescriptorcallbackerror-bosdescriptor" class="tsd-anchor"></a><h4><a href="#md:getbosdescriptorcallbackerror-bosdescriptor">.getBosDescriptor(callback(error, bosDescriptor))</a></h4><p>Perform a control transfer to retrieve an object with properties for the fields of the Binary Object Store descriptor:</p>
 <ul>
 <li>bLength</li>
 <li>bDescriptorType</li>
 <li>wTotalLength</li>
 <li>bNumDeviceCaps</li>
 </ul>
-
-<a href="#getcapabilitiescallbackerror-capabilities" id="getcapabilitiescallbackerror-capabilities" style="color: inherit; text-decoration: none;">
-  <h4>.getCapabilities(callback(error, capabilities))</h4>
-</a>
-<p>Retrieve a list of Capability objects for the Binary Object Store capabilities of the device.</p>
-
-<a href="#interfaceinterface" id="interfaceinterface" style="color: inherit; text-decoration: none;">
-  <h4>.interface(interface)</h4>
-</a>
-<p>Return the interface with the specified interface number.</p>
-
-<a href="#interfaces" id="interfaces" style="color: inherit; text-decoration: none;">
-  <h4>.interfaces</h4>
-</a>
-<p>List of Interface objects for the interfaces of the default configuration of the device.</p>
-
-<a href="#timeout" id="timeout" style="color: inherit; text-decoration: none;">
-  <h4>.timeout</h4>
-</a>
-<p>Timeout in milliseconds to use for control transfers.</p>
-
-<a href="#resetcallbackerror" id="resetcallbackerror" style="color: inherit; text-decoration: none;">
-  <h4>.reset(callback(error))</h4>
-</a>
-<p>Performs a reset of the device. Callback is called when complete.</p>
-
-<a href="#interface" id="interface" style="color: inherit; text-decoration: none;">
-  <h3>Interface</h3>
-</a>
-
-<a href="#endpointaddress" id="endpointaddress" style="color: inherit; text-decoration: none;">
-  <h4>.endpoint(address)</h4>
-</a>
-<p>Return the InEndpoint or OutEndpoint with the specified address.</p>
-
-<a href="#endpoints" id="endpoints" style="color: inherit; text-decoration: none;">
-  <h4>.endpoints</h4>
-</a>
-<p>List of endpoints on this interface: InEndpoint and OutEndpoint objects.</p>
-
-<a href="#interface-1" id="interface-1" style="color: inherit; text-decoration: none;">
-  <h4>.interface</h4>
-</a>
-<p>Integer interface number.</p>
-
-<a href="#altsetting" id="altsetting" style="color: inherit; text-decoration: none;">
-  <h4>.altSetting</h4>
-</a>
-<p>Integer alternate setting number.</p>
-
-<a href="#setaltsettingaltsetting-callbackerror" id="setaltsettingaltsetting-callbackerror" style="color: inherit; text-decoration: none;">
-  <h4>.setAltSetting(altSetting, callback(error))</h4>
-</a>
-<p>Sets the alternate setting. It updates the <code>interface.endpoints</code> array to reflect the endpoints found in the alternate setting.</p>
-
-<a href="#claim" id="claim" style="color: inherit; text-decoration: none;">
-  <h4>.claim()</h4>
-</a>
-<p>Claims the interface. This method must be called before using any endpoints of this interface.</p>
-
-<a href="#releasecloseendpoints-callbackerror" id="releasecloseendpoints-callbackerror" style="color: inherit; text-decoration: none;">
-  <h4>.release([closeEndpoints], callback(error))</h4>
-</a>
-<p>Releases the interface and resets the alternate setting. Calls callback when complete.</p>
+<a id="md:getcapabilitiescallbackerror-capabilities" class="tsd-anchor"></a><h4><a href="#md:getcapabilitiescallbackerror-capabilities">.getCapabilities(callback(error, capabilities))</a></h4><p>Retrieve a list of Capability objects for the Binary Object Store capabilities of the device.</p>
+<a id="md:interfaceinterface" class="tsd-anchor"></a><h4><a href="#md:interfaceinterface">.interface(interface)</a></h4><p>Return the interface with the specified interface number.</p>
+<a id="md:interfaces" class="tsd-anchor"></a><h4><a href="#md:interfaces">.interfaces</a></h4><p>List of Interface objects for the interfaces of the default configuration of the device.</p>
+<a id="md:timeout" class="tsd-anchor"></a><h4><a href="#md:timeout">.timeout</a></h4><p>Timeout in milliseconds to use for control transfers.</p>
+<a id="md:resetcallbackerror" class="tsd-anchor"></a><h4><a href="#md:resetcallbackerror">.reset(callback(error))</a></h4><p>Performs a reset of the device. Callback is called when complete.</p>
+<a id="md:interface" class="tsd-anchor"></a><h3><a href="#md:interface">Interface</a></h3><a id="md:endpointaddress" class="tsd-anchor"></a><h4><a href="#md:endpointaddress">.endpoint(address)</a></h4><p>Return the InEndpoint or OutEndpoint with the specified address.</p>
+<a id="md:endpoints" class="tsd-anchor"></a><h4><a href="#md:endpoints">.endpoints</a></h4><p>List of endpoints on this interface: InEndpoint and OutEndpoint objects.</p>
+<a id="md:interface-1" class="tsd-anchor"></a><h4><a href="#md:interface-1">.interface</a></h4><p>Integer interface number.</p>
+<a id="md:altsetting" class="tsd-anchor"></a><h4><a href="#md:altsetting">.altSetting</a></h4><p>Integer alternate setting number.</p>
+<a id="md:setaltsettingaltsetting-callbackerror" class="tsd-anchor"></a><h4><a href="#md:setaltsettingaltsetting-callbackerror">.setAltSetting(altSetting, callback(error))</a></h4><p>Sets the alternate setting. It updates the <code>interface.endpoints</code> array to reflect the endpoints found in the alternate setting.</p>
+<a id="md:claim" class="tsd-anchor"></a><h4><a href="#md:claim">.claim()</a></h4><p>Claims the interface. This method must be called before using any endpoints of this interface.</p>
+<a id="md:releasecloseendpoints-callbackerror" class="tsd-anchor"></a><h4><a href="#md:releasecloseendpoints-callbackerror">.release([closeEndpoints], callback(error))</a></h4><p>Releases the interface and resets the alternate setting. Calls callback when complete.</p>
 <p>It is an error to release an interface with pending transfers. If the optional closeEndpoints parameter is true, any active endpoint streams are stopped (see <code>Endpoint.stopStream</code>), and the interface is released after the stream transfers are cancelled. Transfers submitted individually with <code>Endpoint.transfer</code> are not affected by this parameter.</p>
-
-<a href="#iskerneldriveractive" id="iskerneldriveractive" style="color: inherit; text-decoration: none;">
-  <h4>.isKernelDriverActive()</h4>
-</a>
-<p>Returns <code>false</code> if a kernel driver is not active; <code>true</code> if active.</p>
-
-<a href="#detachkerneldriver" id="detachkerneldriver" style="color: inherit; text-decoration: none;">
-  <h4>.detachKernelDriver()</h4>
-</a>
-<p>Detaches the kernel driver from the interface.</p>
-
-<a href="#attachkerneldriver" id="attachkerneldriver" style="color: inherit; text-decoration: none;">
-  <h4>.attachKernelDriver()</h4>
-</a>
-<p>Re-attaches the kernel driver for the interface.</p>
-
-<a href="#descriptor" id="descriptor" style="color: inherit; text-decoration: none;">
-  <h4>.descriptor</h4>
-</a>
-<p>Object with fields from the interface descriptor -- see libusb documentation or USB spec.</p>
+<a id="md:iskerneldriveractive" class="tsd-anchor"></a><h4><a href="#md:iskerneldriveractive">.isKernelDriverActive()</a></h4><p>Returns <code>false</code> if a kernel driver is not active; <code>true</code> if active.</p>
+<a id="md:detachkerneldriver" class="tsd-anchor"></a><h4><a href="#md:detachkerneldriver">.detachKernelDriver()</a></h4><p>Detaches the kernel driver from the interface.</p>
+<a id="md:attachkerneldriver" class="tsd-anchor"></a><h4><a href="#md:attachkerneldriver">.attachKernelDriver()</a></h4><p>Re-attaches the kernel driver for the interface.</p>
+<a id="md:descriptor" class="tsd-anchor"></a><h4><a href="#md:descriptor">.descriptor</a></h4><p>Object with fields from the interface descriptor -- see libusb documentation or USB spec.</p>
 <ul>
 <li>bLength</li>
 <li>bDescriptorType</li>
@@ -473,50 +193,18 @@
 <li>iInterface</li>
 <li>extra (Buffer containing any extra data or additional descriptors)</li>
 </ul>
-
-<a href="#capability" id="capability" style="color: inherit; text-decoration: none;">
-  <h3>Capability</h3>
-</a>
-
-<a href="#type" id="type" style="color: inherit; text-decoration: none;">
-  <h4>.type</h4>
-</a>
-<p>Integer capability type.</p>
-
-<a href="#data" id="data" style="color: inherit; text-decoration: none;">
-  <h4>.data</h4>
-</a>
-<p>Buffer capability data.</p>
-
-<a href="#descriptor-1" id="descriptor-1" style="color: inherit; text-decoration: none;">
-  <h4>.descriptor</h4>
-</a>
-<p>Object with fields from the capability descriptor -- see libusb documentation or USB spec.</p>
+<a id="md:capability" class="tsd-anchor"></a><h3><a href="#md:capability">Capability</a></h3><a id="md:type" class="tsd-anchor"></a><h4><a href="#md:type">.type</a></h4><p>Integer capability type.</p>
+<a id="md:data" class="tsd-anchor"></a><h4><a href="#md:data">.data</a></h4><p>Buffer capability data.</p>
+<a id="md:descriptor-1" class="tsd-anchor"></a><h4><a href="#md:descriptor-1">.descriptor</a></h4><p>Object with fields from the capability descriptor -- see libusb documentation or USB spec.</p>
 <ul>
 <li>bLength</li>
 <li>bDescriptorType</li>
 <li>bDevCapabilityType</li>
 </ul>
-
-<a href="#endpoint" id="endpoint" style="color: inherit; text-decoration: none;">
-  <h3>Endpoint</h3>
-</a>
-<p>Common base for InEndpoint and OutEndpoint, see below.</p>
-
-<a href="#direction" id="direction" style="color: inherit; text-decoration: none;">
-  <h4>.direction</h4>
-</a>
-<p>Endpoint direction: <code>&quot;in&quot;</code> or <code>&quot;out&quot;</code>.</p>
-
-<a href="#transfertype" id="transfertype" style="color: inherit; text-decoration: none;">
-  <h4>.transferType</h4>
-</a>
-<p>Endpoint type: <code>usb.LIBUSB_TRANSFER_TYPE_BULK</code>, <code>usb.LIBUSB_TRANSFER_TYPE_INTERRUPT</code>, or <code>usb.LIBUSB_TRANSFER_TYPE_ISOCHRONOUS</code>.</p>
-
-<a href="#descriptor-2" id="descriptor-2" style="color: inherit; text-decoration: none;">
-  <h4>.descriptor</h4>
-</a>
-<p>Object with fields from the endpoint descriptor -- see libusb documentation or USB spec.</p>
+<a id="md:endpoint" class="tsd-anchor"></a><h3><a href="#md:endpoint">Endpoint</a></h3><p>Common base for InEndpoint and OutEndpoint, see below.</p>
+<a id="md:direction" class="tsd-anchor"></a><h4><a href="#md:direction">.direction</a></h4><p>Endpoint direction: <code>&quot;in&quot;</code> or <code>&quot;out&quot;</code>.</p>
+<a id="md:transfertype" class="tsd-anchor"></a><h4><a href="#md:transfertype">.transferType</a></h4><p>Endpoint type: <code>usb.LIBUSB_TRANSFER_TYPE_BULK</code>, <code>usb.LIBUSB_TRANSFER_TYPE_INTERRUPT</code>, or <code>usb.LIBUSB_TRANSFER_TYPE_ISOCHRONOUS</code>.</p>
+<a id="md:descriptor-2" class="tsd-anchor"></a><h4><a href="#md:descriptor-2">.descriptor</a></h4><p>Object with fields from the endpoint descriptor -- see libusb documentation or USB spec.</p>
 <ul>
 <li>bLength</li>
 <li>bDescriptorType</li>
@@ -528,177 +216,61 @@
 <li>bSynchAddress</li>
 <li>extra (Buffer containing any extra data or additional descriptors)</li>
 </ul>
-
-<a href="#timeout-1" id="timeout-1" style="color: inherit; text-decoration: none;">
-  <h4>.timeout</h4>
-</a>
-<p>Sets the timeout in milliseconds for transfers on this endpoint. The default, <code>0</code>, is infinite timeout.</p>
-
-<a href="#clearhaltcallbackerror" id="clearhaltcallbackerror" style="color: inherit; text-decoration: none;">
-  <h4>.clearHalt(callback(error))</h4>
-</a>
-<p>Clear the halt/stall condition for this endpoint.</p>
-
-<a href="#inendpoint" id="inendpoint" style="color: inherit; text-decoration: none;">
-  <h3>InEndpoint</h3>
-</a>
-<p>Endpoints in the IN direction (device-&gt;PC) have this type.</p>
-
-<a href="#transferlength-callbackerror-data" id="transferlength-callbackerror-data" style="color: inherit; text-decoration: none;">
-  <h4>.transfer(length, callback(error, data))</h4>
-</a>
-<p>Perform a transfer to read data from the endpoint.</p>
+<a id="md:timeout-1" class="tsd-anchor"></a><h4><a href="#md:timeout-1">.timeout</a></h4><p>Sets the timeout in milliseconds for transfers on this endpoint. The default, <code>0</code>, is infinite timeout.</p>
+<a id="md:clearhaltcallbackerror" class="tsd-anchor"></a><h4><a href="#md:clearhaltcallbackerror">.clearHalt(callback(error))</a></h4><p>Clear the halt/stall condition for this endpoint.</p>
+<a id="md:inendpoint" class="tsd-anchor"></a><h3><a href="#md:inendpoint">InEndpoint</a></h3><p>Endpoints in the IN direction (device-&gt;PC) have this type.</p>
+<a id="md:transferlength-callbackerror-data" class="tsd-anchor"></a><h4><a href="#md:transferlength-callbackerror-data">.transfer(length, callback(error, data))</a></h4><p>Perform a transfer to read data from the endpoint.</p>
 <p>If length is greater than maxPacketSize, libusb will automatically split the transfer in multiple packets, and you will receive one callback with all data once all packets are complete.</p>
 <p><code>this</code> in the callback is the InEndpoint object.</p>
-
-<a href="#startpollntransfers3-transfersizemaxpacketsize" id="startpollntransfers3-transfersizemaxpacketsize" style="color: inherit; text-decoration: none;">
-  <h4>.startPoll(nTransfers=3, transferSize=maxPacketSize)</h4>
-</a>
-<p>Start polling the endpoint.</p>
+<a id="md:startpollntransfers3-transfersizemaxpacketsize" class="tsd-anchor"></a><h4><a href="#md:startpollntransfers3-transfersizemaxpacketsize">.startPoll(nTransfers=3, transferSize=maxPacketSize)</a></h4><p>Start polling the endpoint.</p>
 <p>The library will keep <code>nTransfers</code> transfers of size <code>transferSize</code> pending in
 the kernel at all times to ensure continuous data flow. This is handled by the
 libusb event thread, so it continues even if the Node v8 thread is busy. The
 <code>data</code> and <code>error</code> events are emitted as transfers complete.</p>
-
-<a href="#stoppollcb" id="stoppollcb" style="color: inherit; text-decoration: none;">
-  <h4>.stopPoll(cb)</h4>
-</a>
-<p>Stop polling.</p>
+<a id="md:stoppollcb" class="tsd-anchor"></a><h4><a href="#md:stoppollcb">.stopPoll(cb)</a></h4><p>Stop polling.</p>
 <p>Further data may still be received. The <code>end</code> event is emitted and the callback
 is called once all transfers have completed or canceled.</p>
-
-<a href="#event-datadata--buffer" id="event-datadata--buffer" style="color: inherit; text-decoration: none;">
-  <h4>Event: data(data : Buffer)</h4>
-</a>
-<p>Emitted with data received by the polling transfers</p>
-
-<a href="#event-errorerror" id="event-errorerror" style="color: inherit; text-decoration: none;">
-  <h4>Event: error(error)</h4>
-</a>
-<p>Emitted when polling encounters an error. All in flight transfers will be automatically canceled and no further polling will be done. You have to wait for the <code>end</code> event before you can start polling again.</p>
-
-<a href="#event-end" id="event-end" style="color: inherit; text-decoration: none;">
-  <h4>Event: end</h4>
-</a>
-<p>Emitted when polling has been canceled</p>
-
-<a href="#outendpoint" id="outendpoint" style="color: inherit; text-decoration: none;">
-  <h3>OutEndpoint</h3>
-</a>
-<p>Endpoints in the OUT direction (PC-&gt;device) have this type.</p>
-
-<a href="#transferdata-callbackerror" id="transferdata-callbackerror" style="color: inherit; text-decoration: none;">
-  <h4>.transfer(data, callback(error))</h4>
-</a>
-<p>Perform a transfer to write <code>data</code> to the endpoint.</p>
+<a id="md:event-datadata--buffer" class="tsd-anchor"></a><h4><a href="#md:event-datadata--buffer">Event: data(data : Buffer)</a></h4><p>Emitted with data received by the polling transfers</p>
+<a id="md:event-errorerror" class="tsd-anchor"></a><h4><a href="#md:event-errorerror">Event: error(error)</a></h4><p>Emitted when polling encounters an error. All in flight transfers will be automatically canceled and no further polling will be done. You have to wait for the <code>end</code> event before you can start polling again.</p>
+<a id="md:event-end" class="tsd-anchor"></a><h4><a href="#md:event-end">Event: end</a></h4><p>Emitted when polling has been canceled</p>
+<a id="md:outendpoint" class="tsd-anchor"></a><h3><a href="#md:outendpoint">OutEndpoint</a></h3><p>Endpoints in the OUT direction (PC-&gt;device) have this type.</p>
+<a id="md:transferdata-callbackerror" class="tsd-anchor"></a><h4><a href="#md:transferdata-callbackerror">.transfer(data, callback(error))</a></h4><p>Perform a transfer to write <code>data</code> to the endpoint.</p>
 <p>If length is greater than maxPacketSize, libusb will automatically split the transfer in multiple packets, and you will receive one callback once all packets are complete.</p>
 <p><code>this</code> in the callback is the OutEndpoint object.</p>
-
-<a href="#event-errorerror-1" id="event-errorerror-1" style="color: inherit; text-decoration: none;">
-  <h4>Event: error(error)</h4>
-</a>
-<p>Emitted when the stream encounters an error.</p>
-
-<a href="#event-end-1" id="event-end-1" style="color: inherit; text-decoration: none;">
-  <h4>Event: end</h4>
-</a>
-<p>Emitted when the stream has been stopped and all pending requests have been completed.</p>
-
-<a href="#usbdetection" id="usbdetection" style="color: inherit; text-decoration: none;">
-  <h3>UsbDetection</h3>
-</a>
-
-<a href="#usbon39attach39-functiondevice---" id="usbon39attach39-functiondevice---" style="color: inherit; text-decoration: none;">
-  <h4>usb.on(&#39;attach&#39;, function(device) { ... });</h4>
-</a>
-<p>Attaches a callback to plugging in a <code>device</code>.</p>
-
-<a href="#usbon39detach39-functiondevice---" id="usbon39detach39-functiondevice---" style="color: inherit; text-decoration: none;">
-  <h4>usb.on(&#39;detach&#39;, function(device) { ... });</h4>
-</a>
-<p>Attaches a callback to unplugging a <code>device</code>.</p>
-
-<a href="#usbrefhotplugevents" id="usbrefhotplugevents" style="color: inherit; text-decoration: none;">
-  <h4>usb.refHotplugEvents();</h4>
-</a>
-<p>Restore (re-reference) the hotplug events unreferenced by <code>unrefHotplugEvents()</code></p>
-
-<a href="#usbunrefhotplugevents" id="usbunrefhotplugevents" style="color: inherit; text-decoration: none;">
-  <h4>usb.unrefHotplugEvents();</h4>
-</a>
-<p>Listening to events will prevent the process to exit. By calling this function, hotplug events will be unreferenced by the event loop, allowing the process to exit even when listening for the <code>attach</code> and <code>detach</code> events.</p>
-
-<a href="#migrating-from-node-usb-detection" id="migrating-from-node-usb-detection" style="color: inherit; text-decoration: none;">
-  <h1>Migrating from node-usb-detection</h1>
-</a>
-<p>If you have been referred here by <code>node-usb-detection</code>, the following may be helpful for you to update your existing code.</p>
-
-<a href="#usbdetectstartmonitoring-amp-usbdetectstopmonitoring" id="usbdetectstartmonitoring-amp-usbdetectstopmonitoring" style="color: inherit; text-decoration: none;">
-  <h2>usbDetect.startMonitoring() &amp; usbDetect.stopMonitoring()</h2>
-</a>
-<p>There is no direct equivalent to these methods. This is handled automatically for you when you add and remove event listeners.</p>
+<a id="md:event-errorerror-1" class="tsd-anchor"></a><h4><a href="#md:event-errorerror-1">Event: error(error)</a></h4><p>Emitted when the stream encounters an error.</p>
+<a id="md:event-end-1" class="tsd-anchor"></a><h4><a href="#md:event-end-1">Event: end</a></h4><p>Emitted when the stream has been stopped and all pending requests have been completed.</p>
+<a id="md:usbdetection" class="tsd-anchor"></a><h3><a href="#md:usbdetection">UsbDetection</a></h3><a id="md:usbon39attach39-functiondevice---" class="tsd-anchor"></a><h4><a href="#md:usbon39attach39-functiondevice---">usb.on(&#39;attach&#39;, function(device) { ... });</a></h4><p>Attaches a callback to plugging in a <code>device</code>.</p>
+<a id="md:usbon39detach39-functiondevice---" class="tsd-anchor"></a><h4><a href="#md:usbon39detach39-functiondevice---">usb.on(&#39;detach&#39;, function(device) { ... });</a></h4><p>Attaches a callback to unplugging a <code>device</code>.</p>
+<a id="md:usbrefhotplugevents" class="tsd-anchor"></a><h4><a href="#md:usbrefhotplugevents">usb.refHotplugEvents();</a></h4><p>Restore (re-reference) the hotplug events unreferenced by <code>unrefHotplugEvents()</code></p>
+<a id="md:usbunrefhotplugevents" class="tsd-anchor"></a><h4><a href="#md:usbunrefhotplugevents">usb.unrefHotplugEvents();</a></h4><p>Listening to events will prevent the process to exit. By calling this function, hotplug events will be unreferenced by the event loop, allowing the process to exit even when listening for the <code>attach</code> and <code>detach</code> events.</p>
+<a id="md:migrating-from-node-usb-detection" class="tsd-anchor"></a><h1><a href="#md:migrating-from-node-usb-detection">Migrating from node-usb-detection</a></h1><p>If you have been referred here by <code>node-usb-detection</code>, the following may be helpful for you to update your existing code.</p>
+<a id="md:usbdetectstartmonitoring-amp-usbdetectstopmonitoring" class="tsd-anchor"></a><h2><a href="#md:usbdetectstartmonitoring-amp-usbdetectstopmonitoring">usbDetect.startMonitoring() &amp; usbDetect.stopMonitoring()</a></h2><p>There is no direct equivalent to these methods. This is handled automatically for you when you add and remove event listeners.</p>
 <p>You may find <code>usb.unrefHotplugEvents()</code> useful as it is intended to help with exit conditions.</p>
-
-<a href="#usbdetectfind" id="usbdetectfind" style="color: inherit; text-decoration: none;">
-  <h2>usbDetect.find()</h2>
-</a>
-<p>You can instead use <code>usb.getDeviceList()</code>. Be aware that this will do an enumeration to find all of the devices, and not look at a cache of the known devices. If you call it too often it may have a performance impact.</p>
+<a id="md:usbdetectfind" class="tsd-anchor"></a><h2><a href="#md:usbdetectfind">usbDetect.find()</a></h2><p>You can instead use <code>usb.getDeviceList()</code>. Be aware that this will do an enumeration to find all of the devices, and not look at a cache of the known devices. If you call it too often it may have a performance impact.</p>
 <p>To find a specific device by vid and pid, call <code>usb.findByIds</code>. e.g. <code>usb.findByIds(0x12, 0x34)</code>.</p>
-
-<a href="#usbdetecton39add39-functiondevice---" id="usbdetecton39add39-functiondevice---" style="color: inherit; text-decoration: none;">
-  <h2>usbDetect.on(&#39;add&#39;, function(device) { ... })</h2>
-</a>
-<p>These should be changed to <code>usb.on(&#39;attach&#39;, function(device) { ... })</code>.</p>
+<a id="md:usbdetecton39add39-functiondevice---" class="tsd-anchor"></a><h2><a href="#md:usbdetecton39add39-functiondevice---">usbDetect.on(&#39;add&#39;, function(device) { ... })</a></h2><p>These should be changed to <code>usb.on(&#39;attach&#39;, function(device) { ... })</code>.</p>
 <p>There is no equivalent to filter based on the vid or pid, instead you should do a check inside the callback you provide.<br>The contents of the device object has also changed.</p>
-
-<a href="#usbdetecton39remove39-functiondevice---" id="usbdetecton39remove39-functiondevice---" style="color: inherit; text-decoration: none;">
-  <h2>usbDetect.on(&#39;remove&#39;, function(device) { ... })</h2>
-</a>
-<p>These should be changed to <code>usb.on(&#39;detach&#39;, function(device) { ... })</code>.</p>
+<a id="md:usbdetecton39remove39-functiondevice---" class="tsd-anchor"></a><h2><a href="#md:usbdetecton39remove39-functiondevice---">usbDetect.on(&#39;remove&#39;, function(device) { ... })</a></h2><p>These should be changed to <code>usb.on(&#39;detach&#39;, function(device) { ... })</code>.</p>
 <p>There is no equivalent to filter based on the vid or pid, instead you should do a check inside the callback you provide.<br>The contents of the device object has also changed.</p>
-
-<a href="#usbdetecton39change39-functiondevice---" id="usbdetecton39change39-functiondevice---" style="color: inherit; text-decoration: none;">
-  <h2>usbDetect.on(&#39;change&#39;, function(device) { ... })</h2>
-</a>
-<p>There is no direct equivalent to this. Instead you can listen to both <code>attach</code> and <code>detach</code> to get the same behaviour.</p>
-
-<a href="#development" id="development" style="color: inherit; text-decoration: none;">
-  <h1>Development</h1>
-</a>
-<p>The library is based on native bindings wrapping the <a href="https://github.com/libusb/libusb">libusb</a> library.</p>
-
-<a href="#setup" id="setup" style="color: inherit; text-decoration: none;">
-  <h2>Setup</h2>
-</a>
-<p>Libusb is included as a submodule, clone this repository and then the submodule as follows:</p>
-<pre><code class="language-bash"><span class="hl-0">git clone https://github.com/node-usb/node-usb</span><br/><span class="hl-8">cd</span><span class="hl-0"> node-usb</span><br/><span class="hl-0">git submodule update --init</span>
-</code></pre>
-
-<a href="#building" id="building" style="color: inherit; text-decoration: none;">
-  <h2>Building</h2>
-</a>
-<p>The package uses <code>prebuildify</code> to generate the native binaries using an <code>install</code> script and <code>TypeScript</code> for the binding code using the <code>compile</code> script. The package can be built as follows:</p>
-<pre><code class="language-bash"><span class="hl-0">yarn</span><br/><span class="hl-0">yarn compile</span>
-</code></pre>
+<a id="md:usbdetecton39change39-functiondevice---" class="tsd-anchor"></a><h2><a href="#md:usbdetecton39change39-functiondevice---">usbDetect.on(&#39;change&#39;, function(device) { ... })</a></h2><p>There is no direct equivalent to this. Instead you can listen to both <code>attach</code> and <code>detach</code> to get the same behaviour.</p>
+<a id="md:development" class="tsd-anchor"></a><h1><a href="#md:development">Development</a></h1><p>The library is based on native bindings wrapping the <a href="https://github.com/libusb/libusb">libusb</a> library.</p>
+<a id="md:setup" class="tsd-anchor"></a><h2><a href="#md:setup">Setup</a></h2><p>Libusb is included as a submodule, clone this repository and then the submodule as follows:</p>
+<pre><code class="language-bash"><span class="hl-0">git</span><span class="hl-1"> </span><span class="hl-2">clone</span><span class="hl-1"> </span><span class="hl-2">https://github.com/node-usb/node-usb</span><br/><span class="hl-0">cd</span><span class="hl-1"> </span><span class="hl-2">node-usb</span><br/><span class="hl-0">git</span><span class="hl-1"> </span><span class="hl-2">submodule</span><span class="hl-1"> </span><span class="hl-2">update</span><span class="hl-1"> </span><span class="hl-6">--init</span>
+</code><button>Copy</button></pre>
+<a id="md:building" class="tsd-anchor"></a><h2><a href="#md:building">Building</a></h2><p>The package uses <code>prebuildify</code> to generate the native binaries using an <code>install</code> script and <code>TypeScript</code> for the binding code using the <code>compile</code> script. The package can be built as follows:</p>
+<pre><code class="language-bash"><span class="hl-0">yarn</span><br/><span class="hl-0">yarn</span><span class="hl-1"> </span><span class="hl-2">compile</span>
+</code><button>Copy</button></pre>
 <p>The native binaries can be rebuilt with:</p>
-<pre><code class="language-bash"><span class="hl-0">yarn rebuild</span>
-</code></pre>
+<pre><code class="language-bash"><span class="hl-0">yarn</span><span class="hl-1"> </span><span class="hl-2">rebuild</span>
+</code><button>Copy</button></pre>
 <p><strong>Note:</strong> On Linux, you&#39;ll need libudev to build libusb. On Ubuntu/Debian:</p>
-<pre><code class="language-bash"><span class="hl-0">sudo apt-get install build-essential libudev-dev</span>
-</code></pre>
-
-<a href="#testing" id="testing" style="color: inherit; text-decoration: none;">
-  <h2>Testing</h2>
-</a>
-<p>To execute the unit tests, Run:</p>
-<pre><code class="language-bash"><span class="hl-0">yarn </span><span class="hl-8">test</span>
-</code></pre>
+<pre><code class="language-bash"><span class="hl-0">sudo</span><span class="hl-1"> </span><span class="hl-2">apt-get</span><span class="hl-1"> </span><span class="hl-2">install</span><span class="hl-1"> </span><span class="hl-2">build-essential</span><span class="hl-1"> </span><span class="hl-2">libudev-dev</span>
+</code><button>Copy</button></pre>
+<a id="md:testing" class="tsd-anchor"></a><h2><a href="#md:testing">Testing</a></h2><p>To execute the unit tests, Run:</p>
+<pre><code class="language-bash"><span class="hl-0">yarn</span><span class="hl-1"> </span><span class="hl-2">test</span>
+</code><button>Copy</button></pre>
 <p>Some tests require an <a href="https://github.com/node-usb/node-usb-test-firmware">attached STM32F103 Microprocessor USB device with specific firmware</a>.</p>
-<pre><code class="language-bash"><span class="hl-0">yarn full-test</span><br/><span class="hl-0">yarn valgrind</span>
-</code></pre>
-
-<a href="#releasing" id="releasing" style="color: inherit; text-decoration: none;">
-  <h2>Releasing</h2>
-</a>
-<p>Please refer to the <a href="https://github.com/node-usb/node-usb/wiki/Release-Process">Wiki</a> for release instructions.</p>
-</div></div><div class="col-4 col-menu menu-sticky-wrap menu-highlight"><nav class="tsd-navigation primary"><ul><li class="current"><a href="modules.html">Exports</a></li><li class=" tsd-kind-namespace"><a href="modules/usb.html">usb</a></li></ul></nav><nav class="tsd-navigation secondary menu-sticky"><ul><li class="tsd-kind-reference"><a href="modules.html#Device" class="tsd-kind-icon">Device</a></li><li class="tsd-kind-reference"><a href="modules.html#DeviceEvents" class="tsd-kind-icon">Device<wbr/>Events</a></li><li class="tsd-kind-reference"><a href="modules.html#LibUSBException" class="tsd-kind-icon">LibUSBException</a></li><li class="tsd-kind-reference"><a href="modules.html#Transfer" class="tsd-kind-icon">Transfer</a></li><li class="tsd-kind-reference"><a href="modules.html#getDeviceList" class="tsd-kind-icon">get<wbr/>Device<wbr/>List</a></li><li class="tsd-kind-reference"><a href="modules.html#useUsbDkBackend" class="tsd-kind-icon">use<wbr/>Usb<wbr/>Dk<wbr/>Backend</a></li><li class="tsd-kind-class"><a href="classes/Capability.html" class="tsd-kind-icon">Capability</a></li><li class="tsd-kind-class"><a href="classes/Endpoint.html" class="tsd-kind-icon">Endpoint</a></li><li class="tsd-kind-class"><a href="classes/InEndpoint.html" class="tsd-kind-icon">In<wbr/>Endpoint</a></li><li class="tsd-kind-class"><a href="classes/Interface.html" class="tsd-kind-icon">Interface</a></li><li class="tsd-kind-class"><a href="classes/OutEndpoint.html" class="tsd-kind-icon">Out<wbr/>Endpoint</a></li><li class="tsd-kind-class"><a href="classes/WebUSB.html" class="tsd-kind-icon">WebUSB</a></li><li class="tsd-kind-class"><a href="classes/WebUSBDevice.html" class="tsd-kind-icon">WebUSBDevice</a></li><li class="tsd-kind-interface"><a href="interfaces/BosDescriptor.html" class="tsd-kind-icon">Bos<wbr/>Descriptor</a></li><li class="tsd-kind-interface"><a href="interfaces/CapabilityDescriptor.html" class="tsd-kind-icon">Capability<wbr/>Descriptor</a></li><li class="tsd-kind-interface"><a href="interfaces/ConfigDescriptor.html" class="tsd-kind-icon">Config<wbr/>Descriptor</a></li><li class="tsd-kind-interface"><a href="interfaces/DeviceDescriptor.html" class="tsd-kind-icon">Device<wbr/>Descriptor</a></li><li class="tsd-kind-interface"><a href="interfaces/EndpointDescriptor.html" class="tsd-kind-icon">Endpoint<wbr/>Descriptor</a></li><li class="tsd-kind-interface"><a href="interfaces/InterfaceDescriptor.html" class="tsd-kind-icon">Interface<wbr/>Descriptor</a></li><li class="tsd-kind-interface"><a href="interfaces/USBOptions.html" class="tsd-kind-icon">USBOptions</a></li><li class="tsd-kind-variable"><a href="modules.html#webusb" class="tsd-kind-icon">webusb</a></li><li class="tsd-kind-function"><a href="modules.html#findByIds" class="tsd-kind-icon">find<wbr/>By<wbr/>Ids</a></li><li class="tsd-kind-function"><a href="modules.html#findBySerialNumber" class="tsd-kind-icon">find<wbr/>By<wbr/>Serial<wbr/>Number</a></li><li class="tsd-kind-function"><a href="modules.html#getWebUsb" class="tsd-kind-icon">get<wbr/>Web<wbr/>Usb</a></li></ul></nav></div></div></div><footer class=""><div class="container"><h2>Legend</h2><div class="tsd-legend-group"><ul class="tsd-legend"><li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li><li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li><li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li><li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited property</span></li><li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-property tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected property</span></li><li class="tsd-kind-method tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected method</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-method tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static method</span></li></ul></div><h2>Settings</h2><p>Theme <select id="theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></p></div></footer><div class="overlay"></div><script src="assets/main.js"></script></body></html>
+<pre><code class="language-bash"><span class="hl-0">yarn</span><span class="hl-1"> </span><span class="hl-2">full-test</span><br/><span class="hl-0">yarn</span><span class="hl-1"> </span><span class="hl-2">valgrind</span>
+</code><button>Copy</button></pre>
+<a id="md:releasing" class="tsd-anchor"></a><h2><a href="#md:releasing">Releasing</a></h2><p>Please refer to the <a href="https://github.com/node-usb/node-usb/wiki/Release-Process">Wiki</a> for release instructions.</p>
+</div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-index-accordion"><summary class="tsd-accordion-summary"><h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><use href="assets/icons.svg#icon-chevronDown"></use></svg>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><h4 class="uppercase">Member Visibility</h4><form><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li></ul></form></div><div class="tsd-theme-toggle"><h4 class="uppercase">Theme</h4><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-index-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><use href="assets/icons.svg#icon-chevronDown"></use></svg>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#md:usb-library-for-nodejs"><span>USB <wbr/>Library for <wbr/>Node.JS</span></a><a href="#md:prerequisites"><span>Prerequisites</span></a><ul><li><a href="#md:windows"><span>Windows</span></a></li><li><a href="#md:linux"><span>Linux</span></a></li></ul><a href="#md:troubleshooting"><span>Troubleshooting</span></a><a href="#md:installation"><span>Installation</span></a><a href="#md:license"><span>License</span></a><a href="#md:limitations"><span>Limitations</span></a><a href="#md:getting-started"><span>Getting <wbr/>Started</span></a><ul><li><a href="#md:migrating-to-v200"><span>Migrating to v2.0.0</span></a></li><li><a href="#md:list-all-legacy-devices"><span>List all legacy devices</span></a></li><li><a href="#md:find-legacy-device-by-vidpid"><span>Find legacy device by vid/pid</span></a></li><li><a href="#md:find-legacy-device-by-serialnumber"><span>Find legacy device by <wbr/>Serial<wbr/>Number</span></a></li><li><a href="#md:turn-legacy-device-into-webusb-compatible-device"><span>Turn legacy <wbr/>Device into <wbr/>WebUSB compatible device</span></a></li><li><a href="#md:use-webusb-approach-to-find-a-device"><span>Use <wbr/>WebUSB approach to find a device</span></a></li><li><a href="#md:use-webusb-approach-to-find-a-device-with-custom-selection-method"><span>Use <wbr/>WebUSB approach to find a device with custom selection method</span></a></li><li><a href="#md:use-webusb-approach-to-list-authorised-devices"><span>Use <wbr/>WebUSB approach to list authorised devices</span></a></li><li><a href="#md:use-webusb-approach-to-list-all-devices"><span>Use <wbr/>WebUSB approach to list all devices</span></a></li><li><a href="#md:electron"><span>Electron</span></a></li></ul><a href="#md:apis"><span>APIs</span></a><ul><li><a href="#md:convenience-functions"><span>Convenience <wbr/>Functions</span></a></li><li><ul><li><a href="#md:getdevicelist"><span>get<wbr/>Device<wbr/>List()</span></a></li><li><a href="#md:findbyidsvid-pid"><span>find<wbr/>By<wbr/>Ids(vid, pid)</span></a></li><li><a href="#md:findbyserialnumberserialnumber"><span>find<wbr/>By<wbr/>Serial<wbr/>Number(serial<wbr/>Number)</span></a></li><li><a href="#md:getwebusb"><span>get<wbr/>Web<wbr/>Usb()</span></a></li><li><a href="#md:webusbdevice"><span>WebUSBDevice</span></a></li><li><ul><li><a href="#md:webusbdevicecreateinstancedevice"><span>WebUSBDevice.create<wbr/>Instance(device)</span></a></li></ul></li></ul></li><li><a href="#md:webusb"><span>WebUSB</span></a></li><li><ul><li><a href="#md:implementation-status"><span>Implementation <wbr/>Status</span></a></li><li><ul><li><a href="#md:usb"><span>USB</span></a></li><li><a href="#md:usbdevice"><span>USBDevice</span></a></li><li><a href="#md:events"><span>Events</span></a></li></ul></li></ul></li><li><a href="#md:legacy-api"><span>Legacy API</span></a></li><li><ul><li><a href="#md:usb-1"><span>usb</span></a></li><li><ul><li><a href="#md:usblibusb_"><span>usb.LIBUSB_<wbr/>*</span></a></li><li><a href="#md:usbgetdevicelist"><span>usb.get<wbr/>Device<wbr/>List()</span></a></li><li><a href="#md:usbpollhotplug"><span>usb.poll<wbr/>Hotplug</span></a></li><li><a href="#md:usbsetdebuglevellevel--int"><span>usb.set<wbr/>Debug<wbr/>Level(level : int)</span></a></li><li><a href="#md:usbuseusbdkbackend"><span>usb.use<wbr/>Usb<wbr/>Dk<wbr/>Backend()</span></a></li></ul></li><li><a href="#md:device"><span>Device</span></a></li><li><ul><li><a href="#md:busnumber"><span>.bus<wbr/>Number</span></a></li><li><a href="#md:deviceaddress"><span>.device<wbr/>Address</span></a></li><li><a href="#md:portnumbers"><span>.port<wbr/>Numbers</span></a></li><li><a href="#md:devicedescriptor"><span>.device<wbr/>Descriptor</span></a></li><li><a href="#md:configdescriptor"><span>.config<wbr/>Descriptor</span></a></li><li><a href="#md:allconfigdescriptors"><span>.all<wbr/>Config<wbr/>Descriptors</span></a></li><li><a href="#md:parent"><span>.parent</span></a></li><li><a href="#md:open"><span>.open()</span></a></li><li><a href="#md:close"><span>.close()</span></a></li><li><a href="#md:controltransferbmrequesttype-brequest-wvalue-windex-data_or_length-callbackerror-data"><span>.control<wbr/>Transfer(bm<wbr/>Request<wbr/>Type, b<wbr/>Request, w<wbr/>Value, w<wbr/>Index, data_<wbr/>or_<wbr/>length, callback(error, data))</span></a></li><li><a href="#md:setconfigurationid-callbackerror"><span>.set<wbr/>Configuration(id, callback(error))</span></a></li><li><a href="#md:getstringdescriptorindex-callbackerror-data"><span>.get<wbr/>String<wbr/>Descriptor(index, callback(error, data))</span></a></li><li><a href="#md:getbosdescriptorcallbackerror-bosdescriptor"><span>.get<wbr/>Bos<wbr/>Descriptor(callback(error, bos<wbr/>Descriptor))</span></a></li><li><a href="#md:getcapabilitiescallbackerror-capabilities"><span>.get<wbr/>Capabilities(callback(error, capabilities))</span></a></li><li><a href="#md:interfaceinterface"><span>.interface(interface)</span></a></li><li><a href="#md:interfaces"><span>.interfaces</span></a></li><li><a href="#md:timeout"><span>.timeout</span></a></li><li><a href="#md:resetcallbackerror"><span>.reset(callback(error))</span></a></li></ul></li><li><a href="#md:interface"><span>Interface</span></a></li><li><ul><li><a href="#md:endpointaddress"><span>.endpoint(address)</span></a></li><li><a href="#md:endpoints"><span>.endpoints</span></a></li><li><a href="#md:interface-1"><span>.interface</span></a></li><li><a href="#md:altsetting"><span>.alt<wbr/>Setting</span></a></li><li><a href="#md:setaltsettingaltsetting-callbackerror"><span>.set<wbr/>Alt<wbr/>Setting(alt<wbr/>Setting, callback(error))</span></a></li><li><a href="#md:claim"><span>.claim()</span></a></li><li><a href="#md:releasecloseendpoints-callbackerror"><span>.release([close<wbr/>Endpoints], callback(error))</span></a></li><li><a href="#md:iskerneldriveractive"><span>.is<wbr/>Kernel<wbr/>Driver<wbr/>Active()</span></a></li><li><a href="#md:detachkerneldriver"><span>.detach<wbr/>Kernel<wbr/>Driver()</span></a></li><li><a href="#md:attachkerneldriver"><span>.attach<wbr/>Kernel<wbr/>Driver()</span></a></li><li><a href="#md:descriptor"><span>.descriptor</span></a></li></ul></li><li><a href="#md:capability"><span>Capability</span></a></li><li><ul><li><a href="#md:type"><span>.type</span></a></li><li><a href="#md:data"><span>.data</span></a></li><li><a href="#md:descriptor-1"><span>.descriptor</span></a></li></ul></li><li><a href="#md:endpoint"><span>Endpoint</span></a></li><li><ul><li><a href="#md:direction"><span>.direction</span></a></li><li><a href="#md:transfertype"><span>.transfer<wbr/>Type</span></a></li><li><a href="#md:descriptor-2"><span>.descriptor</span></a></li><li><a href="#md:timeout-1"><span>.timeout</span></a></li><li><a href="#md:clearhaltcallbackerror"><span>.clear<wbr/>Halt(callback(error))</span></a></li></ul></li><li><a href="#md:inendpoint"><span>In<wbr/>Endpoint</span></a></li><li><ul><li><a href="#md:transferlength-callbackerror-data"><span>.transfer(length, callback(error, data))</span></a></li><li><a href="#md:startpollntransfers3-transfersizemaxpacketsize"><span>.start<wbr/>Poll(n<wbr/>Transfers=3, transfer<wbr/>Size=max<wbr/>Packet<wbr/>Size)</span></a></li><li><a href="#md:stoppollcb"><span>.stop<wbr/>Poll(cb)</span></a></li><li><a href="#md:event-datadata--buffer"><span>Event: data(data : <wbr/>Buffer)</span></a></li><li><a href="#md:event-errorerror"><span>Event: error(error)</span></a></li><li><a href="#md:event-end"><span>Event: end</span></a></li></ul></li><li><a href="#md:outendpoint"><span>Out<wbr/>Endpoint</span></a></li><li><ul><li><a href="#md:transferdata-callbackerror"><span>.transfer(data, callback(error))</span></a></li><li><a href="#md:event-errorerror-1"><span>Event: error(error)</span></a></li><li><a href="#md:event-end-1"><span>Event: end</span></a></li></ul></li><li><a href="#md:usbdetection"><span>Usb<wbr/>Detection</span></a></li><li><ul><li><a href="#md:usbon39attach39-functiondevice---"><span>usb.on(&#39;attach&#39;, function(device) { ... });</span></a></li><li><a href="#md:usbon39detach39-functiondevice---"><span>usb.on(&#39;detach&#39;, function(device) { ... });</span></a></li><li><a href="#md:usbrefhotplugevents"><span>usb.ref<wbr/>Hotplug<wbr/>Events();</span></a></li><li><a href="#md:usbunrefhotplugevents"><span>usb.unref<wbr/>Hotplug<wbr/>Events();</span></a></li></ul></li></ul></li></ul><a href="#md:migrating-from-node-usb-detection"><span>Migrating from node-<wbr/>usb-<wbr/>detection</span></a><ul><li><a href="#md:usbdetectstartmonitoring-amp-usbdetectstopmonitoring"><span>usb<wbr/>Detect.start<wbr/>Monitoring() &amp; usb<wbr/>Detect.stop<wbr/>Monitoring()</span></a></li><li><a href="#md:usbdetectfind"><span>usb<wbr/>Detect.find()</span></a></li><li><a href="#md:usbdetecton39add39-functiondevice---"><span>usb<wbr/>Detect.on(&#39;add&#39;, function(device) { ... })</span></a></li><li><a href="#md:usbdetecton39remove39-functiondevice---"><span>usb<wbr/>Detect.on(&#39;remove&#39;, function(device) { ... })</span></a></li><li><a href="#md:usbdetecton39change39-functiondevice---"><span>usb<wbr/>Detect.on(&#39;change&#39;, function(device) { ... })</span></a></li></ul><a href="#md:development"><span>Development</span></a><ul><li><a href="#md:setup"><span>Setup</span></a></li><li><a href="#md:building"><span>Building</span></a></li><li><a href="#md:testing"><span>Testing</span></a></li><li><a href="#md:releasing"><span>Releasing</span></a></li></ul></div></details></div><div class="site-menu"><nav class="tsd-navigation"><a href="modules.html" class="current"><svg class="tsd-kind-icon" viewBox="0 0 24 24"><use href="assets/icons.svg#icon-1"></use></svg><span>Node USB</span></a><ul class="tsd-small-nested-navigation" id="tsd-nav-container" data-base="."><li>Loading...</li></ul></nav></div></div></div><footer></footer><div class="overlay"></div></body></html>
