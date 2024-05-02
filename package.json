@@ -68,7 +68,7 @@
     "prebuildify-ci": "^1.0.5",
     "prebuildify-cross": "^5.0.0",
     "typedoc": "^0.22.10",
-    "typescript": "~4.2.4"
+    "typescript": "^5.4.5"
   },
   "binary": {
     "napi_versions": [
