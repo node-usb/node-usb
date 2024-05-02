@@ -231,13 +231,13 @@ export class WebUSBDevice implements USBDevice {
                 status: 'ok'
             };
         } catch (error) {
-            if (error.errno === usb.LIBUSB_TRANSFER_STALL) {
+            if ((error as usb.LibUSBException).errno === usb.LIBUSB_TRANSFER_STALL) {
                 return {
                     status: 'stall'
                 };
             }
 
-            if (error.errno === usb.LIBUSB_TRANSFER_OVERFLOW) {
+            if ((error as usb.LibUSBException).errno === usb.LIBUSB_TRANSFER_OVERFLOW) {
                 return {
                     status: 'babble'
                 };
@@ -259,7 +259,7 @@ export class WebUSBDevice implements USBDevice {
                 status: 'ok'
             };
         } catch (error) {
-            if (error.errno === usb.LIBUSB_TRANSFER_STALL) {
+            if ((error as usb.LibUSBException).errno === usb.LIBUSB_TRANSFER_STALL) {
                 return {
                     bytesWritten: 0,
                     status: 'stall'
@@ -290,13 +290,13 @@ export class WebUSBDevice implements USBDevice {
                 status: 'ok'
             };
         } catch (error) {
-            if (error.errno === usb.LIBUSB_TRANSFER_STALL) {
+            if ((error as usb.LibUSBException).errno === usb.LIBUSB_TRANSFER_STALL) {
                 return {
                     status: 'stall'
                 };
             }
 
-            if (error.errno === usb.LIBUSB_TRANSFER_OVERFLOW) {
+            if ((error as usb.LibUSBException).errno === usb.LIBUSB_TRANSFER_OVERFLOW) {
                 return {
                     status: 'babble'
                 };
@@ -318,7 +318,7 @@ export class WebUSBDevice implements USBDevice {
                 status: 'ok'
             };
         } catch (error) {
-            if (error.errno === usb.LIBUSB_TRANSFER_STALL) {
+            if ((error as usb.LibUSBException).errno === usb.LIBUSB_TRANSFER_STALL) {
                 return {
                     bytesWritten: 0,
                     status: 'stall'
