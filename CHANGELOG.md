@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.13.0] - 2024-05-26
+
+### Changed
+- Updated libusb to v1.0.27 - [`773`](https://github.com/node-usb/node-usb/pull/773) ([Rob Moran](https://github.com/thegecko))
+
+### Added
+- Added nullchecks and errorchecks in descriptor parsing - [`764`](https://github.com/node-usb/node-usb/pull/764) ([Seth Foster](https://github.com/sfoster1))
+
 ## [2.12.1] - 2024-03-09
 
 ### Changed
