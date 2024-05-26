@@ -55,7 +55,7 @@ __Note:__ the library is now written in `TypeScript`, so a separate types file i
 # License
 [MIT](LICENSE.md)
 
-Note that the compiled Node extension includes [libusb](https://github.com/libusb/libusb), and is thus subject to the [LGPL](https://github.com/libusb/libusb/blob/master/COPYING).
+Note that the compiled Node extension includes [libusb](https://github.com/libusb/libusb), and is thus subject to the [LGPL](https://github.com/libusb/libusb/blob/main/COPYING).
 
 # Limitations
 Does not support:
