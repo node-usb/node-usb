@@ -17,7 +17,7 @@ jobs:
       matrix:
         include:
           - name: darwin
-            os: macos-11
+            os: macos-12
             node: x64
             command: prebuild --arch x64+arm64
           - name: win32-x86
@@ -46,7 +46,7 @@ jobs:
     name: Build ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     steps:
-      - if: matrix.os == 'macos-11'
+      - if: matrix.os == 'macos-12'
         run: sudo -H pip install setuptools
       - if: matrix.node
         uses: actions/setup-node@v4
@@ -74,7 +74,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
-      - uses: softprops/action-gh-release@69320dbe05506a9a39fc8ae11030b214ec2d1f87
+      - uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
