@@ -114,6 +114,18 @@
   resolved "https://registry.yarnpkg.com/@pkgjs/parseargs/-/parseargs-0.11.0.tgz#a77ea742fab25775145434eb1d2328cf5013ac33"
   integrity sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==
 
+"@thegecko/docker-run@thegecko/docker-run#expose-version":
+  version "3.0.0"
+  uid "988c90a65da8e49cf2f325b3984def64f81fd111"
+  resolved "https://codeload.github.com/thegecko/docker-run/tar.gz/988c90a65da8e49cf2f325b3984def64f81fd111"
+  dependencies:
+    debug "^1.0.2"
+    docker-raw-stream "^1.3.0"
+    docker-remote-api "^4.4.0"
+    minimist "^1.1.0"
+    pump "^1.0.0"
+    through2 "^0.6.2"
+
 "@types/json-schema@^7.0.9":
   version "7.0.11"
   resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.11.tgz#d421b6c527a3037f7c84433fd2c4229e016863d3"
@@ -1138,18 +1150,6 @@ docker-remote-api@^4.4.0:
     once "^1.3.0"
     xtend "^3.0.0"
 
-docker-run@^3.1.0:
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/docker-run/-/docker-run-3.1.0.tgz#7300a50d6a18fc42da9c4b1eb714b10f46ccfe06"
-  integrity sha512-9Bt9AbCX5gUfqNoiwyeYmo3aNj9UlM15FvqUmj3SR+V4AsC+QkbDZasx66AXJHtNN1WalKLKe09vLEf1qZ/v3w==
-  dependencies:
-    debug "^1.0.2"
-    docker-raw-stream "^1.3.0"
-    docker-remote-api "^4.4.0"
-    minimist "^1.1.0"
-    pump "^1.0.0"
-    through2 "^0.6.2"
-
 doctrine@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/doctrine/-/doctrine-3.0.0.tgz#addebead72a6574db783639dc87a121773973961"
@@ -1200,9 +1200,9 @@ ecc-jsbn@~0.1.1:
     safer-buffer "^2.1.0"
 
 elliptic@^6.5.3, elliptic@^6.5.4:
-  version "6.5.4"
-  resolved "https://registry.yarnpkg.com/elliptic/-/elliptic-6.5.4.tgz#da37cebd31e79a1367e941b592ed1fbebd58abbb"
-  integrity sha512-iLhC6ULemrljPZb+QutR5TQGB+pdW6KGD5RSegS+8sorOZT+rdQFbsQFJgvN3eRqNALqJer4oQ16YvJHlU8hzQ==
+  version "6.5.7"
+  resolved "https://registry.yarnpkg.com/elliptic/-/elliptic-6.5.7.tgz#8ec4da2cb2939926a1b9a73619d768207e647c8b"
+  integrity sha512-ESVCtTwiA+XhY3wyh24QqRGBoP3rEdDUl3EDUUo9tft074fi19IrdpH7hLCMMP3CIj7jb3W96rn8lt/BqIlt5Q==
   dependencies:
     bn.js "^4.11.9"
     brorand "^1.1.0"
@@ -2878,14 +2878,14 @@ prebuildify-ci@^1.0.5:
     tar-fs "^1.16.0"
     unzipper "^0.9.11"
 
-prebuildify-cross@^5.0.0:
+prebuildify-cross@thegecko/prebuildify-cross#fix-docker:
   version "5.1.0"
-  resolved "https://registry.yarnpkg.com/prebuildify-cross/-/prebuildify-cross-5.1.0.tgz#0b03017d4357ba5f1578e1c5a6d7c19dfddcd946"
-  integrity sha512-OthEdNpp6irC18hzVUJ6t/b1xrgcY9lUw/kGG7xRmkuA4g9cH0HgaL6BWQuzjmAnafZ6b8rO9As+KqbUK37WHg==
+  uid cb71c7aecc046ff22c723b31cbc70e8447fddb15
+  resolved "https://codeload.github.com/thegecko/prebuildify-cross/tar.gz/cb71c7aecc046ff22c723b31cbc70e8447fddb15"
   dependencies:
+    "@thegecko/docker-run" thegecko/docker-run#expose-version
     "@vweevers/docker-pull" "^1.1.1"
     browserify "^17.0.0"
-    docker-run "^3.1.0"
     log-update "^4.0.0"
     minimist "^1.2.0"
     npm-packlist "^4.0.0"
