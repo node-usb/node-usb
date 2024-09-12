@@ -6,6 +6,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "@types/node"
 
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
