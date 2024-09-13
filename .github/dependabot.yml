@@ -8,6 +8,7 @@ updates:
       interval: "weekly"
     ignore:
       - dependency-name: "@types/node"
+      - dependency-name: "node-gyp"
 
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
