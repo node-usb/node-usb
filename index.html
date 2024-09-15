@@ -13,7 +13,7 @@
 </code><button type="button">Copy</button></pre>
 
 <p>You may need to modify your udev and permission rules in order to access your desired device. Along the lines of:</p>
-<p>SUBSYSTEM==&quot;usb&quot;, ATTR{idVendor}==&quot;<USB VENDOR ID>&quot;, ATTR{idProduct}==&quot;<USB PRODUCT ID>&quot;, MODE=&quot;0660&quot;, GROUP=&quot;<A GROUP YOUR USER IS IN>&quot;</p>
+<p>SUBSYSTEM==&quot;usb&quot;, ATTR{idVendor}==&quot;USB-VENDOR-ID&quot;, ATTR{idProduct}==&quot;USB-PRODUCT-ID&quot;, MODE=&quot;0660&quot;, GROUP=&quot;GROUP-YOUR-USER-IS-IN&quot;</p>
 <a id="md:troubleshooting" class="tsd-anchor"></a><h1 class="tsd-anchor-link">Troubleshooting<a href="#md:troubleshooting" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h1><p>For libusb issues, please refer to the FAQ at <a href="https://github.com/libusb/libusb/wiki/FAQ" target="_blank" class="external">https://github.com/libusb/libusb/wiki/FAQ</a></p>
 <a id="md:installation" class="tsd-anchor"></a><h1 class="tsd-anchor-link">Installation<a href="#md:installation" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h1><p>Native modules are bundled using <code>prebuildify</code>, so installation should be as simple as installing the package.</p>
 <p>With <code>npm</code>:</p>
