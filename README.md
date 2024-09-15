@@ -30,6 +30,10 @@ On Linux, you'll need libudev to build libusb if a prebuild is not available. On
 sudo apt-get install build-essential libudev-dev
 ```
 
+You may need to modify your udev and permission rules in order to access your desired device. Along the lines of:
+
+SUBSYSTEM=="usb", ATTR{idVendor}=="<USB VENDOR ID>", ATTR{idProduct}=="<USB PRODUCT ID>", MODE="0660", GROUP="<A GROUP YOUR USER IS IN>"
+
 # Troubleshooting
 
 For libusb issues, please refer to the FAQ at https://github.com/libusb/libusb/wiki/FAQ
@@ -202,6 +206,12 @@ import { WebUSB } from 'usb';
 Please refer to the maintained example for using `node-usb` in electron:
 
 https://github.com/node-usb/node-usb-example-electron
+
+If using a packaging system for electron, ensure the `node-usb` library does not get recompiled as the correct binaries are already shipped with the package. For example, for [electron-builder](https://www.electron.build/), use these settings:
+
+- buildDependenciesFromSource: true
+- nodeGypRebuild: false
+- npmRebuild: false
 
 # APIs
 Since `v2.0.0`, the `node-usb` library supports two APIs:
