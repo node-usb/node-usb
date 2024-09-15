@@ -110,7 +110,7 @@ void handleCompletion(Transfer* self){
                 Napi::Number::New(env, (uint32_t)self->transfer->actual_length) });
         }
         catch (const Napi::Error& e) {
-            Napi::Error::Fatal("", e.what());
+            e.ThrowAsJavaScriptException();
         }
     }
 
