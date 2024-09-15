@@ -12,6 +12,8 @@
 <pre><code class="bash"><span class="hl-0">sudo</span><span class="hl-1"> </span><span class="hl-2">apt-get</span><span class="hl-1"> </span><span class="hl-2">install</span><span class="hl-1"> </span><span class="hl-2">build-essential</span><span class="hl-1"> </span><span class="hl-2">libudev-dev</span>
 </code><button type="button">Copy</button></pre>
 
+<p>You may need to modify your udev and permission rules in order to access your desired device. Along the lines of:</p>
+<p>SUBSYSTEM==&quot;usb&quot;, ATTR{idVendor}==&quot;<USB VENDOR ID>&quot;, ATTR{idProduct}==&quot;<USB PRODUCT ID>&quot;, MODE=&quot;0660&quot;, GROUP=&quot;<A GROUP YOUR USER IS IN>&quot;</p>
 <a id="md:troubleshooting" class="tsd-anchor"></a><h1 class="tsd-anchor-link">Troubleshooting<a href="#md:troubleshooting" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h1><p>For libusb issues, please refer to the FAQ at <a href="https://github.com/libusb/libusb/wiki/FAQ" target="_blank" class="external">https://github.com/libusb/libusb/wiki/FAQ</a></p>
 <a id="md:installation" class="tsd-anchor"></a><h1 class="tsd-anchor-link">Installation<a href="#md:installation" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h1><p>Native modules are bundled using <code>prebuildify</code>, so installation should be as simple as installing the package.</p>
 <p>With <code>npm</code>:</p>
@@ -62,6 +64,12 @@
 
 <a id="md:electron" class="tsd-anchor"></a><h2 class="tsd-anchor-link">Electron<a href="#md:electron" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>Please refer to the maintained example for using <code>node-usb</code> in electron:</p>
 <p><a href="https://github.com/node-usb/node-usb-example-electron" target="_blank" class="external">https://github.com/node-usb/node-usb-example-electron</a></p>
+<p>If using a packaging system for electron, ensure the <code>node-usb</code> library does not get recompiled as the correct binaries are already shipped with the package. For example, for <a href="https://www.electron.build/" target="_blank" class="external">electron-builder</a>, use these settings:</p>
+<ul>
+<li>buildDependenciesFromSource: true</li>
+<li>nodeGypRebuild: false</li>
+<li>npmRebuild: false</li>
+</ul>
 <a id="md:apis" class="tsd-anchor"></a><h1 class="tsd-anchor-link">APIs<a href="#md:apis" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h1><p>Since <code>v2.0.0</code>, the <code>node-usb</code> library supports two APIs:</p>
 <ul>
 <li><code>WebUSB</code> which follows the <a href="https://wicg.github.io/webusb/" target="_blank" class="external">WebUSB Specification</a> (recommended)</li>
