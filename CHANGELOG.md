@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.14.0] - 2024-09-15
+
+### Fixed
+- Fixed fatal exceptions by using `ThrowAsJavaScriptException` instead of `Napi::Error::Fatal` - [`817`](https://github.com/node-usb/node-usb/pull/817) ([cleoo](https://github.com/cleoo))
+
 ## [2.13.0] - 2024-05-26
 
 ### Changed
