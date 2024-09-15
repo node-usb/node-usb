@@ -32,7 +32,7 @@ sudo apt-get install build-essential libudev-dev
 
 You may need to modify your udev and permission rules in order to access your desired device. Along the lines of:
 
-SUBSYSTEM=="usb", ATTR{idVendor}=="<USB VENDOR ID>", ATTR{idProduct}=="<USB PRODUCT ID>", MODE="0660", GROUP="<A GROUP YOUR USER IS IN>"
+SUBSYSTEM=="usb", ATTR{idVendor}=="USB-VENDOR-ID", ATTR{idProduct}=="USB-PRODUCT-ID", MODE="0660", GROUP="GROUP-YOUR-USER-IS-IN"
 
 # Troubleshooting
 
