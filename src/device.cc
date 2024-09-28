@@ -45,7 +45,7 @@ Napi::Object Device::get(Napi::Env env, libusb_device* dev) {
         auto value = it->second->Value();
         // JS object may have already been garbage collected
         if (!value.IsEmpty()) {
-            DEBUG_LOG("Found device %p", this);
+            DEBUG_LOG("Found device");
             uint8_t add = libusb_get_device_address(dev);
             DEBUG_LOG("Address %u", add);
             return value;
