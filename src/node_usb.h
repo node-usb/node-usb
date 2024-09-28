@@ -119,8 +119,12 @@ private:
         callback = info[CALLBACK_ARG_IDX].As<Napi::Function>(); \
     } \
 
-#define DEBUG_HEADER fprintf(stderr, "node-usb [%s:%s() %d]: ", __FILE__, __FUNCTION__, __LINE__);
-#define DEBUG_FOOTER fprintf(stderr, "\n");
-#define DEBUG_LOG(...) DEBUG_HEADER fprintf(stderr, __VA_ARGS__); DEBUG_FOOTER
+#ifdef DEBUG
+  #define DEBUG_HEADER fprintf(stderr, "node-usb [%s:%s() %d]: ", __FILE__, __FUNCTION__, __LINE__);
+  #define DEBUG_FOOTER fprintf(stderr, "\n");
+  #define DEBUG_LOG(...) DEBUG_HEADER fprintf(stderr, __VA_ARGS__); DEBUG_FOOTER
+#else
+  #define DEBUG_LOG(...)
+#endif
 
 #endif
