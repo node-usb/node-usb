@@ -46,11 +46,13 @@ Napi::Object Device::get(Napi::Env env, libusb_device* dev) {
         // JS object may have already been garbage collected
         if (!value.IsEmpty()) {
             DEBUG_LOG("Found device");
+            DEBUG_LOG("Address %u", libusb_get_device_address(dev);
             return value;
         }
     }
 
     Napi::Object obj = instanceData->deviceConstructor.New({ Napi::External<libusb_device>::New(env, dev) });
+    DEBUG_LOG("Address %u", libusb_get_device_address(dev);
     return obj;
 }
 
