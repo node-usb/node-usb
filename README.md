@@ -611,6 +611,8 @@ cd node-usb
 git submodule update --init
 ```
 
+Alternatively, if you want to build this library against your system `libusb` set the `use_system_libusb` variable to `true` in the [binding.gyp](./binding.gyp) and [libusb.gypi](./libusb.gypi) files.
+
 ## Building
 The package uses `prebuildify` to generate the native binaries using an `install` script and `TypeScript` for the binding code using the `compile` script. The package can be built as follows:
 
