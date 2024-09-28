@@ -280,6 +280,7 @@ The contents of the device object has also changed.</p>
 <pre><code class="bash"><span class="hl-0">git</span><span class="hl-1"> </span><span class="hl-2">clone</span><span class="hl-1"> </span><span class="hl-2">https://github.com/node-usb/node-usb</span><br/><span class="hl-0">cd</span><span class="hl-1"> </span><span class="hl-2">node-usb</span><br/><span class="hl-0">git</span><span class="hl-1"> </span><span class="hl-2">submodule</span><span class="hl-1"> </span><span class="hl-2">update</span><span class="hl-1"> </span><span class="hl-6">--init</span>
 </code><button type="button">Copy</button></pre>
 
+<p>Alternatively, if you want to build this library against your system <code>libusb</code> set the <code>use_system_libusb</code> variable to <code>true</code> in the <a href="media/binding.gyp">binding.gyp</a> and <a href="media/libusb.gypi">libusb.gypi</a> files.</p>
 <a id="md:building" class="tsd-anchor"></a><h2 class="tsd-anchor-link">Building<a href="#md:building" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>The package uses <code>prebuildify</code> to generate the native binaries using an <code>install</code> script and <code>TypeScript</code> for the binding code using the <code>compile</code> script. The package can be built as follows:</p>
 <pre><code class="bash"><span class="hl-0">yarn</span><br/><span class="hl-0">yarn</span><span class="hl-1"> </span><span class="hl-2">compile</span>
 </code><button type="button">Copy</button></pre>
