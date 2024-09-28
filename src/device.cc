@@ -46,10 +46,6 @@ Napi::Object Device::get(Napi::Env env, libusb_device* dev) {
         // JS object may have already been garbage collected
         if (!value.IsEmpty()) {
             DEBUG_LOG("Found device");
-            value.DefineProperty(Napi::PropertyDescriptor::Value("busNumber", Napi::Number::New(env, libusb_get_bus_number(dev)), CONST_PROP));
-            value.DefineProperty(Napi::PropertyDescriptor::Value("deviceAddress", Napi::Number::New(env, libusb_get_device_address(dev)), CONST_PROP));
-            // uint8_t add = libusb_get_device_address(dev);
-            // DEBUG_LOG("Address %u", add);
             return value;
         }
     }
