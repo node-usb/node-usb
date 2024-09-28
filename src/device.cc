@@ -37,6 +37,7 @@ Device::~Device() {
 // Get a V8 instance for a libusb_device: either the existing one from the map,
 // or create a new one and add it to the map.
 Napi::Object Device::get(Napi::Env env, libusb_device* dev) {
+    ModuleData* instanceData = env.GetInstanceData<ModuleData>();
     Napi::Object obj = instanceData->deviceConstructor.New({ Napi::External<libusb_device>::New(env, dev) });
     return obj;
 }
