@@ -107,6 +107,7 @@ Napi::Value GetDeviceList(const Napi::CallbackInfo& info) {
     Napi::Array arr = Napi::Array::New(env, cnt);
 
     for(int i = 0; i < cnt; i++) {
+        // DEBUG_LOG("Address %u", libusb_get_device_address(devs[i]));
         arr.Set(i, Device::get(env, devs[i]));
     }
     libusb_free_device_list(devs, true);
