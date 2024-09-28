@@ -44,8 +44,10 @@ Napi::Object Device::get(Napi::Env env, libusb_device* dev) {
     if (it != byPtr.end()) {
         auto value = it->second->Value();
         // JS object may have already been garbage collected
-        if (!value.IsEmpty())
+        if (!value.IsEmpty()) {
+            DEBUG_LOG("Found device %p", this);
             return value;
+        }
     }
 
     Napi::Object obj = instanceData->deviceConstructor.New({ Napi::External<libusb_device>::New(env, dev) });
