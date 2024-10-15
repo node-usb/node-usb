@@ -1,6 +1,6 @@
 {
   'variables': {
-    'use_udev%': 1,
+    'use_udev%': 0,
     'use_system_libusb%': 'false'
   },
   'dependencies': [
