@@ -100,17 +100,36 @@ Napi::Value GetDeviceList(const Napi::CallbackInfo& info) {
     Napi::HandleScope scope(env);
     libusb_device** devs;
 
-    libusb_context* usb_context = env.GetInstanceData<ModuleData>()->usb_context;
+    ModuleData* instance_data = env.GetInstanceData<ModuleData>();
+    std::map<uint8_t, Device*>& byAddr = instance_data->byAddr;
+    libusb_context* usb_context = instance_data->usb_context;
+
+    // we want to unreference all devices before trying to find the devices
+    for (auto const& it : byAddr) {
+        libusb_unref_device(it.second->device);
+        it.second->device = nullptr;
+    }
     int cnt = libusb_get_device_list(usb_context, &devs);
     CHECK_USB(cnt);
 
     Napi::Array arr = Napi::Array::New(env, cnt);
-
     for(int i = 0; i < cnt; i++) {
         // DEBUG_LOG("Address %u", libusb_get_device_address(devs[i]));
         arr.Set(i, Device::get(env, devs[i]));
     }
-    libusb_free_device_list(devs, true);
+
+    // if the device is still a nullptr after getting all devices,
+    // it means it's not connected anymore and we can saftely delete it
+    for (auto it = byAddr.cbegin(); it != byAddr.cend();)
+    {
+        delete it->second;
+        if (it->second->device == nullptr) {
+            it = byAddr.erase(it);
+        }
+        else ++it;
+    }
+
+    libusb_free_device_list(devs, false);
     return arr;
 }
 
