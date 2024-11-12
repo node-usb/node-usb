@@ -31,7 +31,11 @@ export class ExtendedDevice {
             return (this as unknown as usb.Device).__getConfigDescriptor();
         } catch (e) {
             // Check descriptor exists
-            if ((e as usb.LibUSBException).errno === usb.LIBUSB_ERROR_NOT_FOUND) {
+            const errno = (e as usb.LibUSBException).errno;
+            if (
+                errno === usb.LIBUSB_ERROR_NOT_FOUND ||
+                errno === usb.LIBUSB_ERROR_NO_DEVICE
+            ) {
                 return undefined;
             }
             throw e;
@@ -46,7 +50,11 @@ export class ExtendedDevice {
             return (this as unknown as usb.Device).__getAllConfigDescriptors();
         } catch (e) {
             // Check descriptors exist
-            if ((e as usb.LibUSBException).errno === usb.LIBUSB_ERROR_NOT_FOUND) {
+            const errno = (e as usb.LibUSBException).errno;
+            if (
+                errno === usb.LIBUSB_ERROR_NOT_FOUND ||
+                errno === usb.LIBUSB_ERROR_NO_DEVICE
+            ) {
                 return [];
             }
             throw e;
