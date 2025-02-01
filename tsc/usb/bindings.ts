@@ -6,7 +6,7 @@ import { join } from 'path';
 import type { DeviceDescriptor, ConfigDescriptor, BosDescriptor } from './descriptors';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
-const usb = require('node-gyp-build')(join(__dirname, '..', '..'));
+const usb = require('node-gyp-build')(process.env.NODE_USB_PATH || join(__dirname, '..', '..'));
 module.exports = usb;
 
 /**
