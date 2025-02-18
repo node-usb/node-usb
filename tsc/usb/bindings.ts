@@ -104,6 +104,7 @@ export declare class Device {
     __detachKernelDriver(addr: number): void;
     __attachKernelDriver(addr: number): void;
     __isKernelDriverActive(addr: number): boolean;
+    __setAutoDetachKernelDriver(enable: number): void;
 
     /**
     * Performs a reset of the device. Callback is called when complete.

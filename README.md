@@ -411,6 +411,9 @@ Timeout in milliseconds to use for control transfers.
 #### .reset(callback(error))
 Performs a reset of the device. Callback is called when complete.
 
+#### .setAutoDetachKernelDriver(enable)
+Enable/disable libusb's automatic kernel driver detachment (default true)
+
 ### Interface
 
 #### .endpoint(address)
