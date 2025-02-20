@@ -74,7 +74,6 @@ export class ExtendedDevice {
      */
     public open(this: usb.Device, defaultConfig = true): void {
         this.__open();
-        this.setAutoDetachKernelDriver(true);
 
         // The presence of interfaces is used to determine if the device is open
         this.interfaces = [];

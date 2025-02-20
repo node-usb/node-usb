@@ -412,7 +412,7 @@ Timeout in milliseconds to use for control transfers.
 Performs a reset of the device. Callback is called when complete.
 
 #### .setAutoDetachKernelDriver(enable)
-Enable/disable libusb's automatic kernel driver detachment (default true)
+Enable/disable libusb's automatic kernel driver detachment (defaults to true in the WebUSB API)
 
 ### Interface
 

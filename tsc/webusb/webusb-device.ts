@@ -89,6 +89,7 @@ export class WebUSBDevice implements USBDevice {
             }
 
             this.device.open();
+            this.device.setAutoDetachKernelDriver(true);
         } catch (error) {
             throw new Error(`open error: ${error}`);
         }
