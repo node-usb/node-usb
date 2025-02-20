@@ -18,7 +18,7 @@
       'xcode_settings': {
         'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',
         'CLANG_CXX_LIBRARY': 'libc++',
-        'MACOSX_DEPLOYMENT_TARGET': '10.7'
+        'MACOSX_DEPLOYMENT_TARGET': '10.10'
       },
       'msvs_settings': {
         'VCCLCompilerTool': {
@@ -72,7 +72,7 @@
                 '-arch arm64'
               ],
               'SDKROOT': 'macosx',
-              'MACOSX_DEPLOYMENT_TARGET': '10.7'
+              'MACOSX_DEPLOYMENT_TARGET': '10.10'
             }
           }],
           ['OS!="win"', {
