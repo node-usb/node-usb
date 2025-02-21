@@ -12,8 +12,8 @@ const ENDPOINT_HALT = 0x00;
  * Wrapper to make a node-usb device look like a webusb device
  */
 export class WebUSBDevice implements USBDevice {
-    public static async createInstance(device: usb.Device): Promise<WebUSBDevice> {
-        const instance = new WebUSBDevice(device);
+    public static async createInstance(device: usb.Device, autoDetachKernelDriver = true): Promise<WebUSBDevice> {
+        const instance = new WebUSBDevice(device, autoDetachKernelDriver);
         await instance.initialize();
         return instance;
     }
@@ -47,7 +47,7 @@ export class WebUSBDevice implements USBDevice {
     private resetAsync: () => Promise<void>;
     private getStringDescriptorAsync: (desc_index: number) => Promise<string | undefined>;
 
-    private constructor(private device: usb.Device) {
+    private constructor(private device: usb.Device, private autoDetachKernelDriver: boolean) {
         const usbVersion = this.decodeVersion(device.deviceDescriptor.bcdUSB);
         this.usbVersionMajor = usbVersion.major;
         this.usbVersionMinor = usbVersion.minor;
@@ -89,7 +89,7 @@ export class WebUSBDevice implements USBDevice {
             }
 
             this.device.open();
-            this.device.setAutoDetachKernelDriver(true);
+            this.device.setAutoDetachKernelDriver(this.autoDetachKernelDriver);
         } catch (error) {
             throw new Error(`open error: ${error}`);
         }
