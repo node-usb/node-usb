@@ -6,7 +6,7 @@ import { join } from 'path';
 import type { DeviceDescriptor, ConfigDescriptor, BosDescriptor } from './descriptors';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
-const usb = require('node-gyp-build')(join(__dirname, '..', '..'));
+const usb = require('node-gyp-build')(process.env.NODE_USB_PATH || join(__dirname, '..', '..'));
 module.exports = usb;
 
 /**
@@ -104,6 +104,7 @@ export declare class Device {
     __detachKernelDriver(addr: number): void;
     __attachKernelDriver(addr: number): void;
     __isKernelDriverActive(addr: number): boolean;
+    __setAutoDetachKernelDriver(enable: number): void;
 
     /**
     * Performs a reset of the device. Callback is called when complete.

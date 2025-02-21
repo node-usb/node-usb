@@ -324,6 +324,15 @@ Napi::Value Device::AttachKernelDriver(const Napi::CallbackInfo& info) {
     return env.Undefined();
 }
 
+Napi::Value Device::SetAutoDetachKernelDriver(const Napi::CallbackInfo& info) {
+    ENTER_METHOD(Device, 1);
+    CHECK_OPEN();
+    int enable;
+    INT_ARG(enable, 0);
+    CHECK_USB(libusb_set_auto_detach_kernel_driver(self->device_handle, enable));
+    return env.Undefined();
+}
+
 Napi::Value Device::ClaimInterface(const Napi::CallbackInfo& info) {
     ENTER_METHOD(Device, 1);
     CHECK_OPEN();
@@ -423,6 +432,7 @@ Napi::Object Device::Init(Napi::Env env, Napi::Object exports) {
             Device::InstanceMethod("__isKernelDriverActive", &Device::IsKernelDriverActive),
             Device::InstanceMethod("__detachKernelDriver", &Device::DetachKernelDriver),
             Device::InstanceMethod("__attachKernelDriver", &Device::AttachKernelDriver),
+            Device::InstanceMethod("__setAutoDetachKernelDriver", &Device::SetAutoDetachKernelDriver),
         });
     exports.Set("Device", func);
 

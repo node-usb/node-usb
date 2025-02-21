@@ -57,6 +57,7 @@ struct Device: public Napi::ObjectWrap<Device> {
     Napi::Value IsKernelDriverActive(const Napi::CallbackInfo& info);
     Napi::Value DetachKernelDriver(const Napi::CallbackInfo& info);
     Napi::Value AttachKernelDriver(const Napi::CallbackInfo& info);
+    Napi::Value SetAutoDetachKernelDriver(const Napi::CallbackInfo& info);
 
     Napi::Value ClaimInterface(const Napi::CallbackInfo& info);
     Napi::Value SetInterface(const Napi::CallbackInfo& info);

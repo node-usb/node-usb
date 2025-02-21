@@ -25,6 +25,11 @@ export interface USBOptions {
      * Optional timeout (in milliseconds) to use for the device control transfers
      */
     deviceTimeout?: number;
+
+    /**
+     * Optional flag to enable/disable automatic kernal driver detaching (defaults to true)
+     */
+    autoDetachKernelDriver?: boolean;
 }
 
 /**
@@ -267,7 +272,7 @@ export class WebUSB implements USB {
             }
 
             try {
-                const webDevice = await WebUSBDevice.createInstance(device);
+                const webDevice = await WebUSBDevice.createInstance(device, this.options.autoDetachKernelDriver);
                 this.knownDevices.set(device, webDevice);
             } catch {
                 // Ignore creation issues as this may be a system device

@@ -411,6 +411,9 @@ Timeout in milliseconds to use for control transfers.
 #### .reset(callback(error))
 Performs a reset of the device. Callback is called when complete.
 
+#### .setAutoDetachKernelDriver(enable)
+Enable/disable libusb's automatic kernel driver detachment (defaults to true in the WebUSB API)
+
 ### Interface
 
 #### .endpoint(address)
@@ -441,6 +444,7 @@ Returns `false` if a kernel driver is not active; `true` if active.
 
 #### .detachKernelDriver()
 Detaches the kernel driver from the interface.
+If a `LIBUSB_ERROR_ACCESS` error is raised, you may need to execute this with elevated privileges.
 
 #### .attachKernelDriver()
 Re-attaches the kernel driver for the interface.
