@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.15.0] - 2025-02-21
+
+### Added
+- Added support for `device.setAutoDetachKernelDriver` and set this to true for all devices in the WebUSB API - [`859`](https://github.com/node-usb/node-usb/pull/859) ([Rob Moran](https://github.com/thegecko))
+
 ## [2.14.0] - 2024-09-15
 
 ### Fixed
