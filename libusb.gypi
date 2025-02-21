@@ -118,7 +118,7 @@
               '-arch arm64'
             ],
             'CLANG_CXX_LIBRARY': 'libc++',
-            'MACOSX_DEPLOYMENT_TARGET': '10.10'
+            'MACOSX_DEPLOYMENT_TARGET': '10.7'
           }
         }],
         [ 'OS == "win"', {

@@ -444,6 +444,7 @@ Returns `false` if a kernel driver is not active; `true` if active.
 
 #### .detachKernelDriver()
 Detaches the kernel driver from the interface.
+If a `LIBUSB_ERROR_ACCESS` error is raised, you may need to execute this with elevated privileges.
 
 #### .attachKernelDriver()
 Re-attaches the kernel driver for the interface.
