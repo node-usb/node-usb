@@ -68,6 +68,7 @@
               'OTHER_LDFLAGS': [
                 '-framework', 'CoreFoundation',
                 '-framework', 'IOKit',
+                '-framework', 'Security',
                 '-arch x86_64',
                 '-arch arm64'
               ],
