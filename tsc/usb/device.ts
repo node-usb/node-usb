@@ -74,6 +74,7 @@ export class ExtendedDevice {
      */
     public open(this: usb.Device, defaultConfig = true): void {
         this.__open();
+
         // The presence of interfaces is used to determine if the device is open
         this.interfaces = [];
         if (defaultConfig === false) {
@@ -116,6 +117,16 @@ export class ExtendedDevice {
                 callback.call(this, error);
             }
         });
+    }
+
+    /**
+     * Enable/disable libusb's automatic kernel driver detachment
+     * When this is enabled libusb will automatically detach the kernel driver on an interface when claiming the interface, and attach it when releasing the interface
+     *
+     * The device must be open to use this method.
+     */
+    public setAutoDetachKernelDriver(enable: boolean): void {
+        return (this as unknown as usb.Device).__setAutoDetachKernelDriver(enable ? 1 : 0);
     }
 
     /**
