@@ -32,16 +32,16 @@ jobs:
             os: windows-2022
             command: prebuild --arch arm64 --target 20.11.1
           - name: linux-x64
-            os: ubuntu-20.04
+            os: ubuntu-22.04
             command: prebuild-cross --tag-libc -i ghcr.io/node-usb/centos7-devtoolset7 -i ghcr.io/node-usb/alpine
           - name: linux-arm
-            os: ubuntu-20.04
+            os: ubuntu-22.04
             command: prebuild-cross --tag-armv -i ghcr.io/node-usb/linux-arm64 -i ghcr.io/node-usb/linux-armv7 -i ghcr.io/node-usb/linux-armv6
           - name: android-arm
-            os: ubuntu-20.04
+            os: ubuntu-22.04
             command: prebuild-cross --tag-armv -i ghcr.io/node-usb/android-arm64 -i ghcr.io/node-usb/android-armv7
           - name: linux-x86
-            os: ubuntu-20.04
+            os: ubuntu-22.04
             command: prebuild-cross -i ghcr.io/node-usb/linux-x86
     name: Build ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
@@ -74,7 +74,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
-      - uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda
+      - uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
