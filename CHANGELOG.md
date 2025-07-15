@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.16.0] - 2025-07-16
+
+### Fixed
+- Turned off `device.setAutoDetachKernelDriver` on Windows as this is unsupported - [`870`](https://github.com/node-usb/node-usb/pull/870) ([Rob Moran](https://github.com/thegecko))
+
 ## [2.15.0] - 2025-02-21
 
 ### Added
