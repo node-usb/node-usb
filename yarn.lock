@@ -4002,9 +4002,9 @@ typedarray@^0.0.6:
   integrity sha512-/aCDEGatGvZ2BIk+HmLf4ifCJFwvKFNb9/JeZPMulfgFracn9QFcAf5GO8B/mweUjSoblS5In0cWhqpfs/5PQA==
 
 typedoc@^0.28.0:
-  version "0.28.9"
-  resolved "https://registry.yarnpkg.com/typedoc/-/typedoc-0.28.9.tgz#9af272796c6e68077a044149d1f7626b37de9693"
-  integrity sha512-aw45vwtwOl3QkUAmWCnLV9QW1xY+FSX2zzlit4MAfE99wX+Jij4ycnpbAWgBXsRrxmfs9LaYktg/eX5Bpthd3g==
+  version "0.28.10"
+  resolved "https://registry.yarnpkg.com/typedoc/-/typedoc-0.28.10.tgz#566a19201e7469dc5ca3cc436049655e0beb0201"
+  integrity sha512-zYvpjS2bNJ30SoNYfHSRaFpBMZAsL7uwKbWwqoCNFWjcPnI3e/mPLh2SneH9mX7SJxtDpvDgvd9/iZxGbo7daw==
   dependencies:
     "@gerrit0/mini-shiki" "^3.9.0"
     lunr "^2.3.9"
