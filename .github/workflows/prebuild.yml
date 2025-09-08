@@ -49,7 +49,7 @@ jobs:
       - if: matrix.os == 'macos-14'
         run: sudo -H pip install setuptools
       - if: matrix.node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 20.x
           architecture: ${{ matrix.node }}
@@ -74,7 +74,7 @@ jobs:
       - uses: actions/download-artifact@v5
         with:
           path: artifacts
-      - uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8
+      - uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
