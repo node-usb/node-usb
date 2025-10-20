@@ -49,7 +49,7 @@ jobs:
       - if: matrix.os == 'macos-14'
         run: sudo -H pip install setuptools
       - if: matrix.node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: 20.x
           architecture: ${{ matrix.node }}
