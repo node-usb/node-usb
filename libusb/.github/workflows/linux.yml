@@ -1,0 +1,50 @@
+name: linux
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on: [push, pull_request]
+
+# A workflow run is made up of one or more jobs that can run
+# sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job
+      # can access it
+      - uses: actions/checkout@v3
+
+      - name: setup prerequisites
+        run: |
+          sudo apt update
+          sudo apt install autoconf automake libtool libudev-dev m4
+
+      - name: bootstrap
+        run: ./bootstrap.sh
+
+      - name: netlink
+        # Disable tests for netlink as it doesn't seem to work in the CI environment.
+        run: .private/ci-build.sh --build-dir build-netlink --no-test -- --disable-udev
+
+      - name: udev
+        run: .private/ci-build.sh --build-dir build-udev -- --enable-udev
+
+      - name: debug-log
+        run: .private/ci-build.sh --build-dir build-debug -- --enable-debug-log
+
+      - name: disable-log
+        run: .private/ci-build.sh --build-dir build-nolog -- --disable-log
+
+      - uses: mymindstorm/setup-emsdk@v13
+
+      - run: npm ci
+        working-directory: tests/webusb-test-shim
+
+      - name: emscripten
+        run: emconfigure .private/ci-build.sh --build-dir build-emscripten -- --host=wasm32-unknown-emscripten
+
+      - name: umockdev test
+        run: .private/ci-container-build.sh docker.io/amd64/ubuntu:rolling
