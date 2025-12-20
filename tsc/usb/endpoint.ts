@@ -3,7 +3,7 @@ import { LibUSBException, LIBUSB_TRANSFER_CANCELLED, Transfer, Device } from './
 import { EndpointDescriptor } from './descriptors';
 import { promisify } from 'util';
 
-const isBuffer = (obj: ArrayBuffer | Buffer): obj is Uint8Array => obj && obj instanceof Uint8Array;
+const isBuffer = (obj: ArrayBuffer | Buffer): obj is Buffer => obj && obj instanceof Buffer;
 
 /** Common base for InEndpoint and OutEndpoint. */
 export abstract class Endpoint extends EventEmitter {
