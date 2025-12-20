@@ -219,7 +219,7 @@ export class WebUSB implements USB {
                 classCode: device.deviceClass,
                 subclassCode: device.deviceSubclass,
                 protocolCode: device.deviceProtocol,
-                serialNumber: device.serialNumber
+                serialNumber: device.serialNumber || undefined
             });
 
             return device;
