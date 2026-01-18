@@ -192,7 +192,7 @@ describe 'Transfers', ->
     it 'should control transfer OUT', ->
         transferResult = await device.controlTransferOut({
             requestType: 'device',
-            recipient: 'vendor';
+            recipient: 'vendor',
             request: 0x81,
             value: 0,
             index: 0
@@ -204,7 +204,7 @@ describe 'Transfers', ->
     it 'should control transfer IN', ->
         transferResult = await device.controlTransferIn({
             requestType: 'device',
-            recipient: 'vendor';
+            recipient: 'vendor',
             request: 0x81,
             value: 0,
             index: 0
