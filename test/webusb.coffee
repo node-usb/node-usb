@@ -192,8 +192,8 @@ describe 'Transfers', ->
 
     it 'should control transfer OUT', ->
         transferResult = await device.controlTransferOut({
-            requestType: 'device',
-            recipient: 'vendor',
+            requestType: 'vendor',
+            recipient: 'device',
             request: 0x81,
             value: 0,
             index: 0
@@ -204,8 +204,8 @@ describe 'Transfers', ->
 
     it 'should control transfer IN', ->
         transferResult = await device.controlTransferIn({
-            requestType: 'device',
-            recipient: 'vendor',
+            requestType: 'vendor',
+            recipient: 'device',
             request: 0x81,
             value: 0,
             index: 0
@@ -232,6 +232,6 @@ describe 'Transfers', ->
         resultBuffer = Buffer.from(transferResult.data.buffer, transferResult.data.byteOffset, transferResult.data.byteLength);
         expectedBuffer = Buffer.from(b2, 0, b2.byteLength);
         assert(resultBuffer.equals(expectedBuffer));
-
+    
     after ->
         device.close()
