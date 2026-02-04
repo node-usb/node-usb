@@ -30,9 +30,9 @@ export class WebUSBDevice implements USBDevice {
     public readonly deviceVersionMinor: number;
     public readonly deviceVersionSubminor: number;
 
-    public manufacturerName?: string | undefined;
-    public productName?: string | undefined;
-    public serialNumber?: string | undefined;
+    public manufacturerName: string | null = null;
+    public productName: string | null = null;
+    public serialNumber: string | null = null;
     public configurations: USBConfiguration[] = [];
 
     private controlTransferAsync: (
@@ -70,12 +70,12 @@ export class WebUSBDevice implements USBDevice {
         this.getStringDescriptorAsync = promisify(this.device.getStringDescriptor).bind(this.device);
     }
 
-    public get configuration(): USBConfiguration | undefined {
+    public get configuration(): USBConfiguration | null {
         if (!this.device.configDescriptor) {
-            return undefined;
+            return null;
         }
         const currentConfiguration = this.device.configDescriptor.bConfigurationValue;
-        return this.configurations.find(configuration => configuration.configurationValue === currentConfiguration);
+        return this.configurations.find(configuration => configuration.configurationValue === currentConfiguration) || null;
     }
 
     public get opened(): boolean {
@@ -89,7 +89,9 @@ export class WebUSBDevice implements USBDevice {
             }
 
             this.device.open();
-            this.device.setAutoDetachKernelDriver(this.autoDetachKernelDriver);
+            if (platform() !== 'win32') {
+                this.device.setAutoDetachKernelDriver(this.autoDetachKernelDriver);
+            }
         } catch (error) {
             throw new Error(`open error: ${error}`);
         }

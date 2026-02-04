@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.17.0] - 2026-01-18
+
+### Changed
+- Updated libusb to v1.0.29 - [`926`](https://github.com/node-usb/node-usb/pull/926) ([Rob Moran](https://github.com/thegecko))
+
+### Fixed
+- Dependency updates seem to have fixed TypeScript build error - [`907`](https://github.com/node-usb/node-usb/issues/907) ([Rob Moran](https://github.com/thegecko))
+
+## [2.16.0] - 2025-07-16
+
+### Fixed
+- Turned off `device.setAutoDetachKernelDriver` on Windows as this is unsupported - [`870`](https://github.com/node-usb/node-usb/pull/870) ([Rob Moran](https://github.com/thegecko))
+
 ## [2.15.0] - 2025-02-21
 
 ### Added

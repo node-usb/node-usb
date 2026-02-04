@@ -164,8 +164,8 @@ describe 'Device', ->
                     done()
 
             it 'times out', (done) ->
-                iface.endpoints[2].timeout = 20
-                iface.endpoints[2].transfer 64, (e, d) ->
+                iface.endpoints[4].timeout = 20
+                iface.endpoints[4].transfer 64, (e, d) ->
                     assert.equal e.errno, usb.LIBUSB_TRANSFER_TIMED_OUT
                     done()
 
@@ -228,8 +228,8 @@ describe 'Device', ->
                     done()
 
             it 'times out', (done) ->
-                iface.endpoints[3].timeout = 20
-                iface.endpoints[3].transfer [1,2,3,4], (e) ->
+                iface.endpoints[5].timeout = 20
+                iface.endpoints[5].transfer [1,2,3,4], (e) ->
                     assert.equal e.errno, usb.LIBUSB_TRANSFER_TIMED_OUT
                     done()
 
