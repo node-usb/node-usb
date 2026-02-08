@@ -606,6 +606,20 @@ There is no direct equivalent to this. Instead you can listen to both `attach` a
 # Development
 The library is based on native bindings wrapping the [libusb](https://github.com/libusb/libusb) library.
 
+## Prerequisites
+
+A valid node-gyp build system
+
+### Windows
+
+- [chocolatey](https://chocolatey.org/)
+
+```bash
+choco install python visualstudio2019-workload-vctools -y
+```
+
+If the automatic installation of VS Tools fails or pauses, open the installer GUI to resume installation.
+
 ## Setup
 Libusb is included as a submodule, clone this repository and then the submodule as follows:
 
