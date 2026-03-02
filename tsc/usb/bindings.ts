@@ -4,6 +4,7 @@
 
 import { join } from 'path';
 import type { DeviceDescriptor, ConfigDescriptor, BosDescriptor } from './descriptors';
+import type { ExtendedDevice } from './device';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 const usb = require('node-gyp-build')(process.env.NODE_USB_PATH || join(__dirname, '..', '..'));
@@ -76,7 +77,7 @@ export declare class Transfer {
 }
 
 /** Represents a USB device. */
-export declare class Device {
+export declare class Device extends ExtendedDevice {
     /** Integer USB device number */
     busNumber: number;
 
@@ -319,3 +320,32 @@ export declare const LIBUSB_ERROR_NO_MEM: number;
 export declare const LIBUSB_ERROR_NOT_SUPPORTED: number;
 /** Other error */
 export declare const LIBUSB_ERROR_OTHER: number;
+
+
+export declare interface EventListeners<T> {
+    newListener: keyof T;
+    removeListener: keyof T;
+}
+
+export declare interface DeviceIds {
+    idVendor: number;
+    idProduct: number;
+}
+
+export declare interface DeviceEvents extends EventListeners<DeviceEvents> {
+    attach: Device;
+    detach: Device;
+    attachIds: DeviceIds;
+    detachIds: DeviceIds;
+}
+
+export declare function addListener<K extends keyof DeviceEvents>(event: K, listener: (arg: DeviceEvents[K]) => void): void;
+export declare function removeListener<K extends keyof DeviceEvents>(event: K, listener: (arg: DeviceEvents[K]) => void): void;
+export declare function on<K extends keyof DeviceEvents>(event: K, listener: (arg: DeviceEvents[K]) => void): void;
+export declare function off<K extends keyof DeviceEvents>(event: K, listener: (arg: DeviceEvents[K]) => void): void;
+export declare function once<K extends keyof DeviceEvents>(event: K, listener: (arg: DeviceEvents[K]) => void): void;
+export declare function listeners<K extends keyof DeviceEvents>(event: K): ((arg: DeviceEvents[K]) => void)[];
+export declare function rawListeners<K extends keyof DeviceEvents>(event: K): ((arg: DeviceEvents[K]) => void)[];
+export declare function removeAllListeners<K extends keyof DeviceEvents>(event?: K): void;
+export declare function emit<K extends keyof DeviceEvents>(event: K, arg: DeviceEvents[K]): boolean;
+export declare function listenerCount<K extends keyof DeviceEvents>(event: K): number;
