@@ -30,6 +30,7 @@ jobs:
           git pull
           git clean -fd
           cp -R $TMPDIR/* ./
+          touch ./.nojekyll
           git add .
           git commit --allow-empty --message "Automatic Deployment"
           git push
