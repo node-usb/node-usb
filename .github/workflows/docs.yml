@@ -6,8 +6,17 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
 jobs:
-  docs:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-node@v6
@@ -19,18 +28,19 @@ jobs:
       - run: yarn install --ignore-scripts
       - run: yarn compile
       - run: yarn docs
-      - name: Deploy to gh-pages
-        if: ${{ github.event_name == 'push' }}
-        run: |
-          git config --global user.name thegecko
-          git config --global user.email github@thegecko.org
-          TMPDIR=`mktemp -d`
-          cp -R docs/* $TMPDIR
-          git checkout gh-pages
-          git pull
-          git clean -fd
-          cp -R $TMPDIR/* ./
-          touch ./.nojekyll
-          git add .
-          git commit --allow-empty --message "Automatic Deployment"
-          git push
+      - run: touch docs/.nojekyll
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: docs
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
