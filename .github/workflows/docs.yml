@@ -29,10 +29,17 @@ jobs:
       - run: yarn compile
       - run: yarn docs
       - run: touch docs/.nojekyll
+      - name: Create Pages artifact
+        shell: bash
+        run: |
+          set -euxo pipefail
+          tar --dereference --hard-dereference -C docs -cvf "$RUNNER_TEMP/artifact.tar" .
+          gzip -n "$RUNNER_TEMP/artifact.tar"   # -> artifact.tar.gz
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-artifact@v4
         with:
-          path: docs
+          name: github-pages
+          path: ${{ runner.temp }}/artifact.tar.gz
 
   deploy:
     runs-on: ubuntu-latest
