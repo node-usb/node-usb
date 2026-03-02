@@ -33,8 +33,16 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          tar --dereference --hard-dereference -C docs -cvf "$RUNNER_TEMP/artifact.tar" .
-          gzip -n "$RUNNER_TEMP/artifact.tar"   # -> artifact.tar.gz
+          chmod -R u+rwX,go+rX docs
+          tar --dereference --hard-dereference \
+              --owner=0 --group=0 --numeric-owner \
+              -C docs -cvf "$RUNNER_TEMP/artifact.tar" .
+          gzip -n "$RUNNER_TEMP/artifact.tar"
+      - name: Inspect docs output
+        run: |
+          set -eux
+          ls -la docs
+          find docs -maxdepth 2 -print
       - name: Upload Pages artifact
         uses: actions/upload-artifact@v4
         with:
