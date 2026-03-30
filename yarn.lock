@@ -202,9 +202,9 @@
   integrity sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==
 
 "@types/w3c-web-usb@^1.0.6":
-  version "1.0.13"
-  resolved "https://registry.yarnpkg.com/@types/w3c-web-usb/-/w3c-web-usb-1.0.13.tgz#4792e2ef7f611d0ee260b7adbf4ed121326c04e1"
-  integrity sha512-N2nSl3Xsx8mRHZBvMSdNGtzMyeleTvtlEw+ujujgXalPqOjIA6UtrqcB6OzyUjkTbDm3J7P1RNK1lgoO7jxtsw==
+  version "1.0.14"
+  resolved "https://registry.yarnpkg.com/@types/w3c-web-usb/-/w3c-web-usb-1.0.14.tgz#9b2c8e723045e7bf8018d47efe1b736815b23b38"
+  integrity sha512-Qu3Nn6JFuF4+sHKYl+IcX9vYiI40ogleXzFFSxoE1W94rG98o/kXs8uJ0QSfFzuwBCZWlGfUGpPkgwuuX4PchA==
 
 "@typescript-eslint/eslint-plugin@^5.45.1":
   version "5.62.0"
