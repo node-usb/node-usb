@@ -130,8 +130,8 @@ Napi::Value SupportedHotplugEvents(const Napi::CallbackInfo& info) {
     Napi::HandleScope scope(env);
     ModuleData* instanceData = env.GetInstanceData<ModuleData>();
 
-    int res = instanceData->hotplugManager->supportedHotplugEvents();
-    return Napi::Number::New(env, res);
+    bool res = instanceData->hotplugManager->supportedHotplugEvents();
+    return Napi::Boolean::New(env, res);
 }
 
 Napi::Value EnableHotplugEvents(const Napi::CallbackInfo& info) {
