@@ -70,7 +70,9 @@ const devicesChanged = () => setTimeout(() => emitHotplugEvents(), usb.pollHotpl
 // Hotplug control
 let hotplugSupported = 0;
 const startHotplug = () => {
+    // 0 - not supported, 1 - supported with device events, 2 - supported with ID events
     hotplugSupported = usb.pollHotplug ? 0 : usb._supportedHotplugEvents();
+    console.log(hotplugSupported);
 
     if (hotplugSupported !== 1) {
         // Collect initial devices when not using libusb

@@ -1,6 +1,6 @@
 #include "node_usb.h"
 #include "thread_name.h"
-#include "hotplug/hotplug.h"
+#include "hotplug.h"
 
 Napi::Value SetDebugLevel(const Napi::CallbackInfo& info);
 Napi::Value UseUsbDkBackend(const Napi::CallbackInfo& info);

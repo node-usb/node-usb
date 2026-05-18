@@ -1,7 +1,7 @@
 #ifndef _USB_HOTPLUG_H
 #define _USB_HOTPLUG_H
 
-#include "../node_usb.h"
+#include "node_usb.h"
 
 #define HOTPLUG_SUPPORTS_NONE 0
 #define HOTPLUG_SUPPORTS_DEVICES 1

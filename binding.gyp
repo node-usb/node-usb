@@ -29,7 +29,8 @@
         'src/node_usb.cc',
         'src/device.cc',
         'src/transfer.cc',
-        'src/thread_name.cc'
+        'src/thread_name.cc',
+        'src/hotplug.cc'
       ],
       'cflags_cc': [
         '-std=c++14'
@@ -76,15 +77,7 @@
               'MACOSX_DEPLOYMENT_TARGET': '10.7'
             }
           }],
-          ['OS!="win"', {
-            'sources': [
-              'src/hotplug/libusb.cc'
-            ],
-          }],
           ['OS=="win"', {
-            'sources': [
-              'src/hotplug/windows.cc'
-            ],
             'defines':[
               'WIN32_LEAN_AND_MEAN'
             ],
