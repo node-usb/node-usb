@@ -12,10 +12,9 @@
 Device::Device(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Device>(info), env(0), device_handle(0), refs_(0), completionQueue(handleCompletion) {
     env = info.Env();
     device = info[0].As<Napi::External<libusb_device>>().Data();
-    libusb_ref_device(device);
 
-    std::map<libusb_device*, Device*>& byPtr = env.GetInstanceData<ModuleData>()->byPtr;
-    byPtr[device] = this;
+    std::map<uint8_t, Device*>& byAddr = env.GetInstanceData<ModuleData>()->byAddr;
+    byAddr[libusb_get_device_address(device)] = this;
 
     DEBUG_LOG("Created device %p", this);
     Constructor(info);
@@ -23,14 +22,15 @@ Device::Device(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Device>(info),
 
 Device::~Device() {
     DEBUG_LOG("Freed device %p", this);
-
-    ModuleData* instanceData = env.GetInstanceData<ModuleData>();
-    std::map<libusb_device*, Device*>& byPtr = instanceData->byPtr;
-
-    auto it = byPtr.find(device);
-    if (it != byPtr.end() && it->second == this)
-        byPtr.erase(it);
     libusb_close(device_handle);
+
+    if (device == nullptr) return;
+    ModuleData* instanceData = env.GetInstanceData<ModuleData>();
+    std::map<uint8_t, Device*>& byAddr = instanceData->byAddr;
+    auto it = byAddr.find(libusb_get_device_address(device));
+    if (it != byAddr.end() && it->second == this)
+        byAddr.erase(it);
+
     libusb_unref_device(device);
 }
 
@@ -38,11 +38,14 @@ Device::~Device() {
 // or create a new one and add it to the map.
 Napi::Object Device::get(Napi::Env env, libusb_device* dev) {
     ModuleData* instanceData = env.GetInstanceData<ModuleData>();
-    std::map<libusb_device*, Device*>& byPtr = instanceData->byPtr;
+    std::map<uint8_t, Device*>& byAddr = instanceData->byAddr;
 
-    auto it = byPtr.find(dev);
-    if (it != byPtr.end()) {
-        auto value = it->second->Value();
+    auto it = byAddr.find(libusb_get_device_address(dev));
+    if (it != byAddr.end()) {
+        Device* js_dev = it->second;
+        js_dev->device = dev;
+
+        auto value = js_dev->Value();
         // JS object may have already been garbage collected
         if (!value.IsEmpty()) {
             DEBUG_LOG("Found device");
@@ -206,6 +209,7 @@ Napi::Value Device::GetParent(const Napi::CallbackInfo& info) {
 Napi::Value Device::Open(const Napi::CallbackInfo& info) {
     ENTER_METHOD(Device, 0);
     if (!self->device_handle){
+        printf("Opening device: %p\n", self->device);
         CHECK_USB(libusb_open(self->device, &self->device_handle));
         completionQueue.start(info.Env());
     }

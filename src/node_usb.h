@@ -77,7 +77,7 @@ struct ModuleData {
     std::unique_ptr<HotPlugManager> hotplugManager;
     UVQueue<HotPlug*> hotplugQueue;
     Napi::ObjectReference hotplugThis;
-    std::map<libusb_device*, Device*> byPtr;
+    std::map<uint8_t, Device*> byAddr;
     Napi::FunctionReference deviceConstructor;
 
     ModuleData(libusb_context* usb_context);
