@@ -141,6 +141,9 @@
           'include_dirs': [
             'libusb/msvc',
           ],
+          'defines': [
+            'LIBUSB_WINDOWS_HOTPLUG=1',
+          ],
           'msvs_disabled_warnings': [ 4267 ],
           'msvs_settings': {
               'VCCLCompilerTool': {
