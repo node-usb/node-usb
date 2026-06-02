@@ -129,6 +129,8 @@
             'libusb/libusb/os/threads_windows.h',
             'libusb/libusb/os/windows_common.c',
             'libusb/libusb/os/windows_common.h',
+            'libusb/libusb/os/windows_hotplug.c',
+            'libusb/libusb/os/windows_hotplug.h',
             'libusb/libusb/os/windows_usbdk.c',
             'libusb/libusb/os/windows_usbdk.h',
             'libusb/libusb/os/windows_winusb.c',
