@@ -68,7 +68,6 @@ const pollHotplug = (start = false) => {
 let hotplugSupported = false;
 const startHotplug = () => {
     hotplugSupported = usb.pollHotplug ? false : usb._supportedHotplugEvents();
-    console.log(hotplugSupported);
 
     if (hotplugSupported) {
         // Use hotplug event emitters
