@@ -64,29 +64,17 @@ const pollHotplug = (start = false) => {
     setTimeout(() => pollHotplug(), usb.pollHotplugDelay);
 };
 
-// Devices changed event handler
-const devicesChanged = () => setTimeout(() => emitHotplugEvents(), usb.pollHotplugDelay);
-
 // Hotplug control
-let hotplugSupported = 0;
+let hotplugSupported = false;
 const startHotplug = () => {
-    hotplugSupported = usb.pollHotplug ? 0 : usb._supportedHotplugEvents();
-
-    if (hotplugSupported !== 1) {
-        // Collect initial devices when not using libusb
-        hotPlugDevices = new Set(usb.getDeviceList());
-    }
+    hotplugSupported = usb.pollHotplug ? false : usb._supportedHotplugEvents();
 
     if (hotplugSupported) {
         // Use hotplug event emitters
         usb._enableHotplugEvents();
-
-        if (hotplugSupported === 2) {
-            // Use hotplug ID events to trigger a change check
-            usb.on('attachIds', devicesChanged);
-            usb.on('detachIds', devicesChanged);
-        }
     } else {
+        // Collect initial devices
+        hotPlugDevices = new Set(usb.getDeviceList());
         // Fallback to using polling to check for changes
         pollHotplug(true);
     }
@@ -96,12 +84,6 @@ const stopHotplug = () => {
     if (hotplugSupported) {
         // Disable hotplug events
         usb._disableHotplugEvents();
-
-        if (hotplugSupported === 2) {
-            // Remove hotplug ID event listeners
-            usb.off('attachIds', devicesChanged);
-            usb.off('detachIds', devicesChanged);
-        }
     } else {
         // Stop polling
         pollingHotplug = false;

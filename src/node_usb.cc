@@ -1,6 +1,6 @@
 #include "node_usb.h"
 #include "thread_name.h"
-#include "hotplug/hotplug.h"
+#include "hotplug.h"
 
 Napi::Value SetDebugLevel(const Napi::CallbackInfo& info);
 Napi::Value UseUsbDkBackend(const Napi::CallbackInfo& info);
@@ -130,8 +130,8 @@ Napi::Value SupportedHotplugEvents(const Napi::CallbackInfo& info) {
     Napi::HandleScope scope(env);
     ModuleData* instanceData = env.GetInstanceData<ModuleData>();
 
-    int res = instanceData->hotplugManager->supportedHotplugEvents();
-    return Napi::Number::New(env, res);
+    bool res = instanceData->hotplugManager->supportedHotplugEvents();
+    return Napi::Boolean::New(env, res);
 }
 
 Napi::Value EnableHotplugEvents(const Napi::CallbackInfo& info) {
