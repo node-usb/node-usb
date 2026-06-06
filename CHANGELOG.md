@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.18.0] - 2026-06-06
+
+### Changed
+- Updated libusb to v1.0.30 - [`950`](https://github.com/node-usb/node-usb/pull/950) ([Rob Moran](https://github.com/thegecko))
+- Switched to using libusb hotplug support for Windows - [`953`](https://github.com/node-usb/node-usb/pull/953) ([Rob Moran](https://github.com/thegecko))
+
 ## [2.17.0] - 2026-01-18
 
 ### Changed
