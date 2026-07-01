@@ -4,6 +4,9 @@
 [![npm](https://img.shields.io/npm/dm/usb.svg)](https://www.npmjs.com/package/usb)
 [![Licence MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](http://opensource.org/licenses/MIT)
 
+> [!NOTE]
+> Development of this library has now moved to https://github.com/node-usb/node-usb-rs since v3.0.0
+
 Node.JS library for communicating with USB devices.
 
 This is a refactoring / rewrite of Christopher Klein's [node-usb](https://github.com/schakko/node-usb).
