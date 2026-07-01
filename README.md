@@ -1,6 +1,6 @@
 # USB Library for Node.JS
 
-[![Build Status](https://github.com/node-usb/node-usb/workflows/prebuild/badge.svg)](https://github.com/node-usb/node-usb/actions)
+[![Build Status](https://github.com/node-usb/node-usb/actions/workflows/prebuild.yml/badge.svg?branch=main)](https://github.com/node-usb/node-usb/actions)
 [![npm](https://img.shields.io/npm/dm/usb.svg)](https://www.npmjs.com/package/usb)
 [![Licence MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](http://opensource.org/licenses/MIT)
 
