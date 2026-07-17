@@ -106,10 +106,16 @@ private:
 
 
 
-#define CHECK_USB(r) \
-    if (r < LIBUSB_SUCCESS) { \
-        throw libusbException(env, r); \
-    }
+#define CHECK_USB_CLEANUP(r, cleanup) \
+    do { \
+        int _r = (r); \
+        if (_r < LIBUSB_SUCCESS) { \
+            cleanup \
+            throw libusbException(env, _r); \
+        } \
+    } while (0)
+
+#define CHECK_USB(r) CHECK_USB_CLEANUP(r, {})
 
 #define CALLBACK_ARG(CALLBACK_ARG_IDX) \
     Napi::Function callback; \

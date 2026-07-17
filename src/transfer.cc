@@ -73,7 +73,11 @@ Napi::Value Transfer::Submit(const Napi::CallbackInfo& info) {
         self->transfer->buffer
     );
 
-    CHECK_USB(libusb_submit_transfer(self->transfer));
+    CHECK_USB_CLEANUP(libusb_submit_transfer(self->transfer), {
+        self->v8buffer.Reset();
+        self->transfer->buffer = NULL;
+        self->transfer->length = 0;
+    });
     self->ref();
     self->device->ref();
 
