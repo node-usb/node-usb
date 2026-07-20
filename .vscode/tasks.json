@@ -17,7 +17,7 @@
         {
             "label": "test",
             "type": "npm",
-            "script": "full-test"
+            "script": "test"
         }
     ]
 }
