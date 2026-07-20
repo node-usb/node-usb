@@ -33,7 +33,7 @@
         'src/hotplug.cc'
       ],
       'cflags_cc': [
-        '-std=c++14'
+        '-std=c++17'
       ],
       'defines': [
         '_FILE_OFFSET_BITS=64',
@@ -61,7 +61,7 @@
           ['OS=="mac"', {
             'xcode_settings': {
               'OTHER_CFLAGS': [
-                '-std=c++1y',
+                '-std=c++17',
                 '-stdlib=libc++',
                 '-arch x86_64',
                 '-arch arm64'
@@ -110,7 +110,7 @@
             },
             'msvs_settings': {
               'VCCLCompilerTool': {
-                'AdditionalOptions': [ '/EHsc' ]
+                'AdditionalOptions': [ '/EHsc', '/std:c++17' ]
               }
             }
           }
