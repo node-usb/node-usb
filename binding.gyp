@@ -110,7 +110,7 @@
             },
             'msvs_settings': {
               'VCCLCompilerTool': {
-                'AdditionalOptions': [ '/EHsc' ]
+                'AdditionalOptions': [ '/EHsc', '/std:c++17' ]
               }
             }
           }
