@@ -664,7 +664,7 @@ yarn test
 Some tests require an [attached STM32F103 Microprocessor USB device with specific firmware](https://github.com/node-usb/node-usb-test-firmware).
 
 ```bash
-yarn full-test
+yarn test
 yarn valgrind
 ```
 

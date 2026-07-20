@@ -4,6 +4,5 @@ build
 *~
 *.log
 docs
-test/*.js
 dist
 prebuilds

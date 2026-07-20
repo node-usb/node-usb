@@ -21,7 +21,7 @@ class HotPlugManagerLibUsb: public HotPlugManager {
 
     void enableHotplug(const Napi::Env& env, ModuleData* instanceData) {
         libusb_context* usb_context = instanceData->usb_context;
-        CHECK_USB(libusb_hotplug_register_callback(
+        CHECK_USB_CLEANUP(libusb_hotplug_register_callback(
             usb_context,
             (libusb_hotplug_event)(LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED | LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT),
             (libusb_hotplug_flag)0,
@@ -31,7 +31,10 @@ class HotPlugManagerLibUsb: public HotPlugManager {
             hotplug_callback,
             instanceData,
             &hotplugHandle
-        ));
+        ), {
+            instanceData->hotplugQueue.stop();
+            instanceData->hotplugThis.Reset();
+        });
     }
 
     void disableHotplug(const Napi::Env& env, ModuleData* instanceData) {
