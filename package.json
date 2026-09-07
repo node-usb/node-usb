@@ -60,7 +60,7 @@
     "@typescript-eslint/eslint-plugin": "^5.45.1",
     "@typescript-eslint/parser": "^5.45.1",
     "eslint": "^8.29.0",
-    "mocha": "^11.0.1",
+    "mocha": "^12.0.0",
     "node-gyp": "^10.0.1",
     "prebuildify": "^6.0.1",
     "prebuildify-ci": "^1.0.5",
