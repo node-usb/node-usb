@@ -3,6 +3,8 @@ name: Bug Report
 about: Create a report to help us improve Node USB
 ---
 
+<!-- If you are using Node USB v3.0.0 or above, please create your issue at https://github.com/node-usb/node-usb-rs/issues instead. -->
+
 <!-- Please provide a detailed description of the bug. -->
 ## Bug Description:
 
