@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.19.0] - 2026-10-04
+
+### Changed
+- Use C++17 flags for native bindings - [`964`](https://github.com/node-usb/node-usb/pull/964) ([Joey Stanford](https://github.com/rinchen))
+
+### Fixed
+- Fixed stale active transfer state with cleanup after libusb failure - [`962`](https://github.com/node-usb/node-usb/pull/962) ([Rob Moran](https://github.com/thegecko))
+
 ## [2.18.0] - 2026-06-06
 
 ### Changed
