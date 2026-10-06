@@ -81,6 +81,11 @@ Napi::Value Transfer::Submit(const Napi::CallbackInfo& info) {
     self->ref();
     self->device->ref();
 
+    if (self->transfer->timeout > 0) {
+        // Wake the event thread so newly submitted transfer timeouts are observed.
+        libusb_interrupt_event_handler(env.GetInstanceData<ModuleData>()->usb_context);
+    }
+
     return info.This();
 }
 
