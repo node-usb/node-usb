@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.19.1] - 2026-10-06
+
+### Fixed
+- Fixed read/write issues on Linux - [`981`](https://github.com/node-usb/node-usb/pull/981) ([Rob Moran](https://github.com/thegecko))
+
 ## [2.19.0] - 2026-10-04
 
 ### Changed
