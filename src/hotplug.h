@@ -6,6 +6,7 @@
 class HotPlugManager {
 public:
     static std::unique_ptr<HotPlugManager> create();
+    virtual ~HotPlugManager() = default;
 
     virtual bool supportedHotplugEvents() = 0;
 
