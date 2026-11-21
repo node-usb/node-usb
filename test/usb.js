@@ -90,7 +90,7 @@ describe('Device', () => {
         assert.ok(device.busNumber > 0, 'busNumber must be larger than 0');
         assert.ok(device.deviceAddress > 0, 'deviceAddress must be larger than 0');
         if (process.platform !== 'darwin' || process.arch !== 'arm64') {
-            assert.ok(util.isArray(device.portNumbers), 'portNumbers must be an array');
+            assert.ok(Array.isArray(device.portNumbers), 'portNumbers must be an array');
         }
     });
 
