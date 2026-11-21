@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.19.2] - 2026-11-21
+
+### Fixed
+- Added HotPlugManager destructor - [`988`](https://github.com/node-usb/node-usb/pull/988) ([Pavel R](https://github.com/pavel-teramips))
+
 ## [2.19.1] - 2026-10-06
 
 ### Fixed
